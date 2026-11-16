@@ -1,4 +1,4 @@
-# ADR-0082: Dates, Times, and Time Zones
+# ADR-0082: Temporal Values, Operations, Sources, and Measurement
 
 **Status:** Draft
 
@@ -35,68 +35,69 @@
 
 ## 1. Context
 
-A Contract may use a date, compare two instants, or calculate a period without observing the running machine. Other
-obligations depend on physical time. ADR-0051 already defines a `Relative Elapsed Time` Budget that measures the actual
-interval between an exact subject's boundaries.
+A Contract may calculate with temporal values without observing the running machine. Other obligations depend
+on physical time. ADR-0051 already defines a `Relative Elapsed Time` Budget for an exact subject.
 
-These uses cannot be interpreted as one operation merely because Java or Kotlin represents them with temporal types. A
-local date-time does not identify an instant. A calendar day can differ from twenty-four elapsed hours. A Clock reading
-depends on the machine or service providing it.
+These uses require a common temporal basis rather than a single host-library model.
 
-ADR-0064 §7.9.5 already defines the presentation meaning of nine temporal Input Leaves. ADR-0079 and ADR-0084 govern
-interpretation of Java/Kotlin source operations. This ADR establishes the common temporal meaning used by Contract
-judgments and by the compiler itself.
+ADR-0064 §7.9.5 defines nine temporal Input Leaves. ADR-0079 and ADR-0084 govern Java/Kotlin source
+interpretation. This ADR supplies the temporal meaning for both Contract judgments and the compiler itself.
 
-The physical observation of time also matters to the compiler and its generated machine. Reliable measurement is
-necessary for resource enforcement and for engineering tests. The meaning of a measurement includes what is measured
-and what can be established about the result. It is not determined by the hardware used to obtain it.
+The compiler and its generated machine also need reliable measurements for resource enforcement and
+engineering tests. The meaning of those measurements must be established independently of the hardware that
+realizes them.
 
 ## 2. Problem
 
-A temporal operation can change its result because the selected callable has different rules, because the relevant
-time-zone data changed, or because it reads the current environment. Treating these cases as ordinary deterministic
-arithmetic permits the compiler to establish a result on an incomplete basis.
+A temporal expression can have an incomplete determining basis. Even a familiar callable can depend on
+external rule data or the current environment (§§3.9–3.10).
 
-For example, adding one calendar day to a zoned date-time can cross a daylight-saving transition. Adding twenty-four
-elapsed hours to the same instant can produce a different local time. Similarly, two offset date-times can denote one
-instant while remaining unequal under their source `equals` operation.
+Calendar arithmetic and elapsed-time arithmetic can give different results. A comparison can also preserve
+different distinctions of the same value (§§3.4 and 3.6).
 
-There is a second problem at the execution boundary. A timeout returned to a caller does not prove that the underlying
-operation stopped. A precise timestamp does not prove that a stop occurred at the timestamp. If a Budget depends on
-either assumption, its judgment may be wrong even when the Clock is accurate.
+At the execution boundary, an inaccurate interpretation of a timeout can establish the wrong judgment even
+with an accurate Clock (§3.12).
 
-Two measurements can report the same duration while describing different parts of an execution. A measured value may
-also differ from the actual physical quantity. The compiler needs to express that difference without treating an
-estimate as an exact value of the measured quantity.
+For engineering measurements, equal durations may describe different activities. The recorded result and the
+physical claim require separate meanings (§§3.1.7–3.1.8).
 
-Kontrakt therefore needs a common basis that explains both the author's temporal operations and the time of the running
-machine. The existing 1D Contracts remain responsible for deciding which temporal meanings they may use.
+The common basis must resolve these problems without assuming the authority of an owning 1D Contract.
 
 ## 3. Decision
 
+The following decision index identifies the governing provisions. The referenced sections define the operative
+laws.
+
+1. Shared temporal meaning and 1D authority (§§3.1–3.1.1).
+2. The seven fundamental temporal laws (§§3.1.2–3.1.8).
+3. Temporal value distinctions and preservation of Input presentation (§3.2).
+4. Purpose-specific reference selection (§§3.3 and 3.13).
+5. Distinct calendar and elapsed-time arithmetic (§3.4).
+6. Exact resolver, comparison and conversion behavior (§§3.5–3.9).
+7. Closed determining data versus external observation (§3.10).
+8. Qualified measurement at the applicable judgment boundary (§3.11).
+9. Logical control and physical execution as distinct obligations (§3.12).
+
 ### 3.1. Common Meaning and Contract Authority
 
-**Kontrakt owns the common meaning of time and its basic operations.** The same meaning is used to interpret Source
-Operations and to describe the compiler's internal machine. A calculation has a defined operand domain and result law.
-The same law and determining inputs produce the same legally observable result. The chosen implementation cannot
-silently change that result. An observation of physical time is not a closed calculation merely because the recorded
-result can subsequently be used in one.
+**Kontrakt owns the common meaning of time and its basic operations.** This meaning applies to Source
+Operations and the compiler's internal machine. Each calculation has a defined operand domain and result law.
+The same law and determining inputs must produce the same legally observable result, regardless of
+implementation. The distinction between a calculation and physical observation follows §3.10.
 
-This is shared temporal meaning, not a new Time 1D Contract. The owning 1D still establishes its own judgment and
-Material. In particular, an interpreted duration does not establish a Budget observation, and a comparison of instants
-does not establish an Admission or Governance result by itself.
+This ADR introduces shared laws, not a Time 1D Contract. The owning 1D establishes its judgment and Material.
+Interpreting a duration does not establish a Budget observation. Comparing instants does not establish an
+Admission or Governance result.
 
-A completed temporal datum may be interpreted without qualifying the operation that originally produced it. Using a
-temporal operation inside governed Contract source is a separate decision under ADR-0073, ADR-0079, and ADR-0084. An
-operation supported in user Realization is not thereby permitted in 1D authoring.
+A completed temporal datum can be interpreted without qualifying its producer. Eligibility of an operation for
+governed Contract source is a separate matter (§3.9).
 
-#### 3.1.1. Fundamental temporal contracts
+#### 3.1.1. Fundamental Temporal Laws
 
-The temporal basis consists of seven contracts. Each supplies a law that can be used with the other contracts to
-explain a temporal value or operation. A composed meaning is not a new basic contract merely because it has a name
-in a library or protocol.
+The seven laws below explain distinct aspects of temporal meaning. Each can be used in combination with the
+others. A named library or protocol composition does not require another fundamental law.
 
-| Basic contract              | Law subject                                                                                       | Definition |
+| Fundamental law             | Law subject                                                                                       | Definition |
 |-----------------------------|---------------------------------------------------------------------------------------------------|------------|
 | **Temporal Quantity**       | What a temporal amount means                                                                      | §3.1.2     |
 | **Temporal Reference**      | What a position in a temporal system means                                                        | §3.1.3     |
@@ -106,9 +107,9 @@ in a library or protocol.
 | **Temporal Measurement**    | What is measured and how observations establish a measurement result                              | §3.1.7     |
 | **Temporal Uncertainty**    | What can be asserted about an uncertain temporal quantity or position                             | §3.1.8     |
 
-These contracts are not mutually exclusive value families. Their number is not a claim of mathematical minimality.
-They do not prescribe the representation or physical subsystem structure. The same laws can be realized by a host
-carrier or by a specialized compiler representation, provided the required observations are preserved.
+The laws are neither mutually exclusive value families nor a claim of mathematical minimality. They prescribe
+no physical subsystem or representation. A host carrier or a specialized compiler representation may realize
+them if it preserves the required observations.
 
 The existing common laws remain in force where a temporal meaning uses them:
 
@@ -119,17 +120,19 @@ The existing common laws remain in force where a temporal meaning uses them:
 | ADR-0080     | Text and character meaning             |
 | ADR-0081     | Structured values and their operations |
 
-A composition must establish the applicability of each law it uses. The result of one operation must satisfy the
-operand law of the next. Any determining rule data or context must be available under §3.10. Source composition
-preserves the observations required by the selected operation, including intermediate results when they can affect
-the outcome (ADR-0073 and ADR-0078). A composition cannot assert a stronger physical guarantee than its evidence
-supports (§3.1.8). Explanation of a Source Operation does not by itself qualify it for use (§§3.1 and 3.9).
+A composed operation must satisfy these conditions:
+
+- Each participating law applies to its operands. Every intermediate result satisfies the next operand law.
+- Determining data is available under §3.10.
+- The composition preserves the selected Source Operation's required observations. Intermediate results are preserved
+  where they affect the outcome (ADR-0073 and ADR-0078).
+- A physical claim is limited to its evidence (§3.1.8).
 
 #### 3.1.2. Temporal Quantity
 
-A Temporal Quantity gives a magnitude its temporal meaning. An amount may be declared directly or derived from
-other values. The way it was obtained does not define a separate kind of temporal quantity. Time quantities use the
-applicable Type and Numeric Laws under ADR-0079 and ADR-0078 rather than a separate temporal type or arithmetic system.
+A Temporal Quantity gives a magnitude its temporal meaning. A declared amount and a derived amount use the
+same law. Their acquisition methods do not create separate quantity kinds. Type and Numeric Laws follow
+§3.1.1.
 
 | Law                | Required meaning                                                                       |
 |--------------------|----------------------------------------------------------------------------------------|
@@ -137,41 +140,49 @@ applicable Type and Numeric Laws under ADR-0079 and ADR-0078 rather than a separ
 | Unit Semantics     | How the unit interprets the magnitude and when a change of unit preserves the quantity |
 | Quantity Relations | The relations specific to temporal quantities and the conditions under which they hold |
 
-**Quantity Formation.** A numeric datum alone does not establish a temporal quantity. The applicable domain must
-admit that datum as the magnitude of the quantity. For example, a reserved protocol field value can indicate that a
-correction is out of range rather than denote a large duration. A field encoded as an exponent requires its specified
-decoding law before it denotes an amount.
+**Quantity Formation.** The domain must admit the datum as a magnitude of the quantity. A reserved protocol
+value can signal an out-of-range correction instead of denoting a large duration. An exponent-encoded field
+must be decoded under its specified law.
 
-A duration may describe elapsed time, while a displacement may relate two temporal positions. A quantity can also
-have a meaning under a particular time scale or domain model. A coordinate-time difference and a physical proper-time
-interval need not agree. An equivalent processing time defined by a physical model need not equal the time actually
-spent processing. The model determines what that amount represents; its scientific law is not a general law of time.
+Quantities can describe different things even when they have the same unit:
 
-The applicable Type and Numeric Laws determine the admitted magnitudes. An extended domain may admit infinity only
-when its meaning and operations are defined. A maximum finite amount is not infinity. An unknown amount and a wait
-without a finite deadline do not thereby denote infinite quantities. The domain of a recorded estimate may also
-differ from that of the measured quantity (§3.1.8).
+| Quantity               | Meaning                                                                          |
+|------------------------|----------------------------------------------------------------------------------|
+| Duration               | An amount of elapsed time.                                                       |
+| Displacement           | An amount relating positions under their reference.                              |
+| Scale-dependent amount | A coordinate-time difference can differ from physical proper time.               |
+| Model-derived amount   | An equivalent processing time need not equal the time actually spent processing. |
 
-**Unit Semantics.** The SI second is the reference unit for physical time quantities. The SI prefixes and fixed-duration
-units use their established definitions. ADR-0051 §4.4 defines the corresponding Budget unit vocabulary and its narrower
-V1 authoring scope. That scope does not limit the meaning of other temporal quantities.
+A domain model supplies its own scientific law. That law is not a general law of time.
 
-A unit's meaning follows its definition, not its spelling. A fixed day of 86,400 seconds differs from a calendar day.
-Different unit conventions can use the same name for different magnitudes. The applicable definition must therefore be
-known before interpreting or converting a quantity.
+The applicable Type and Numeric Laws determine the admitted magnitudes. An extended domain may admit infinity
+only with a defined meaning and operations. These cases must remain distinct:
 
-An exact change of unit preserves the quantity under the established relation between the units.
-For example, one second equals 1,000 milliseconds. A conversion to a finite representation may still require rounding
-under §3.7. The unit is not the representation's numerical resolution. A binary fraction of a second need not be
-expressed as an integer number of nanoseconds.
+- An infinite amount.
+- A maximum finite amount.
+- An unknown amount.
+- A wait with no finite deadline.
 
-Some unit correspondences depend on a physical model rather than an exact defining factor. For example, a conversion
-from Planck time to SI seconds depends on the value of the gravitational constant. Such a conversion must retain its
-applicable correspondence and uncertainty (§§3.1.4 and 3.1.8). An estimated factor cannot be treated as exact.
+The domain of an estimate may differ from that of the measured quantity (§3.1.8).
 
-**Quantity Relations.** This law supplies the temporal meaning of an operation. ADR-0078 supplies its numerical
-semantics. An operation must establish what its operands represent and what the result denotes. Equal dimensions or
-units alone do not establish that the operands can be substituted in a temporal operation.
+**Unit Semantics.** The SI second is the reference unit for physical time quantities. SI prefixes and
+fixed-duration units retain their established definitions. ADR-0051 §4.4 defines a narrower V1 Budget
+vocabulary. It does not limit other temporal quantities.
+
+A unit follows its definition rather than its name. For example, different fixed-month conventions can denote
+different amounts. Calendar amounts follow §3.4. The applicable unit definition must be known before
+interpretation or conversion.
+
+An exact unit conversion preserves the quantity. One second equals 1,000 milliseconds. A finite representation
+may still require rounding under §3.7. The unit and the representation's resolution are distinct; a binary
+fractional second need not be an integer number of nanoseconds.
+
+Some unit conversions use a physical model instead of an exact defining factor. For example, expressing Planck
+time in SI seconds depends on the value of the gravitational constant. The applicable correspondence and its
+uncertainty follow §§3.1.4 and 3.1.8.
+
+**Quantity Relations.** The operation must establish what its operands represent and what its result denotes.
+Equal dimensions or units alone are insufficient for substitution. ADR-0078 supplies the numeric result law.
 
 | Relation              | Temporal meaning                                                                                                                                                               |
 |-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -180,22 +191,19 @@ units alone do not establish that the operands can be substituted in a temporal 
 | Phase                 | A phase or phase displacement requires the applicable cycle law. Conversion to a temporal displacement requires the necessary relation to the cycle.                           |
 | Calendar amount       | An amount such as one month belongs to its calendar law. Application requires that Reference and a starting position; conversion to an elapsed amount follows §§3.1.4 and 3.4. |
 
-An event rate does not by itself establish a fixed interval between individual events. A tick count is a progression
-count, not a physical time unit. Its conversion to an elapsed quantity requires the applicable correspondence; the
-source's actual progression is governed by §3.1.6. A calendar amount with several components uses the structured value
-laws of ADR-0081. Measurement attribution and accumulation belong to §3.1.7.
+An event rate alone does not fix the interval between individual events. A tick count denotes a progression
+count rather than a physical time unit. Conversion to an elapsed amount requires §3.1.4; actual progression
+follows §3.1.6. Structured calendar amounts follow ADR-0081. Measurement attribution follows §3.1.7.
 
-These examples establish relations, not a closed inventory of temporal quantity types. The laws do not introduce a
-separate quantity hierarchy or a general system of physical dimensions. A domain-specific relation must be established
-by its own model before participating in a temporal calculation. The supported operation determines the result domain
-and any promotion under ADR-0078. No universal temporal promotion or rounding rule is introduced. See §3.7 for
-representation boundaries.
+The relations above are not a closed inventory of quantity types. No quantity hierarchy or general system of
+physical dimensions is introduced. A domain-specific relation requires its own established model. The selected
+operation determines the result domain and any promotion under ADR-0078. Representation and rounding follow
+§3.7.
 
 #### 3.1.3. Temporal Reference
 
-A Temporal Reference defines how a temporal position is interpreted. A position has meaning in its selected reference
-system. Kontrakt does not require all positions to use a common time scale. The choice follows the temporal domain and
-the intended operation (§3.3).
+A Temporal Reference gives a position its meaning. Reference selection follows the domain and intended
+operation (§3.3).
 
 | Law                     | Required meaning                                                                |
 |-------------------------|---------------------------------------------------------------------------------|
@@ -203,8 +211,8 @@ the intended operation (§3.3).
 | Position Formation      | What constitutes an admitted position in that system                            |
 | Positional Relations    | The relations that hold between positions and their conditions of applicability |
 
-**Reference Determination.** The necessary reference law must be established for the value and the selected operation.
-The following determinants are used where they affect that meaning:
+**Reference Determination.** The reference law must be established for the value and the selected operation.
+The following determinants apply only where they affect the meaning:
 
 | Determinant              | Meaning                                                                        |
 |--------------------------|--------------------------------------------------------------------------------|
@@ -215,45 +223,52 @@ The following determinants are used where they affect that meaning:
 | Cycle law                | The modulus or other rule governing repeating coordinates                      |
 | Logical relation         | The law relating logical positions without requiring a physical time scale     |
 
-These determinants are not mutually exclusive reference types. An origin and a scale can vary independently.
-Neither is required where it does not determine the meaning. A cyclic coordinate may also belong to a source-relative
-reference. A determinant already fixed by the applicable
-domain does not need to be repeated in every value. A calculation does not require unrelated reference data. The
-rules governing the acquisition and reuse of determining data are in §3.10.
+These determinants can coexist. Origin and scale can vary independently; neither is required unless it
+determines the meaning. A cyclic coordinate can also be source-relative. A determinant fixed by the domain
+need not be repeated in each value. Acquisition and reuse of determining data follow §3.10.
 
-**Position Formation.** A position must satisfy the applicable reference law. The existing Type and Numeric Laws
-supply its component domains. The calendar law can impose further constraints on the combination of fields; for
-example, a Gregorian date cannot contain a day outside its month. A value such as a YearMonth or MonthDay can be
-complete in its own domain without representing an entire date. A conversion requiring another position or additional
-context follows §3.1.4.
+**Position Formation.** A position must satisfy the reference law. Its component domains follow the Type and
+Numeric Laws. The calendar can further constrain their combination; a Gregorian date must have a day admitted
+by its month. `YearMonth` and `MonthDay` can be complete in their own domains. Conversion that needs another
+position or context follows §3.1.4.
 
-A cyclic coordinate does not by itself establish its unwrapped position. For example, readings of 250 and 10 from
-an eight-bit counter can be separated by 16 ticks or by 16 ticks plus any admissible number of full cycles, assuming
-forward progression. Recovering a unique displacement requires a law and sufficient determining context. The numeric
-residue alone is insufficient.
+The selected field-resolution operation determines which fields participate and how their relations are
+resolved. Individually admitted fields may fail to describe a common position. The participating fields must
+satisfy that operation's consistency conditions. Merely acquiring unresolved fields does not establish the
+position.
 
-**Positional Relations.** The reference law establishes which positional comparisons and operations are meaningful.
-For a reference that supports displacement, applying an amount to a position can produce another position. The
-difference between two positions need not denote a physical elapsed interval. A conversion to such an amount follows
-the applicable Quantity and Correspondence laws. Not every position supports addition or subtraction. For example, Java
-`LocalTime` can advance from 23:00 to 01:00
-by adding two hours, while its `until` operation in hours returns −22 for those positions. The comparison and
-difference laws need not recover the amount originally applied.
+A cyclic coordinate alone is insufficient to recover its unwrapped position. For example, an eight-bit counter
+advancing from 250 to 10 can traverse 16 ticks plus any admissible number of full cycles. A unique
+displacement requires a law and sufficient context.
 
-A pairwise comparison need not establish a global ordering. For example, in an eight-bit cyclic space, a comparison
-using forward distances smaller than half a cycle can place 0 before 100, 100 before 200, and 200 before 0. Positions
-separated by exactly half a cycle have no order under that rule. ADR-0081 governs use of a comparison for operations
-that require an ordering. The temporal comparison does not establish those properties by itself.
+**Positional Relations.** The reference law determines which operations apply. Applying an amount may move a
+position where displacement is supported. A positional difference need not denote physical elapsed time; such
+a conversion follows §§3.1.2 and 3.1.4. Addition and subtraction are not universal operations on positions.
 
-A physical source can realize a reference without being identical to it (§3.1.6). A coordinate also does not identify
-an occurrence (§3.1.5). The temporal value distinctions remain in §3.2.
+For example, Java `LocalTime` advances from 23:00 to 01:00 when two hours are added. Yet `until` in hours
+returns −22. The difference law need not recover the applied amount.
+
+A temporal field can observe a stored component or a value derived under the reference law. Field and unit
+applicability can depend on the position and selected operation. A field range can also depend on them. A
+reported range is not a guarantee that every included value is admitted by the formation or adjustment law.
+
+Adjustment to a temporal boundary requires the formation law for those boundaries and the law for selecting
+one. Fixed spacing may require an origin. Changing that origin can change the boundaries even when the spacing
+stays the same. Calendar boundaries follow the applicable calendar and civil rules. ADR-0078 governs numerical
+rounding; the temporal law supplies the positions to which it applies.
+
+Pairwise comparison need not supply a global ordering. In an eight-bit cyclic space, a rule using forward
+distances smaller than half a cycle can order 0 before 100, 100 before 200, and 200 before 0. Positions
+exactly half a cycle apart are unordered under that rule. Ordering-dependent operations must satisfy ADR-0081.
+
+For the distinction between reference and source, see §3.1.6. For the association of an event with a
+coordinate, see §3.1.5.
 
 #### 3.1.4. Temporal Correspondence
 
-A Temporal Correspondence establishes how a value has a counterpart in another temporal domain or under an additional
-relation within a domain. For example, it can relate positions in two time scales or relate a counter displacement to
-an elapsed amount. The intrinsic quantity and position laws remain with §§3.1.2–3.1.3. Relations between events
-belong to §3.1.5.
+A Temporal Correspondence relates a value to a counterpart in another domain or under an additional relation
+within its domain. For example, it can relate two time scales or turn a counter displacement into an elapsed
+amount. Intrinsic quantities and positions follow §§3.1.2–3.1.3. Event relations follow §3.1.5.
 
 | Law                          | Required meaning                                                                             |
 |------------------------------|----------------------------------------------------------------------------------------------|
@@ -261,32 +276,38 @@ belong to §3.1.5.
 | Conversion Semantics         | What a selected operation does with the correspondence                                       |
 | Correspondence Composition   | The conditions under which inverse relations and composed conversions preserve their meaning |
 
-**Correspondence Determination.** The relation must establish the source and target domains and its applicable rule.
-Its domain of applicability may cover all source values or only some of them. A value may have no counterpart or
-more than one counterpart. No fixed upper bound on their number is implied. The structured value laws of ADR-0081
-apply when the result is represented as a Collection. The relation itself need not be finite or enumerable.
+**Correspondence Determination.** The relation identifies its source and target domains. It also establishes
+the applicable rule. It may apply to only part of the source domain. A value can have zero or several
+counterparts, without a fixed upper bound on their number. The relation need not be finite or enumerable.
+Collection-valued results follow ADR-0081.
 
-An implementation may use an offset or a rate conversion without defining a different basic contract. A more complex
-rule, including a calendar rule, can also establish a correspondence. A rule may apply only over a particular segment
-of a reference. For example, the same spacecraft counter value may occur again after a reset. Its partition can be
-necessary to identify the applicable correlation.
+An offset, a rate or a calendar rule can establish a correspondence without introducing another fundamental
+law. A relation can apply only to a reference segment. For example, a spacecraft counter that repeats values
+after reset can require a partition to identify the applicable correlation.
 
-An exact relation under a selected rule differs from a physical relation inferred from observations. A calibration may
-provide a conversion law whose coefficients are recorded exactly, while its correspondence to physical time remains
-uncertain. The observation and uncertainty follow §§3.1.7–3.1.8.
+A calibration may have exactly recorded coefficients while its relation to physical time remains uncertain.
+Physical claims follow §3.1.8; observation follows §3.1.7.
 
-The applicability of a physical correspondence depends on the claim made with it. Establishing a relation at
-one observation does not establish its validity at a later position. A correspondence used for an elapsed interval
-must support the relation required between the selected boundaries. A claim throughout an interval can require
-additional evidence. The required basis need not be the same as that for an absolute position (§3.1.8).
+The applicability of a physical correspondence depends on the intended claim:
 
-A descriptor identifies a rule or reference by its admitted descriptive meaning. It does not establish the rule's
-contents or authorize its acquisition. External rule data follows §3.10.
+| Claim                           | Required basis                                                                                |
+|---------------------------------|-----------------------------------------------------------------------------------------------|
+| Position                        | A relation valid for the selected position. An earlier observation is insufficient by itself. |
+| Elapsed interval                | A relation supporting the difference between the selected boundaries.                         |
+| Property throughout an interval | Evidence sufficient for the claim over the interval.                                          |
 
-**Conversion Semantics.** A correspondence does not by itself determine the outcome of a conversion operation. The
-selected operation may return the available counterparts or select one of them. It may instead adjust the operand
-under its own law or reject it. Named-zone resolution in §3.5 illustrates why an adjusted result need not be a
-counterpart of the original position.
+The basis for one claim need not establish another (§3.1.8).
+
+A descriptor identifies a rule or reference through its admitted meaning. Its contents and acquisition require
+a separate basis under §3.10.
+
+**Conversion Semantics.** The selected conversion determines what to do with the correspondence. Its result
+may follow any of these forms, according to the selected law:
+
+- Return the available counterparts.
+- Select a counterpart.
+- Adjust the operand. An adjusted result need not be a counterpart of the original position (§3.5).
+- Reject the operand.
 
 | Condition                   | Distinction                                                                                   |
 |-----------------------------|-----------------------------------------------------------------------------------------------|
@@ -296,27 +317,25 @@ counterpart of the original position.
 | Uncertain physical relation | The correspondence is subject to the conditions of §3.1.8.                                    |
 | Unrepresentable result      | A counterpart exists but the required result domain cannot represent it under §3.7.           |
 
-These conditions do not introduce a new failure taxonomy. The selected operation determines its result and preserves
-its Source semantics under ADR-0078. Its owning law determines the treatment of an unsuccessful calculation.
+These conditions describe meanings, not a failure taxonomy. The resolved operation owns the result law (§3.9);
+the owning Contract determines the treatment of an unsuccessful calculation.
 
-**Correspondence Composition.** An inverse relation need not be a function. A conversion that discards a distinction
-may not admit an operation that recovers the original value. The same holds when a mathematically reversible relation
-is realized through a representation that loses information (§3.7).
+**Correspondence Composition.** An inverse relation need not be a function. A distinguishing value lost by
+conversion may be unrecoverable. This also applies to reversible mathematical relations when their
+representation loses information (§3.7).
 
-A composition requires the participating relations to apply to the intermediate domain under consistent determining
-conditions (§3.1.1). For example, let one conversion add a calibration offset and another subtract it. Cancellation
-requires a basis establishing that both offsets agree. Reusing the same formula with a different calibration does not
-establish that basis. The treatment of shared uncertain inputs follows §3.1.8.
+Composition follows §3.1.1. For example, adding and then subtracting a calibration offset cancels only when
+the two offsets are established to agree. A different calibration can prevent cancellation despite identical
+formulas. Shared uncertain inputs follow §3.1.8.
 
-A direct correspondence and a chain of correspondences need not provide the same result or physical guarantee. A chain
-can be used when it establishes the relation required by the operation. Substituting one conversion path for another
-requires preservation of the observations of that operation under §3.1.1. The existence of a path is not sufficient.
-No graph representation or path-selection algorithm is prescribed by this law.
+A chain and a direct correspondence can establish different results or guarantees. A chain is usable when it
+establishes the required relation. Substitution must preserve the selected operation's observations under
+§3.1.1. The existence of a path is insufficient. No graph or path-selection algorithm is prescribed.
 
 #### 3.1.5. Temporal Occurrence
 
-A Temporal Occurrence relates an event to time. An event and its temporal position are distinct. The applicable event
-law identifies the event or subject. This contract does not establish general event Identity.
+A Temporal Occurrence relates an event to time. The event is distinct from its position. Its owning event law
+establishes its identity; this ADR does not define general event Identity.
 
 | Law                    | Required meaning                                                        |
 |------------------------|-------------------------------------------------------------------------|
@@ -325,58 +344,58 @@ law identifies the event or subject. This contract does not establish general ev
 | Occurrence Relations   | Which temporal relations hold between events and on what basis          |
 | Occurrence Recurrence  | How repeated events relate to a temporal rule or to earlier occurrences |
 
-**Occurrence Association.** The event described by a temporal value may differ from the event at which the value is
-acquired or delivered. For example, the time of an operation can differ from the time at which its record is published.
-Two events can occupy the same recorded position without becoming the same event.
+**Occurrence Association.** The time described by a value can differ from the time of acquisition or delivery.
+For example, an operation's occurrence may precede the publication of its record. Two events recorded at the
+same position remain distinct.
 
-A temporal association may describe an actual occurrence or a position assigned to an event that has not occurred.
-For example, a model can assign a position to a predicted event. Such a position does not establish that the event
-actually occurred. The subject to which an event belongs follows its owning law. Attribution of a measured amount
-follows §3.1.7.
+A temporal association may describe an actual occurrence or a position assigned to a future or hypothetical
+event. A predicted position is not evidence that the event occurred. Subject identity follows the owning law;
+measurement attribution follows §3.1.7.
 
-**Occurrence Boundary.** An event extent is formed from selected boundary events under the applicable reference law.
-The request for an operation, the start of its execution and the delivery of its result may delimit different extents.
-ADR-0081 governs interval formation and structural operations. Measurement of an extent follows §3.1.7. Selection of
-resource enforcement boundaries remains with the owning Contract (§3.11).
+**Occurrence Boundary.** An extent uses selected boundary events in an applicable reference. For example,
+request-to-delivery extent can differ from execution-start-to-delivery extent. ADR-0081 governs interval
+formation and structural operations. Measurement uses §3.1.7. Resource-enforcement boundaries follow the
+owning Contract (§3.11).
 
-**Occurrence Relations.** A temporal relation must identify the events it relates and the basis on which it holds.
-For example, an occurrence can precede another or take place within an extent bounded by other events. Positional
-relations follow §3.1.3. Comparisons requiring a further correspondence follow §3.1.4. The conditions under which
-uncertain positions establish a relation follow §3.1.8.
+**Occurrence Relations.** A relation identifies the events it relates and its determining basis. For example,
+a relation can establish precedence or occurrence within an extent. Use the positional law (§3.1.3), any
+necessary correspondence (§3.1.4) and the applicable evidence law (§3.1.8).
 
-Equal recorded positions do not by themselves establish physical simultaneity. Coordinate order does not establish
-causal order by itself. Logical order may represent causal constraints without measuring an elapsed duration. An
-incomparable pair under a relation differs from a pair for which the available evidence does not establish the relation.
-Neither case establishes that the events occurred at the same time. The absence of evidence for a relation also differs
-from evidence that it does not hold.
+The following distinctions are necessary for an event relation:
 
-General relation and ordering laws follow ADR-0081. Encounter order and Publication order keep the meanings of their
-owning laws. Causal and execution constraints remain with the laws that establish them. An observed execution order
-is not by itself a required execution order. A required temporal relation does not determine a total execution order
-unless the owning law requires one. Deterministic realization follows ADR-0075.
+| Evidence or relation     | Limit of the claim                                                         |
+|--------------------------|----------------------------------------------------------------------------|
+| Equal recorded positions | Physical simultaneity requires its own basis.                              |
+| Coordinate order         | Causal order requires its own basis.                                       |
+| Logical order            | It can express causal constraints without measuring elapsed time.          |
+| Incomparable events      | The selected relation supplies no order for the pair.                      |
+| Insufficient evidence    | The relation is undetermined; this differs from evidence that it is false. |
 
-The advance of a time coordinate does not establish that all events up to that position have been received. Any claim
-of completeness over a temporal extent must follow the applicable data or result law. The claim concerns the selected
-scope; it need not apply to all occurrences in the system.
+Incomparability and insufficient evidence are not evidence of simultaneity.
 
-**Occurrence Recurrence.** A recurrence establishes how the positions of repeated events are determined. Its basis may
-be an original scheduled position or the outcome of an earlier occurrence. A calendar progression and a repetition
-based on a previous completion need not produce the same positions. For example, Java `LocalDate.datesUntil` can
-produce a progression anchored at the first date. Repeatedly adding the same Calendar Period to the preceding date
-can yield different positions after an end-of-month adjustment (§3.4).
+General ordering and relation laws follow ADR-0081. Encounter order and Publication order retain their owning
+meanings. Causal constraints and required execution order belong to their owners. Observing an execution order
+does not make it required. A temporal constraint need not establish a total order unless its owning law
+requires one. Deterministic realization follows ADR-0075.
 
-A repeated event can retain its original scheduled position even when its schedule is changed. The original position,
-the revised position and the actual occurrence have their respective associations. The progression structure follows
-ADR-0081. A recurrence does not establish that any scheduled occurrence took place.
+Progress of a time coordinate does not establish that all earlier events have been received. A completeness
+claim requires the applicable data or result law and an identified scope.
 
-None of these laws confers execution control authority. The selected execution law determines whether an operation
-starts
-or is cancelled. It also determines the treatment of missed or overlapping repetitions (§3.12).
+**Occurrence Recurrence.** A recurrence defines the positions of repeated events. It may use an original
+scheduled position or the outcome of an earlier occurrence. These bases can differ: Java
+`LocalDate.datesUntil` can anchor its progression at the first date, unlike repeated additions to the previous
+date after end-of-month adjustment (§3.4).
+
+A rescheduled event can retain its original scheduled position. The revised position and the actual occurrence
+remain separately associated under this law. ADR-0081 governs the progression structure. A schedule is not
+evidence of execution.
+
+Execution authority and the handling of missed or overlapping repetitions follow §3.12.
 
 #### 3.1.6. Temporal Source
 
-A Temporal Source supplies readings under a law of progression. The source and the reference system of its readings
-are separate. Two sources can realize the same time scale without being synchronized.
+A Temporal Source supplies readings under a progression law. Its reference is distinct from the source.
+Sources using the same scale need not be synchronized.
 
 | Law                | Required meaning                                                        |
 |--------------------|-------------------------------------------------------------------------|
@@ -384,14 +403,14 @@ are separate. Two sources can realize the same time scale without being synchron
 | Source Progression | How the source advances and how changes to its progression take effect  |
 | Source Continuity  | When the progression relation remains valid across readings             |
 
-**Source Reading.** A reading has the meaning of its reference under §3.1.3. The selected reading operation determines
-how the value is obtained. It may supply a retained value or obtain a new one. A fixed or controlled source can model
-time without observing the running machine. A reading does not by itself establish a new physical observation (§3.1.7).
+**Source Reading.** A reading has the meaning of its reference (§3.1.3). The selected operation determines how
+the reading is obtained. It may return a retained value or obtain a new one. A fixed or controlled source can
+model time without physical observation. A reading alone does not establish a fresh physical observation (§3.1.7).
 
-Different operations on the same source need not return equivalent temporal values. For example, a Java offset Clock
-can apply its offset after conversion to milliseconds in one operation and before that conversion in another. The
-selected Source Operation determines the result (§3.9). The applicable Type law distinguishes a valid reading from
-any unavailable or uninitialized result, even when the latter uses a numeric representation.
+Different calls on one source can yield different results. For example, a Java offset Clock can apply the
+offset after conversion to milliseconds in one call and before that conversion in another. Preserve the
+selected operation under §3.9. Type Law distinguishes valid readings from unavailable or uninitialized
+results, including those encoded numerically.
 
 **Source Progression.** The source law establishes the following properties whenever a use depends on them:
 
@@ -403,40 +422,39 @@ any unavailable or uninitialized result, even when the latter uses a numeric rep
 | Adjustment  | The effect of a change in rate or a discontinuous change in position                  |
 | Control     | Whether a declared operation can change the source's progression                      |
 
-There is no universal requirement that every source be monotonic or advance at a constant rate. A monotonic source
-can support elapsed-time measurement without establishing civil time. Conversely, a civil timestamp does not establish
-that two readings form a monotonic interval. Monotonicity does not imply strict increase or fidelity to physical elapsed
-time. Two monotonic sources can differ in whether they include system suspension. A source suitable for one measured
-extent may therefore be inadequate for another (§3.11).
+A source need not be monotonic or advance at a constant rate. Monotonicity means readings do not decrease
+under the applicable conditions; it is not strict increase. Monotonicity alone supplies neither a civil-time
+reference nor a guarantee of fidelity to physical elapsed time. A civil timestamp alone is not evidence of
+monotonic progression. Two monotonic sources can also differ in their treatment of suspension. Qualification
+for an extent follows §3.11.
 
-A change in progression rate differs from an immediate change in position. A declared control operation may also
-advance, pause or reverse model time where the source law permits it. These are properties of the applicable source,
-not separate kinds of time. The mutability of a controlled source does not change the meaning of an already established
-reading. The distinction between model-time tests and physical backend qualification follows §3.11.
+Changing the progression rate differs from changing the position immediately. A declared control operation can
+alter model-time progression as permitted by its source law. For example, it can advance model time. It can
+also pause model time or reverse its direction. These are progression properties rather than separate kinds of
+time. A later change to the source leaves an established reading unchanged. Model-time qualification follows
+§3.11.
 
-**Source Continuity.** A source must establish the conditions under which its progression law relates earlier and later
-readings. A reset or disruption can invalidate that relation. For example, live migration can change the underlying
-counter of a virtual machine without replacing its time-source interface. The continued existence of that interface
-does not prove continuity. A change of hardware does not necessarily break continuity if the source preserves its
-established progression through a valid compensation law.
+**Source Continuity.** The source must establish when its progression law relates earlier and later readings.
+A reset or disruption can invalidate that relation. For example, live VM migration can change the underlying
+counter while leaving the time-source interface intact. Interface identity alone does not establish
+continuity. Hardware replacement can preserve continuity through a valid compensation law.
 
-Readings from different domains require the correspondence of §3.1.4 before they can be used in a common calculation.
-Synchronization is a relation to a reference or another source. Loss of synchronization can invalidate an established
-correspondence even when the source continues to supply readings under its own progression law. Any guarantee that
-remains valid during holdover follows §3.1.8. Continuity of progression alone does not establish that guarantee.
+Cross-domain calculations require §3.1.4. Synchronization establishes a relation to a reference or another
+source. Losing synchronization can invalidate that relation without disrupting local progression. The validity
+of a guarantee during holdover follows §3.1.8.
 
-Observing a relation between sources differs from changing the progression of either source. Synchronization
-can use the observed relation to adjust a source under its progression law. The established correspondence and
-its uncertainty must reflect the relevant conditions before and after that adjustment (§§3.1.4 and 3.1.8).
+Observing a source relation and adjusting a source are different operations. Synchronization may use the
+former to change progression. The correspondence and uncertainty must reflect the relevant conditions before
+and after the adjustment (§§3.1.4 and 3.1.8).
 
-No particular source hierarchy, state machine or disruption marker is required by these laws. The actual source
-capabilities require qualification under §3.11.
+No particular source hierarchy, state machine or disruption marker is prescribed (§3.1.1). Qualify actual
+capabilities under §3.11.
 
 #### 3.1.7. Temporal Measurement
 
-A Temporal Measurement relates a measured quantity or position to the observations used to establish it. The
-measurand defines what the measurement is about. Its distinction from the observation is necessary even when the
-observed value happens to equal the intended quantity.
+A Temporal Measurement relates a measurand to the observations used to establish a result. The measurand
+identifies what is measured even if the recorded datum happens to equal it. For claims about physical
+accuracy, see §3.1.8.
 
 | Law                     | Required meaning                                                              |
 |-------------------------|-------------------------------------------------------------------------------|
@@ -444,24 +462,27 @@ observed value happens to equal the intended quantity.
 | Measurement Observation | What is observed and under which conditions the observation provides evidence |
 | Measurement Formation   | How the observations establish the requested result                           |
 
-**Measurement Target.** A measurement must identify the intended subject and the portions of activity that belong to
-its scope. A measurement of physical elapsed time must identify the particular execution and the events bounding the
-selected extent. Its unit alone does not identify those events. The event and boundary laws follow §3.1.5.
+**Measurement Target.** Identify the measurement subject and the activity included in its scope. An
+elapsed-time measurement must identify the specific execution and its boundary events (§3.1.5). The unit alone
+is insufficient.
 
-A measurement need not span one continuous interval. Time spent waiting for service differs from time spent executing
-that service. A message transfer and the execution that handles the message can also have different extents. Exclusive
-time requires a law identifying the excluded activity. CPU time requires a basis attributing time to actual CPU usage;
-a sum of worker elapsed intervals does not establish it.
+A measurement can cover more than one interval. The following targets require different extents or inclusion
+laws:
 
-Attribution specifies which subject receives a measured extent. A shared computation may run only once while its
-inclusive time is attributed to more than one participating subject. The sum of those attributed amounts need not be
-the actual execution time of the shared computation. Attribution does not decide what a Budget charges; that authority
-remains with ADR-0051.
+| Target             | Required distinction                                                                   |
+|--------------------|----------------------------------------------------------------------------------------|
+| Service            | Waiting for service differs from executing the service.                                |
+| Message processing | Transfer extent can differ from handling extent.                                       |
+| Exclusive time     | The excluded activity must be identified.                                              |
+| CPU time           | Actual CPU usage must be attributed; summing worker elapsed intervals is insufficient. |
 
-Elapsed time for a selected execution extent includes all time that passes between its boundaries. An activity
-inside that extent need not belong to the subject's logical work. Its inclusion in the elapsed measurement does
-not establish attribution of its cost or responsibility for a delay. A measurement of selected activity time
-requires its own inclusion law.
+Attribution identifies the subject receiving a measured extent. A shared computation may run once while each
+participating subject receives its inclusive time. Summing those attributions need not recover the physical
+execution time. ADR-0051 determines Budget charges.
+
+Elapsed time includes all time between the selected boundaries. An activity inside that extent may be
+unrelated to the subject's logical work. Inclusion does not attribute the activity's cost or responsibility
+for delay to that subject. Selected activity time requires its own inclusion law.
 
 In a concurrent execution, the following questions establish different temporal meanings:
 
@@ -472,49 +493,42 @@ In a concurrent execution, the following questions establish different temporal 
 | Which activities overlapped?                           | The relevant positions or extents in a comparable reference.            |
 | How much did an activity change the subject's latency? | Evidence and a model sufficient to establish its performance influence. |
 
-A logical dependency does not establish the last relation. Work without a logical dependency can delay the
-subject through a shared resource. Temporal overlap alone cannot establish such a delay. An observed interruption
-of one activity need not increase the completion time of a larger parallel computation.
+Performance influence requires more than logical dependency or overlap. Work without a dependency can cause
+delay through shared resources. Interrupting one activity need not delay completion of the larger parallel
+computation.
 
-Noise is relative to the selected measurement target and experimental conditions. An interruption can be part
-of the actual elapsed interval and a factor to isolate in a separate experiment. Its classification as noise does
-not remove it from an elapsed measurement. Time spent in a selected state does not by itself establish the amount
-of latency that would disappear if that state were avoided.
+Noise depends on the target and experimental conditions. An interruption can be a factor to isolate
+experimentally while remaining part of elapsed time under the inclusion law above. Time in a state is
+insufficient to establish the latency reduction if that state were avoided.
 
-For a result based on samples, the target must identify the occurrences or population the result describes. A result
-about completed executions need not describe executions that failed or did not complete.
+A sampled result must identify its occurrences or population. A population of completed executions need not
+represent failed or unfinished executions.
 
-**Measurement Observation.** An observation establishes a recorded datum under its acquisition conditions. The event
-at which acquisition occurs can differ from the intended physical event. For example, a timestamp obtained at a message
-handler need not describe the instant at which the message arrived at the network interface. That distinction must be
-preserved when the intended boundary matters to the result.
+**Measurement Observation.** An observation establishes a recorded datum under its acquisition conditions. Its
+acquisition event can differ from the intended physical event (§3.1.5). For example, a handler timestamp need
+not describe arrival at the network interface. Preserve that distinction where it affects the target.
 
-An observation can be received or retained independently of the source that produced it. A recorded datum differs
-from the physical quantity that it is used to estimate. An external assertion about time is distinct from the
-observations that verify it. Authentication does not by itself establish the assertion's physical accuracy or current
-validity (§3.1.8).
+Observations may be received or retained independently of the producing source. An external assertion and the
+observations that verify it are distinct. Authentication alone does not establish physical accuracy or
+continuing validity (§3.1.8).
 
-The observation law establishes which samples were actually obtained and how they were selected. A missing observation
-must not be reported as an actual observation. A partial observation can nevertheless establish
-information. For example, a monitored device that remains operational through the end of a test can provide a lower
-bound on its lifetime without establishing its failure time. Not observing an operation's completion does not by
-itself establish that the operation was still executing or that it stopped (§3.12).
+The observation law identifies the samples actually acquired and their selection. A missing sample must not be
+represented as acquired. Partial evidence can still support a claim: a device operating at the end of a test
+gives a lower bound on lifetime, not its failure time. Missing completion evidence establishes neither
+continuing execution nor cessation (§3.12).
 
-Instrumentation may affect the activity being measured. The measured outcome of an instrumented execution does not
-by itself establish the outcome of an execution without that instrumentation. Such an inference requires an applicable
-model. Measurement quality is not inferred from the result unit (§3.1.8). The observation boundary and the effects of
-acquisition must be accounted for when they affect the claimed result.
+Instrumentation can change the activity being measured. An inference about execution without instrumentation
+requires its own model. Account for acquisition effects and the observation boundary wherever they affect the
+claimed result.
 
-The actual effect of instrumentation on execution differs from error in the observation. A delay introduced by
-the measurement mechanism is part of the actual elapsed interval when it occurs within the selected boundary.
-An estimate of the execution without instrumentation requires its own basis. Subtracting the time spent in the
-instrumentation does not in general establish that estimate.
+Execution perturbation differs from observation error. Under the elapsed-time inclusion law, instrumentation
+delay inside the boundary is included. Merely subtracting instrumentation time does not establish the
+uninstrumented result.
 
-**Measurement Formation.** A measurement model establishes how the available observations determine the result for the
-selected target. A correspondence used in that model follows §3.1.4. The model may form a quantity from observed
-positions or derive an estimate from partial observations. An inferred result must not be presented as a direct
-observation. For example, a performance model may supply additional samples to account for unobserved requests. It
-must preserve the distinction between those samples and the values actually observed.
+**Measurement Formation.** A model determines the result for the selected target from the available
+observations. It may derive an amount from positions or estimate one from partial observations. Keep inferred
+results distinct from direct observations. For example, performance-model samples for unobserved requests must
+remain distinguishable from acquired samples. Correspondence follows §3.1.4.
 
 Consider three activities on a common time axis with extents `[0, 8]`, `[2, 10]` and `[4, 8]` milliseconds:
 
@@ -525,44 +539,44 @@ Consider three activities on a common time axis with extents `[0, 8]`, `[2, 10]`
 | Sum             | 20 ms  | The sum of the selected activity extents, retaining their multiplicity |
 | Intersection    | 4 ms   | Time shared by all three extents                                       |
 
-These are different measurands regardless of whether some results agree numerically. Accumulation must follow the
-selected measurand's treatment of overlap and multiplicity. Critical-path time depends on the selected dependency
-relation and its weights. The general structural operations belong to ADR-0081. Numeric calculations follow ADR-0078.
+These results describe different measurands even when their numbers agree. Accumulation follows the target's
+treatment of multiplicity and overlap. Critical-path time follows the selected dependency relation and its
+weights. Apply ADR-0081 to the structure and ADR-0078 to its numeric operations.
 
-A measurement result may be used in a further measurement calculation only when its meaning supplies the necessary
-basis. For example, a total accumulated since a starting point differs from an amount measured since the preceding
-observation. Adding successive cumulative totals can count the same extent more than once. A reset of the accumulated
-quantity need not interrupt the progression of its time source.
+Reuse requires a result whose meaning supports the next calculation. An amount accumulated since a starting
+point differs from an amount since the previous observation. Adding successive cumulative totals can double
+count an extent. Resetting accumulation need not interrupt source progression.
 
-A sample of measured latencies may describe a population under a selected sampling law. An aggregate of those latencies
-can be combined with other results only under a law that preserves the intended target. For example, combining sample
-means may require their respective sample counts. Individual percentiles alone do not generally determine the combined
-percentile. The required sampling and aggregation conditions must be retained where they affect the claimed result.
+Combining aggregates requires a law preserving the target population. For example, combining sample means can
+require sample counts. Individual percentiles generally cannot determine a combined percentile. Retain the
+sampling and aggregation conditions that affect the claim.
 
-A combination of marginal results need not establish a result over corresponding occurrences. Two stages can
-have the same individual latency distributions while their combined latency distributions differ. The selected
-formation law determines whether the correspondence between occurrences must be retained.
+Marginal results alone can be insufficient to establish a result over corresponding occurrences. The same
+individual stage latency distributions can yield different combined distributions. The formation law
+determines whether the relation between corresponding occurrences must be retained.
 
-A decomposition of elapsed time must state the meaning of its components. If it claims an exhaustive partition,
-its components must account for the whole selected extent without double counting. When observations are
-incomplete, the unexplained portion must remain distinguishable from an established cause. Independent estimates
-of performance influence need not be additive. The applicable structural laws remain with ADR-0081.
+A decomposition must define its components. An exhaustive partition covers the whole extent without double
+counting. Incomplete observations must leave unexplained portions distinct from established causes.
+Independent estimates of performance influence need not be additive. Structural laws follow ADR-0081.
 
-The required observation material depends on the claimed result. A purpose-specific summary may be sufficient
-for one formation law without supporting another. Retention of the complete observation history is not a common
-measurement requirement. The conditions for consuming a derived result follow ADR-0075; retention remains with
-its owning law.
+The claimed result determines the required observation material. A summary may be sufficient for one formation
+law but not another. Consuming a derived result follows ADR-0075. Complete observation-history retention is
+not a common measurement obligation; retention belongs to its owning law.
 
-The basis of a measurement includes the relevant provenance and acquisition conditions. Its derivation must preserve
-which observations were used and the model that gives the result its meaning. A claim about the measured quantity or
-population must retain the conditions that support it (§3.1.8). Reuse of retained observations does not establish a new
-physical observation (§3.13).
+A measurement derivation must preserve its relevant provenance and acquisition conditions. Identify the
+observations used and the model that gives the result meaning. Preserve the premises of its physical or
+population claim (§3.1.8). Reusing retained observations does not produce a new physical observation.
 
 #### 3.1.8. Temporal Uncertainty
 
-Temporal Uncertainty describes what can be established about a temporal quantity or position when its exact physical
-value is not known. The recorded numeric value, its estimate of a physical quantity and the guarantee about that
-quantity are distinct. An exact calculation on the recorded datum does not make the physical estimate exact.
+Temporal Uncertainty describes what can be established when the intended physical quantity or position is not
+exactly known. Keep three meanings distinct:
+
+- The recorded numeric datum.
+- The estimate of the intended physical value.
+- The guarantee about that value.
+
+Exact arithmetic on the datum does not make the estimate exact.
 
 | Law                     | Required meaning                                                        |
 |-------------------------|-------------------------------------------------------------------------|
@@ -570,8 +584,8 @@ quantity are distinct. An exact calculation on the recorded datum does not make 
 | Uncertainty Composition | What follows from dependent uncertain values under a selected operation |
 | Uncertainty Validity    | The conditions under which a statement supports a judgment              |
 
-**Uncertainty Semantics.** The meaning of an uncertainty statement depends on the quantity or position it describes.
-The following properties are relevant where they affect that statement:
+**Uncertainty Semantics.** The meaning of an uncertainty statement depends on the quantity or position it
+describes. The following properties are relevant where they affect that statement:
 
 | Property    | Meaning                                                                                                            |
 |-------------|--------------------------------------------------------------------------------------------------------------------|
@@ -585,11 +599,15 @@ The following properties are relevant where they affect that statement:
 | Dependency  | A relation between uncertain inputs that constrains their joint values                                             |
 | Validity    | The conditions under which the uncertainty statement or guarantee applies                                          |
 
-A nanosecond timestamp does not establish nanosecond measurement accuracy. Correcting an estimated bias does not
-establish that all error has been removed. Drift describes change relative to a reference over time; its meaning
-combines
-Quantity, Source and Correspondence. Jitter requires an identified reference and variation law. Neither implies an
-error bound without the corresponding evidence.
+A nanosecond timestamp alone cannot establish nanosecond accuracy. Correcting an estimated bias does not
+establish that all error was removed.
+
+| Property | Required basis                                                       |
+|----------|----------------------------------------------------------------------|
+| Drift    | Change relative to a reference over time (§§3.1.2, 3.1.4 and 3.1.6). |
+| Jitter   | An identified reference and variation law.                           |
+
+Neither property supplies an error bound without evidence.
 
 The following statements about a temporal result are not interchangeable:
 
@@ -604,72 +622,74 @@ The following statements about a temporal result are not interchangeable:
 | Confidence interval      | An interval produced by a statistical procedure with a stated confidence level                  |
 | Observed range           | The extent of the actual samples; it does not bound unobserved cases                            |
 
-These statements do not form a closed classification. A range need not be continuous or symmetric around an estimate.
-Its structure may use the existing law of an interval or another admitted structured form under ADR-0081. An enclosing
-range can include values that are not possible under the stated constraints. It must not be represented as the exact
-set of possible values unless it establishes that set. A range of values indistinguishable at a given resolution does
-not by itself establish a physical error bound. No mandatory probability model or universal uncertainty representation
-is implied.
+The table is not a closed classification. A range may be asymmetric or disconnected. It uses the admitted
+interval or structured value laws of ADR-0081. A claimed enclosing range may include impossible values; it is
+an exact set of possible values only if that set is established. Values indistinguishable at a given
+resolution do not alone establish a physical error bound. No universal probability model or uncertainty
+representation is prescribed.
 
-**Uncertainty Composition.** An operation on uncertain values must preserve the meaning of the resulting assertion.
-In a bound-based calculation, let `S` be the admissible joint values of its operands. The possible results of an
-applicable operation `f` are the values `f(x)` for joint values `x` in `S`. A claimed enclosing bound must contain
-those results. The unsuccessful outcomes required by the selected operation remain subject to §3.7.
+**Uncertainty Composition.** Preserve the meaning of the resulting assertion. In a bound-based calculation,
+let `S` contain the admissible joint operand values. For an applicable operation `f`, the possible results are
+`f(x)` for `x` in `S`. An enclosing bound must contain those results. Required unsuccessful outcomes follow
+§3.7.
 
-A calculation of the result range must account for the operation's actual behavior over the admitted domain. For
-example, the square of a value in `[-2, 3]` can be zero even though neither endpoint maps to zero. Transforming only
-the endpoints would miss this result. When a result must be expressed in a finite format, its enclosing bound must
-still contain the required values. The applicable rounding law follows ADR-0078; a rounding that excludes possible
-values cannot serve as an enclosing bound. These requirements do not prescribe an algorithm for finding the bound or
-authorize a wider result where the selected operation requires an exact extent. A probability-based calculation
-follows its own model and result law. A range sampled from that model is not by itself a guaranteed bound.
+A result range must account for the operation's behavior over the whole admitted domain. For example, squaring
+values in `[-2, 3]` includes zero, although neither endpoint maps to it.
 
-For example, let two observed positions be `100 + e` and `150 + e`, in nanoseconds, with a common offset error `e`
-in `[-5, 5]`. Their difference is 50 ns under that model. If the two errors are not constrained to agree, the same
-individual bounds only justify an enclosing difference of `[40, 60]` ns from the bounds alone. Neither independence
-nor cancellation can be assumed without a basis. A statistical calculation must likewise account for established
-dependencies where they affect the result. Sharing a source does not establish that every error is common.
+A finite-format enclosing bound must still contain all required values after rounding under ADR-0078. A
+rounding that excludes possible values is not an enclosing bound. This law prescribes no bounding algorithm
+and does not authorize widening when the operation requires an exact extent. A probability calculation follows
+its own model and result law; a sampled range is not a guaranteed bound.
 
-The selected operation must also meet the result law of §3.1.1. A choice among several enclosing bounds does not
-by itself determine a lawful observable result. General numeric and structural operations remain with ADR-0078
-and ADR-0081.
+Consider positions `100 + e` and `150 + e` in nanoseconds with a common offset error `e` in `[-5, 5]`. Their
+difference is 50 ns. Without a constraint equating the errors, the individual bounds alone justify an
+enclosing difference of `[40, 60]` ns. Neither independence nor cancellation may be assumed. Sharing a source
+is insufficient to establish that errors are common. Statistical calculations must likewise account for
+established dependencies that affect the result.
 
-**Uncertainty Validity.** An uncertainty statement requires a basis for its claim and the conditions under which that
-basis applies. Unavailable or invalid observations cannot be treated as a zero uncertainty result. An error contribution
-not supplied by a source does not thereby vanish.
+Several valid enclosing bounds need not identify the selected operation's lawful observable result (§3.1.1).
+Numeric and structured operations retain their existing laws.
 
-Observation and conversion may establish new information about a value. Combining such information must preserve the
-applicable dependencies and validity conditions. A source adjustment or a disruption can invalidate a calibration
-(§§3.1.4 and 3.1.6). Continued holdover can change the uncertainty of a current-time estimate without changing the
-meaning of a previously recorded coordinate. Later evidence may support a new estimate of that coordinate's physical
-position. It does not rewrite the original observation. Reuse of results under changed determining data follows §3.10.
+**Uncertainty Validity.** State the basis for an uncertainty claim and its conditions of applicability.
+Invalid or unavailable observations must not be treated as zero uncertainty. An unreported error contribution
+cannot be assumed to vanish.
 
-When claims are combined as constraints on one intended value, each claim must apply to that value. If their
-constraints are inconsistent, an empty set of admissible values is evidence of that inconsistency, not a basis for
-asserting an arbitrary result. This differs from insufficient evidence to establish a relation. The treatment of the
-inconsistent basis follows the owning law.
+New observations or conversions may refine knowledge of a value. Their combination must preserve dependencies
+and validity conditions. Source disruption and adjustment can invalidate calibration (§§3.1.4 and 3.1.6).
+During holdover, the uncertainty of a current-time estimate may change while earlier recorded coordinates
+retain their meaning. Later evidence may refine an earlier coordinate's physical estimate while leaving the
+recorded observation intact. Reuse under changed determining data follows §3.10.
 
-For two valid enclosing bounds on event positions in a common reference, a strict separation establishes their
-coordinate order. Overlapping bounds alone do not establish equality or a unique order. An established dependency
-can provide sufficient additional information to decide a relation, as in the shared-offset example above.
+Constraints combined for one intended value must apply to that value. An empty set of admissible values
+signals inconsistency when the claims conflict. It cannot justify an arbitrary result. Inconsistent evidence
+differs from insufficient evidence; the owning law determines its treatment.
 
-A statement that a limit is met requires evidence sufficient for that judgment. For example, a valid enclosing bound
-at or below an inclusive upper limit can establish numerical compliance. A bound entirely above that limit can establish
-that the measured quantity exceeds it. A bound containing values on either side does not establish either conclusion
-from the bound alone. This concerns the sufficiency of evidence for a physical claim. A Contract can instead define a
-judgment over an
-accepted measurement result under §3.11. That judgment does not establish a stronger physical claim.
-A statistical latency percentile or an observed maximum cannot replace a guaranteed physical upper bound. When
-available evidence does not establish the required claim, the owning Contract determines the permissible outcome (§3.1).
-This does not introduce probabilistic Budget compliance or require uncertainty fields on values that have
-no such meaning.
+Two valid enclosing bounds in a common reference establish coordinate order if strictly separated. Overlap
+alone establishes neither equality nor a unique order. An established dependency may supply sufficient
+additional evidence, as in the shared-offset example.
+
+Evidence for a physical limit claim must support that claim. For a valid enclosing bound and an inclusive
+upper limit:
+
+| Relation to the limit         | What the bound establishes               |
+|-------------------------------|------------------------------------------|
+| Entirely at or below          | Numerical compliance.                    |
+| Entirely above                | The quantity exceeds the limit.          |
+| Contains values on both sides | Neither conclusion from the bound alone. |
+
+A statistical latency percentile or observed maximum cannot substitute for a guaranteed physical upper bound.
+If evidence is insufficient, the owning Contract determines the permissible outcome (§3.1).
+
+A Contract may instead judge an accepted measurement result (§3.11) without making the stronger physical
+claim. This law introduces neither probabilistic Budget compliance nor mandatory uncertainty fields for values
+that have no uncertainty meaning.
 
 The concrete estimation laws, representation and propagation rules remain subject to §5.
 
 ### 3.2. Temporal Value Distinctions
 
-The following values illustrate completed temporal meanings under §3.1.1. When one of these values is an Input Leaf,
-its exact presentation and Sameness remain those of ADR-0064 §7.9.5.
+The following values illustrate completed meanings under §3.1.1. For an Input Leaf, ADR-0064 §7.9.5 owns the
+exact presentation and Sameness.
 
 | Meaning                  | Required distinction                                                                                                              |
 |--------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
@@ -684,53 +704,44 @@ its exact presentation and Sameness remain those of ADR-0064 §7.9.5.
 | Resolved Zoned Date-Time | A local date-time, offset, and Zone Descriptor whose retained distinctions remain observable.                                     |
 | Calendar Period          | A calendar-relative amount whose application requires a calendar and a temporal starting context. It is not an elapsed Duration.  |
 
-ADR-0064 currently defines the first nine meanings for its Input inventory. Its Instant profile requires a fixed
-Kontrakt epoch coordinate. The relationship of that profile to this common basis is subject to §3.3. **Calendar Period
-is a common calculation subject proposed here**, not an additional V1 Input Leaf. Supporting it
-does not amend the Input presentation inventory.
+ADR-0064 defines the first nine meanings for its Input inventory. Its Instant profile follows §3.3 of this
+ADR. **Calendar Period is a common calculation subject proposed here**, not an additional V1 Input Leaf.
 
-An Instant is a position under a Temporal Reference; a Duration is a Temporal Quantity. Neither is an absolute or
-relative measurement merely because a host type has that name (§3.1.7). A `TimeMark` or other reading tied to a
-running clock is not a transferable Instant unless a qualified correspondence establishes the relevant time scale
-and correlation (§3.1.4).
+An `Instant` is a position under §3.1.3; Duration is a quantity under §3.1.2. A `TimeMark` or another
+running-clock reading becomes a transferable Instant only through a qualified correspondence supplying the
+relevant scale and correlation (§3.1.4). For measurement claims, see §3.1.7.
 
 ### 3.3. Epochs, Time Scales, and Units
 
-**No single time scale governs the common temporal basis.** A temporal operation follows the Reference that determines
-its meaning. User-facing Source Operations retain the time-scale laws of their selected libraries or domains under
-§3.9. They are not converted to a Kontrakt-chosen scale merely because the compiler interprets them. The compiler's
-own choice of reference follows the purpose of its operation (§3.13).
+**No single time scale governs the common temporal basis.** The operation follows the Reference that
+determines its meaning. Source Operations retain the selected library or domain's scale (§3.9), rather than a
+scale chosen by the compiler. Internal choices follow §3.13.
 
-Under §3.1.3, the origin and scale of an Instant determine the interpretation of its coordinate. A nanosecond count
-without that context is not enough to establish an Instant. The same written epoch in different scales need not denote
-the same position. An exact correspondence must establish the relevant relation before converting a position or a
-scale-dependent difference. Named-zone rules follow §3.5.
+An Instant coordinate requires the origin and scale applicable under §3.1.3. A bare nanosecond count cannot
+establish it. Identically written epochs in different scales need not identify the same position. Converting a
+position or scale-dependent difference requires the exact applicable correspondence (§3.1.4).
 
-A correspondence between time scales (§3.1.4) must include any leap-second treatment required by the selected semantics.
-For example, a UTC position can distinguish an inserted leap second that a POSIX coordinate does not separately
-represent. A smeared scale can have a different rate from TAI during a leap adjustment. A conversion may also require
-historical rules rather than the current offset between scales. See §3.7 when the result is not exactly representable.
+A time-scale correspondence must include the leap-second treatment required by its selected law. UTC can
+distinguish an inserted leap second that POSIX does not separately represent. The rate of a smeared scale can
+differ from TAI during adjustment. Conversion may require historical rules rather than the current offset. For
+inexact representation, see §3.7.
 
-Java `java.time.Instant` and Kotlin `kotlin.time.Instant` are not assumed interchangeable merely because both expose
-epoch-based coordinates. Their specified ranges and time-scale laws must be examined for the selected profiles. A Source
-conversion that copies the same seconds and fractional-second fields does not by itself establish physical equivalence.
+For the Java and Kotlin Instant comparison, see §3.9.
 
-The unit law for a quantity is under §3.1.2. Calendar days across a time-zone transition are illustrated in §3.4.
-The coordinate scale and unit must not be confused with the representation's numerical resolution (§3.7).
+Unit definitions follow §3.1.2. Representation resolution follows §3.7; calendar-day calculations are
+illustrated in §3.4.
 
-ADR-0064 §7.9.5 was established before the common temporal basis. Its fixed Kontrakt Instant epoch requirement is
-not a requirement to normalize all temporal values in this ADR. The Instant Leaf profile and its relationship to
-admitted temporal reference domains require a separate revision of ADR-0064. The presentation must use an established
-temporal meaning rather than define a new common time scale. Its retained distinctions and Presentation Sameness must
-remain defined by the Input law. Until that revision is decided, the existing Input law remains in force; this ADR
-neither admits new Input Leaves nor changes their Sameness. A calculation cannot proceed with an undetermined epoch or
-other determinant on which it depends.
+ADR-0064 §7.9.5 predates this basis. Its fixed Kontrakt Instant epoch is an Input profile, not a normalization
+rule for all temporal values. Revision of that Leaf profile belongs to ADR-0064. The profile must adopt an
+established temporal meaning and retain the distinctions required by Input Presentation Sameness. Until
+revision, the existing Input law governs; this ADR changes neither the admitted Leaf inventory nor its
+Sameness. A calculation requiring an undetermined epoch or another missing determinant cannot proceed.
 
 ### 3.4. Calendar Arithmetic and Elapsed-Time Arithmetic
 
-The exact source operation determines the arithmetic. Calendar arithmetic modifies calendar fields under its selected
-rules. Elapsed-time arithmetic applies a Duration to an instant under the applicable reference law. A scale-dependent
-coordinate displacement is not necessarily a physical elapsed duration (§3.1.3).
+Calendar arithmetic modifies calendar fields under the selected rule. Elapsed-time arithmetic applies a
+Duration to an instant under its reference law. The exact operation governs both (§3.9). For coordinate
+displacement that is not an elapsed duration, see §3.1.3.
 
 Consider a zoned date-time at noon in New York on 2024-03-09. Under the relevant New York rules:
 
@@ -739,27 +750,28 @@ Consider a zoned date-time at noon in New York on 2024-03-09. Under the relevant
 | Add one local calendar day | 2024-03-10 12:00 at UTC−04:00 | 23 hours         |
 | Add 24 elapsed hours       | 2024-03-10 13:00 at UTC−04:00 | 24 hours         |
 
-These operations are not interchangeable merely because both amounts are expressed as one day.
+A fixed day denotes 86,400 seconds. A local calendar day follows its calendar and reference, as the example
+shows.
 
-Every supported temporal operation must preserve its actual source law for field adjustment, normalization, evaluation
-order, and failure. For example, adding one month to a date near the end of January may require an end-of-month
-adjustment. Whether that adjustment occurs depends on the selected operation; it is not a universal Calendar Period
-rule.
+End-of-month adjustment depends on the selected callable; it is not a universal rule for Calendar Period.
+General preservation of intermediate results and unsuccessful outcomes follows §§3.1.1 and 3.7.
 
-A calendar operation may adjust an intermediate position. Its composition must preserve that adjustment under
-§3.1.1. Repeated application of a Calendar Period need not equal a single application of the combined period.
-An inverse operation need not recover the original position (§3.1.4). For example, under Java `LocalDate` month
-arithmetic, applying one month twice to 2024-01-31 produces 2024-03-29. Applying two months once produces
-2024-03-31.
+Intermediate calendar adjustment can change composition. Under Java `LocalDate` month arithmetic:
 
-A date-only value can be compared as a date without first resolving it to an Instant. Conversely, calculating elapsed
-time between two instants does not require converting them to local civil time when their reference and the selected
-difference law already establish the elapsed quantity.
+| Starting date | Operation             | Result     |
+|---------------|-----------------------|------------|
+| 2024-01-31    | Apply one month twice | 2024-03-29 |
+| 2024-01-31    | Apply two months once | 2024-03-31 |
+
+The intermediate adjustment must be preserved (§3.1.1). Recovery by an inverse operation follows §3.1.4.
+
+A comparison of dates does not require conversion to Instant. Elapsed-time calculation between instants
+requires no civil-time conversion when the reference and difference law already establish the amount.
 
 ### 3.5. Named Zones and Local-Time Resolution
 
-A Zone Descriptor and the rules used to resolve it are separate semantic inputs. Named-zone resolution requires rules
-applicable to the local date-time or instant being interpreted.
+Zone Descriptor and applicable zone rules are separate inputs. Named-zone resolution requires the rules for
+the local date-time or instant being interpreted; see §3.10 for rule-data acquisition.
 
 The available counterparts and the behavior of a resolver are distinct under §3.1.4. Local-time resolution has
 three relevant cases:
@@ -770,29 +782,28 @@ three relevant cases:
 | Gap                 | None                             | The source operation may reject the value or apply a specified adjustment.            |
 | Overlap             | More than one                    | The source operation must determine how an offset is selected, retained, or rejected. |
 
-For example, `2024-03-10T02:30` does not occur in `America/New_York`. Java `LocalDateTime.atZone` adjusts that local
-time forward into the valid interval, whereas `ZonedDateTime.ofStrict` can reject an invalid local-time/offset
-combination. The compiler must preserve the selected callable's behavior. During an overlap, projecting a resolved
-position to its local date-time can discard the selected offset. For example, projecting `2024-11-03T01:30-05:00`
-in `America/New_York` and then applying `atZone` can select UTC−04:00 instead. The original instant is not recovered.
+For `2024-03-10T02:30` in `America/New_York`, Java `LocalDateTime.atZone` adjusts forward into the valid
+interval. `ZonedDateTime.ofStrict` can reject the invalid local-time/offset combination.
 
-A calendar operation on a resolved zoned value may require local-time resolution after the calendar calculation.
-Its result depends on the selected operation's resolution law. A calendar adjustment at an intermediate position
-can therefore affect subsequent operations. The availability of an offset or instant under one rule does not
-establish its availability under another rule (§3.10).
+During an overlap, projection to local date-time can discard the selected offset. Projecting
+`2024-11-03T01:30-05:00` in `America/New_York` and then applying `atZone` can select UTC−04:00 instead. The
+original instant is not recovered.
 
-The resolved presentation must not be silently reinterpreted against the current TZDB each time it is observed. ADR-0064
-expressly preserves its submitted date-time, offset, and descriptor. A later operation that checks consistency with zone
-rules is a separate calculation with its own semantic basis.
+Calendar arithmetic on a resolved zoned value may require resolution after calendar calculation. Preserve the
+selected resolver at each required intermediate position (§3.4). Rule-set validity follows §3.10.
 
-Zone aliases, fixed offsets, named regions, and provider-defined zone identifiers must not be treated as interchangeable
-without a qualified conversion or comparison law. Equality of descriptor spellings, equality of rules, and equality of
-resulting instants answer different questions.
+An established resolved presentation must not be silently reinterpreted against current TZDB. ADR-0064
+preserves the submitted date-time together with its offset and Zone Descriptor. A later consistency check
+against zone rules is a separate operation with its own basis.
+
+Zone identifiers require a qualified comparison or conversion law. Do not substitute aliases or fixed offsets
+for named regions or provider-defined identifiers merely by name. Comparing descriptor spellings, comparing
+rules and comparing resulting instants answer distinct questions; see §3.6.
 
 ### 3.6. Comparison and Sameness
 
-There is no universal temporal equality operator. The comparison used must be the one selected by the common law or the
-exact source callable.
+There is no universal temporal equality operator. Common comparisons follow their selected law; Source
+comparisons follow their resolved callable (§3.9).
 
 | Comparison                                 | What it establishes                                                                     |
 |--------------------------------------------|-----------------------------------------------------------------------------------------|
@@ -802,27 +813,38 @@ exact source callable.
 | Presentation Sameness                      | Only the distinctions fixed by the owning presentation law are compared.                |
 | Source `equals`, `compareTo`, or `isEqual` | The result of that exact Java/Kotlin operation.                                         |
 
-For example, Java `OffsetDateTime.equals` can return `false` for `2024-01-01T00:00+09:00` and `2023-12-31T15:00Z`, while
-`isEqual` returns `true`. Replacing one operation with the other changes the source meaning.
+For example, Java `OffsetDateTime.equals` can return `false` for `2024-01-01T00:00+09:00` and
+`2023-12-31T15:00Z`, while `isEqual` returns `true`. Replacing one operation with the other changes the source
+meaning.
 
-The result of a same-instant comparison does not revise Input Presentation Sameness. Nor does it authorize Fact
-uniqueness, collection key identity, or Canonicalization equivalence. Those judgments belong to their existing owners.
+Same-instant comparison supplies no authority over Input Presentation Sameness or another owner's judgment:
+
+- Fact uniqueness belongs to ADR-0068.
+- Collection key identity belongs to ADR-0081.
+- Canonicalization equivalence belongs to ADR-0066.
+
+Input Sameness remains with ADR-0064 (§3.2).
 
 ### 3.7. Precision, Range, and Unsuccessful Calculation
 
-Every supported value has a defined domain. Temporal calculations follow ADR-0078 §§3.3–3.7 for numeric result laws.
-The applicable bounds and numerical resolution must be preserved. Resolution need not be uniform over the domain.
-A decimal fraction of a second and an integer nanosecond field have different representation laws. Neither establishes
-the accuracy of a measurement (§3.1.8).
+Each supported temporal domain has defined bounds and numerical resolution. Resolution need not be uniform. A
+decimal fractional second and an integer nanosecond field have different representation laws. Accuracy of a
+measurement follows §3.1.8. Numeric results follow ADR-0078 §§3.3–3.7; there is no universal temporal
+promotion or rounding rule.
 
-The mathematical meaning of a quantity does not by itself establish support for a Numeric Format. For example,
-`2^-32` seconds is a defined amount that is not an integer number of nanoseconds. An ideal period of `1/48000` seconds
-cannot be represented as a finite decimal number of seconds. ADR-0078 §3.7 leaves Rational Numeric Formats
-subject to a separate decision. An operation may establish a result in an admitted format under its own law, but it may
-not claim unsupported exact Datum representation. If an operation rounds each intermediate amount, its later result
-must reflect those rounding points rather than a single rounding after exact accumulation.
+A mathematically defined time amount need not have a supported exact Datum representation:
 
-For each supported operation, the result law must account for the following when they affect a legal observation:
+| Amount                            | Representation limit                    |
+|-----------------------------------|-----------------------------------------|
+| `2^-32` seconds                   | Not an integer number of nanoseconds.   |
+| Ideal period of `1/48000` seconds | Not a finite decimal number of seconds. |
+
+Rational Numeric Formats remain a separate decision under ADR-0078 §3.7. An operation may establish an
+admitted result under its own law; it must not claim unsupported exact representation. When intermediate
+amounts are rounded, the composed result must preserve those rounding points (§3.1.1).
+
+For each supported operation, the result law must account for the following when they affect a legal
+observation:
 
 | Condition                   | Meaning to preserve                                               |
 |-----------------------------|-------------------------------------------------------------------|
@@ -833,45 +855,56 @@ For each supported operation, the result law must account for the following when
 | Invalid temporal text       | The selected parser's unsuccessful result and exception behavior. |
 | Ambiguous zone resolution   | The selected resolver's actual choice or rejection.               |
 
-Java `java.time.Duration` and Kotlin `kotlin.time.Duration` do not have identical domains. Kotlin supports an infinite
-Duration and has arithmetic that can saturate. Converting Kotlin infinity to a very large finite Java Duration does not
-establish value identity. A corresponding conversion back may lose information.
+The Java/Kotlin domain and outcome differences are collected in §3.9.
 
-Likewise, a Kotlin `Instant` operation that clamps an out-of-range result cannot be replaced by a Java `Instant`
-operation that throws. Source-observable failure is part of the result law and follows ADR-0057 for attribution.
+Source-observable failure is part of the selected result law. Its attribution follows ADR-0057.
 
-A failed calculation does not yield a valid fallback temporal datum merely because the representation can store one.
-Kontrakt must not repair invalid operands unless the selected operation actually defines that repair.
+A failed calculation supplies no valid fallback merely because its representation can store one. Repair
+invalid operands only where the selected operation defines the repair.
 
 ### 3.8. Temporal Text and Calendar Systems
 
-Parsing and formatting are operations over Text and temporal values. They do not determine the meaning of Text itself,
-which remains with ADR-0080.
+Parsing and formatting operate on Text and temporal values. Text meaning remains with ADR-0080.
 
-A temporal parser can depend on its pattern and resolver rules. Locale or calendar data may also determine the result.
-Parsing `2024-03-10` as an ISO date is therefore a different operation from parsing locale-dependent text under an
-unspecified host default.
+The selected parser's determining basis may include:
 
-A calendar calculation must use the chronology and determining rules applicable to its operands. A civil label
-can identify a date in its calendar without establishing an occurrence of that date in a named zone. Converting
-it to a temporal extent requires the boundary and resolution laws of §§3.1.5 and 3.5.
+- The pattern.
+- Resolver rules.
+- Locale data.
+- Calendar data.
 
-Formatting may erase distinctions needed for a later round trip. For example, a format that omits an offset cannot be
-assumed to reconstruct the original Offset Date-Time (§3.1.4). A pattern that emits only seconds can lose fractional
-precision.
+Parsing `2024-03-10` as an ISO date differs from locale-dependent parsing under an unspecified host default (§3.10).
 
-ISO chronology does not silently authorize every `java.time.chrono` calendar. Non-ISO chronologies may be supported when
-their operations and required semantic data are qualified. Their dates do not become ISO Input Leaves through a host
-conversion unless the conversion has an exact lawful result.
+The applicable chronology governs calendar calculation. A civil date label can be valid without the date
+occurring in a named zone. Conversion to an extent requires §§3.1.5 and 3.5.
+
+Formatting can lose distinctions needed for round-trip conversion (§3.1.4). Omitting an offset can prevent
+recovery of the original Offset Date-Time. A seconds-only pattern can discard fractional precision.
+
+Non-ISO chronologies in `java.time.chrono` require their own qualified operations and semantic data. Their
+dates are not ISO Input Leaves unless the selected conversion establishes an exact lawful result.
 
 ### 3.9. Java/Kotlin Source Operations
 
-A temporal source expression retains the semantics of its resolved callable. The frontend must distinguish an overload
-that accepts a `Clock` from one that reads the system clock, and a calendar-field operation from one that applies a
-Duration. Kotlin extensions and Java members must be resolved according to their respective language rules.
+**A temporal Source Operation retains the semantics of its exact resolved callable.** The author's selected
+overload and language binding determine the operation. Distinguish an overload accepting a `Clock` from an
+overload reading the system clock. Likewise, distinguish a calendar-field operation from a Duration operation.
+Resolve Kotlin extensions and Java members under their respective language rules. Composition follows §3.1.1.
 
-ADR-0079, ADR-0084, and ADR-0073 govern the exact resolution and qualification process. This ADR adds no separate
-library interpretation authority. The relevant source inventory includes:
+Resolution and qualification follow ADR-0079, ADR-0084 and ADR-0073. Recognition is not authoring eligibility.
+The owning 1D decides whether the qualified operation may participate in its judgment; support in user
+Realization does not grant 1D authoring authority.
+
+The following differences require exact profile-specific interpretation. They are not a common replacement law
+for the selected callable:
+
+| Subject                                         | Java / Kotlin distinction                                                                                                                                                                                                           |
+|-------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `java.time.Instant` and `kotlin.time.Instant`   | Both expose epoch-based coordinates. Their specified ranges and time-scale laws must be checked for the selected profiles. Copying seconds and fractional-second fields does not by itself establish physical equivalence (§3.1.4). |
+| `java.time.Duration` and `kotlin.time.Duration` | Their domains differ. Kotlin supports infinity and arithmetic that can saturate. Conversion of Kotlin infinity to a large finite Java Duration does not preserve value identity; conversion back can lose information.              |
+| Out-of-range Instant arithmetic                 | A Kotlin operation that clamps a result cannot be replaced by a Java operation that throws (§3.7).                                                                                                                                  |
+
+The SDK interpretation inventory includes:
 
 | Source family                             | Qualification concern                                                        |
 |-------------------------------------------|------------------------------------------------------------------------------|
@@ -882,82 +915,99 @@ library interpretation authority. The relevant source inventory includes:
 | `java.sql` and XML temporal types         | Domain and precision differences from modern time values.                    |
 | Java concurrency and I/O timeouts         | Waiting, cancellation, and side effects rather than closed value arithmetic. |
 
-This inventory identifies interpretation work, not an authoring allow-list. An exact callable may be recognized but
-still be unlawful for an owning 1D judgment. Conversely, the presence of a clock or timer API in a standard library does
-not oblige Kontrakt to admit that call into a closed judgment.
+The inventory identifies qualification work, not an authoring allow-list. Apply the eligibility law above even
+to standard-library Clock and timer operations.
 
-Third-party libraries, including `kotlinx-datetime`, are not part of ADR-0084's default V1 standard-library inventory
-merely because they provide temporal operations.
+Third-party libraries, including `kotlinx-datetime`, are not part of ADR-0084's default V1 standard-library
+inventory merely because they provide temporal operations.
 
 ### 3.10. External Semantic Data and Current-Time Observation
 
-A time-zone calculation can consume released zone rules. Locale-sensitive formatting can consume locale data. A
-time-scale
-conversion can consume historical leap-second or other reference data. Such data may be a closed Platform Semantic Basis
-when its exact contents and applicability have been qualified under ADR-0073 §7.
+A closed Platform Semantic Basis can include released temporal rule data when its exact contents and
+applicability are qualified under ADR-0073 §7. Examples include:
 
-The system default zone, current system time, mutable provider state, and data chosen by an ambient runtime setting are
-not closed inputs merely because the author wrote a familiar method name. They must not be smuggled into a deterministic
-1D judgment.
+- Time-zone rules.
+- Locale data for formatting.
+- Historical leap-second or other reference data for scale conversion.
 
-A call such as `Instant.now()` or `Clock.System.now()` observes an external time source. It cannot be replaced by a
-compiler-chosen timestamp and treated as a pure calculation. An already-formed Instant supplied through an eligible
-Input is different: its later comparison may be deterministic even when the external event that produced it was not.
+The following are not closed inputs merely because a familiar callable obtains them:
 
-The applicable 1D law decides whether an explicit observed value is legal judgment material. Admission's restrictions on
-hidden observation remain in ADR-0065 §8. Fact-local Invariant restrictions remain in ADR-0069 §15. This ADR grants
-neither contract a new right to read the Clock.
+- The system default zone.
+- Current system time.
+- Mutable provider state.
+- Data selected by ambient runtime settings.
 
-When a compiler calculation actually consumes temporal rule data, the resulting product depends on that selected
-basis. Its reuse and execution under changed data follow ADR-0073 §7 and ADR-0075. A library or JVM upgrade is not proof
-that two bases are semantically compatible.
+Do not introduce these as hidden inputs to a deterministic 1D judgment.
+
+`Instant.now()` and `Clock.System.now()` observe an external source. They cannot be replaced with a
+compiler-chosen timestamp and treated as closed calculations. In contrast, comparing an already formed Instant
+supplied as eligible Input may be deterministic despite its external origin.
+
+Explicit observed material requires eligibility under the owning 1D. In particular, Admission follows ADR-0065
+§8 for hidden observation. Fact-local Invariant follows ADR-0069 §15. Neither receives new Clock-reading
+authority here.
+
+A product consuming temporal rule data depends on that selected basis. Reuse and execution under changed data
+follow ADR-0073 §7 and ADR-0075. A library or JVM upgrade is insufficient evidence of semantic compatibility.
 
 ### 3.11. Physical Measurement and Backend Qualification
 
-The distinction between a calculation and physical observation follows §3.1. The meaning of a measurement is governed
-by §3.1.7 and its uncertainty by §3.1.8. The provider's qualification must be sufficient for the actual obligation.
-In particular, it must account for source behavior (§3.1.6) and the actual observation boundary. Observing a threshold
-crossing does not establish that execution stopped at the threshold (§3.12).
+Qualification must support the actual temporal obligation. Use the applicable laws:
 
-A reading that is unavailable or no longer valid cannot silently become a successful measurement. Measurement failure
-cannot be reported as a confirmed limit violation without the evidence required by the owning Contract.
+- Source behavior (§3.1.6).
+- Measurement and observation boundaries (§3.1.7).
+- Evidence validity (§3.1.8).
+- Time-based control (§3.12).
 
-Physical measurement must pursue the accuracy and precision required by its use. Qualification must account for
-resolution, acquisition delay and uncertainty where they can affect the judgment. It must also account for the cost
-and interference introduced by measurement. An exact numerical result does not establish an error-free observation.
+An unavailable or invalid reading cannot establish a successful measurement. Report a limit violation only
+when the evidence required by the owning Contract establishes it. Measurement failure is not a confirmed
+violation.
 
-The `Relative Elapsed Time` quantity of ADR-0051 describes the actual elapsed interval of its exact subject. Its
-judgment uses an elapsed-time measurement accepted under the qualified observation law for that boundary. The
-observed value is compared with the declared allowance under the owning Budget law. Measurement uncertainty does
-not by itself extend the allowance or require a conservative offset to it. A judgment on such a measurement does
-not claim that the actual physical interval is known exactly (§3.1.8).
+Physical measurement must pursue the accuracy and precision required by its use. Qualification must account
+for factors that affect the judgment:
 
-A measurement accepted for a judgment must describe the relevant boundary. An arbitrary earlier Clock reading
-cannot serve as evidence of a later result establishment. The backend must establish the applicability of the
-observation under the selected acquisition and control law (§3.12). This requirement does not imply an atomic
-physical Clock read and state change or prescribe an observation mechanism.
+- Numerical or instrumental resolution.
+- Acquisition delay.
+- Measurement uncertainty.
+- Cost and interference introduced by acquisition.
 
-For the `Relative Elapsed Time` Budget, ADR-0051 owns the measurement boundaries and `Budget Stop` result.
-The measurement-based judgment and establishment law in this Draft require corresponding alignment of
-ADR-0051 §§4.5, 4.9 and 6.2 before adoption. Failure to support the declared boundary or judgment remains a
-compilation failure under ADR-0051 §4.8. A simulated Clock can test judgment logic, but it cannot establish the
-physical capability of the deployed backend.
+Apply the distinctions in §§3.1.7–3.1.8.
 
-The physical acquisition and qualification of measurements belong to compiler and backend realization work. That work
-must satisfy the selected measurement law, not redefine it. Failure handling and the physical enforcement mechanism
-remain subject to their owning Contract laws.
+ADR-0051's `Relative Elapsed Time` quantity describes the actual elapsed interval of its exact subject. The
+judgment compares the measurement accepted for that boundary with the declared allowance under the owning
+Budget law. Measurement uncertainty alone neither extends the allowance nor requires a conservative offset.
+This is a judgment on an accepted measurement, not a stronger physical claim under §3.1.8.
+
+**A measurement used for judgment must describe the relevant boundary.** An arbitrary earlier Clock reading
+cannot justify later result establishment. The backend must establish applicability under the selected
+acquisition and control law (§3.12). This does not require a physically atomic Clock read and state change or
+prescribe the observation mechanism.
+
+ADR-0051 owns `Relative Elapsed Time` boundaries and `Budget Stop`. The measurement-based judgment and
+establishment law in this Draft require alignment of ADR-0051 §§4.5, 4.9 and 6.2 before adoption. Inability to
+support the declared boundary or judgment remains a compilation failure under ADR-0051 §4.8. Simulated Clock
+tests can verify judgment logic, but physical backend capability requires separate evidence.
+
+Acquisition and physical qualification belong to realization (§3.13). Failure handling and enforcement must
+satisfy their owning Contract laws.
 
 ### 3.12. Time-Based Control Is a Separate Operation
 
-A timeout commonly limits how long a caller waits. A deadline identifies a point relative to a specified Clock or
-execution schedule. Cancellation requests work to stop. None of these operations alone proves that the work has ceased
-or that its external effects have been undone.
+The following concepts have different meanings:
+
+| Concept      | Meaning                                                         |
+|--------------|-----------------------------------------------------------------|
+| Timeout      | Commonly limits how long a caller waits.                        |
+| Deadline     | A position relative to a specified Clock or execution schedule. |
+| Cancellation | A request to stop work.                                         |
+
+Their control guarantees follow §3.12.4; the effect of Failure on established results and external effects
+follows §3.12.3.
 
 #### 3.12.1. Time Conditions and Control Occurrences
 
-A time condition and the action taken on that condition are distinct. A time source can reach a deadline before
-the machine observes it. The observation can precede the establishment of a control result. A control result can
-in turn precede the actual cessation of execution.
+A time condition is distinct from the action taken on it. Reaching a deadline, observing it and acting on that
+observation need not occur at the same time. The relevant occurrences are:
 
 | Occurrence               | Meaning                                                                                         |
 |--------------------------|-------------------------------------------------------------------------------------------------|
@@ -968,61 +1018,62 @@ in turn precede the actual cessation of execution.
 | Execution ceased         | The selected work actually stops.                                                               |
 | Resource occupancy ended | The relevant resource is no longer held under its owning law.                                   |
 
-These occurrences need not share a temporal position. The selected control law determines which occur and the
-relations between them. A scheduled occurrence or a timer notification does not establish the actual execution
-of its intended action. Publication and delivery remain distinct from the establishment of a result (ADR-0057
-and ADR-0058).
+The selected control law determines which occurrences take place and their relations. Timer notification is
+not evidence that its intended action ran (§3.1.5). Publication and delivery are distinct from result
+establishment under ADR-0057 and ADR-0058.
 
-An observation of a later time does not establish the time at which an earlier event occurred. A notification's
-arrival does not revise the original deadline. Repeated control operations follow the recurrence law of §3.1.5;
-scheduled occurrences that were missed do not become actual occurrences. The execution law determines whether
-missed occurrences are skipped, combined or acted upon later.
+A later observation does not establish the time of an earlier event. Notification arrival leaves the original
+deadline unchanged. The recurrence law in §3.1.5 distinguishes missed scheduled events from actual
+occurrences. The execution law decides whether missed events are skipped, combined or acted upon later.
 
-When a deadline is conveyed to another time domain, its interpretation requires the applicable correspondence.
-A remaining duration is relative to the boundary at which it was established. Starting that duration again at
-receipt does not by itself preserve the original deadline. The required guarantee follows §§3.1.4 and 3.1.8.
+Communicating a deadline across time domains requires the applicable correspondence. A remaining duration is
+relative to the boundary at which it was established. Starting it again at receipt does not necessarily
+preserve the original deadline. The guarantee requires §§3.1.4 and 3.1.8.
 
 #### 3.12.2. Time Judgment and Failure Establishment
 
-A time-limit judgment and the establishment of the resulting control outcome are distinct. For the
-`Relative Elapsed Time` Budget, the comparison uses the accepted measurement under §3.11. The declared
-allowance retains its inclusive meaning under ADR-0051. The time of Failure establishment is the boundary at
-which the stopped subject loses the authority to establish further normal results.
+Time-limit judgment and control-outcome establishment are distinct. `Relative Elapsed Time` uses the accepted
+measurement under §3.11. Its allowance retains the inclusive meaning of ADR-0051.
 
-An already lawfully established terminal result must not be changed into a `Budget Stop` by a later time
-observation or cancellation request. A later observation does not establish that the earlier result was late.
-Conversely, the absence of an established `Budget Stop` cannot authorize a new successful result when the
-applicable time judgment prohibits it. The result establishment path must observe the applicable Budget law;
-it must not depend only on a separate timeout notification.
+A later time observation or cancellation cannot invalidate an already lawfully established terminal result.
+Such an observation is not proof that the earlier result was late. The absence of an established `Budget Stop`
+cannot authorize a successful result prohibited by the time judgment. The result establishment path must apply
+the Budget law directly. It cannot rely only on the arrival of a timeout notification.
 
-The owning Contract determines whether a judgment can establish its result. Competing result establishment and stop
-establishment for the same subject must have one consistent order. Establishing the stop and withdrawing the
-subject's authority for dependent normal processing form one logical transition. Any result establishment must
-respect the observation law in §3.11. A backend race does not acquire authority to change the comparison law (ADR-0075
-and ADR-0051 §6.4).
+The owning Contract establishes its result. Competing result and stop establishment for one subject must have
+one consistent order. Failure establishment is the boundary at which the stopped subject loses authority over
+dependent normal progress. Establishing the stop and withdrawing that authority form one logical transition.
+Apply the boundary observation law of §3.11. A backend race cannot change the comparison law (ADR-0075 and
+ADR-0051 §6.4).
 
-| Condition at the applicable establishment boundary                                                        | Required treatment                                                                                   |
-|-----------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
-| The successful terminal result is already lawfully established                                            | Preserve the established result.                                                                     |
-| A result is being established and the accepted measurement satisfies the applicable Budget law            | Permit establishment subject to the other Contract judgments and the absence of an established stop. |
-| The accepted measurement requires a `Budget Stop` and the subject has not established its terminal result | Establish the stop under ADR-0051.                                                                   |
-| A `Budget Stop` has been established                                                                      | Reject later normal progress that depends on the stopped subject.                                    |
-| The required observation is unavailable or invalid                                                        | Apply the measurement-failure law of §3.11; do not invent an elapsed-time violation.                 |
+| Condition at the applicable establishment boundary                                    | Required treatment                                                                              |
+|---------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| Successful terminal result already lawfully established                               | Preserve it under the non-retroactivity rule above.                                             |
+| A result is being established and the accepted measurement satisfies the Budget law   | Permit establishment only if the other Contract judgments permit it and no stop is established. |
+| The accepted measurement requires `Budget Stop` and no terminal result is established | Establish the stop under ADR-0051.                                                              |
+| `Budget Stop` already established                                                     | Apply the withdrawal of authority above.                                                        |
+| Required observation unavailable or invalid                                           | Apply the measurement-failure law of §3.11.                                                     |
 
-The table does not replace the exact equality and simultaneous-failure laws of ADR-0051. An observation that
-establishes violations of several applicable Budgets must preserve each required Failure. A competing transition
-cannot discard Failure evidence that the owning Contract requires.
+ADR-0051 still owns exact equality and simultaneous-failure laws. Where one observation establishes violations
+of multiple applicable Budgets, preserve every required Failure. A competing transition must not discard
+required Failure evidence.
 
 #### 3.12.3. Contract Stop and Physical Cessation
 
-The establishment of `Budget Stop` does not require physical cessation of the unfinished work. The normal progress
-that depends on the stopped subject must already be prohibited. Failure does not by itself authorize rollback of
-established results or external effects (ADR-0057). A completed operation does not require cancellation merely because
-a later time observation exceeds the allowance.
+`Budget Stop` may be established before unfinished work ceases. The prohibition of dependent normal progress
+follows §3.12.2. Failure does not itself authorize rollback of established results or external effects (ADR-0057). A
+completed operation requires no cancellation merely because a later observation exceeds the
+allowance.
 
-Failure establishment does not require completion of later diagnostic analysis, delivery, cancellation or cleanup.
-Their required relations follow their owning laws. Publication remains subject to ADR-0058. An earlier response does
-not establish that resource occupancy has ended.
+Failure establishment need not wait for subsequent handling:
+
+- Diagnostic analysis.
+- Result delivery.
+- Cancellation.
+- Cleanup.
+
+Their required relations follow the owning laws. Publication follows ADR-0058. A response does not establish
+that resource occupancy has ended.
 
 Time-based control requires its own measurement. For example, the following extents can describe the same
 execution without denoting the same result:
@@ -1035,59 +1086,77 @@ execution without denoting the same result:
 | Response latency              | The applicable request boundary to result delivery.                  |
 | Cessation latency             | The selected stop or request boundary to actual execution cessation. |
 
-These are examples of Measurement Targets under §3.1.7, not new fundamental contracts. The actual subject
-interval includes all elapsed time inside its declared boundaries, including applicable measurement and control
-work. Later handling can have its own measured extent. The declaration of an allowance does not cap the observed
-elapsed amount. Physical detection and enforcement can take time after the declared limit has been reached.
+These extents are Measurement Targets under §3.1.7. Apply its elapsed-time inclusion law to measurement and
+control work inside the subject boundary. Later handling can have its own extent. An allowance is not a cap on
+the observed elapsed amount: detection and enforcement can continue after the limit.
 
-A stop must preserve the evidence required by ADR-0051 and ADR-0060. For an elapsed-time failure, the observed
-amount and exact subject must remain distinguishable from the factors that explain the delay. The evidence needed
-to explain execution and interference within the qualified observation scope must remain available under the applicable
-evidence and retention laws. Established common observations can support explanations of several failures. An
-explanation
-must identify the limits of its evidence. Missing causal evidence does not establish that the subject caused the delay.
-The meaning of the measurement follows §3.1.7. Its evidentiary and retention obligations belong to ADR-0060.
-An explanation does not change the time judgment.
+A stop preserves the evidence required by ADR-0051 and ADR-0060. Keep the observed elapsed amount and exact
+subject distinct from explanatory factors. Under the applicable evidence and retention laws, preserve the
+material needed to explain execution and interference within the qualified observation scope. Common
+observations can explain several failures. An explanation must state its evidentiary limits; missing causal
+evidence cannot establish that the subject caused the delay. Measurement attribution follows §3.1.7.
+Explanation leaves the time judgment unchanged.
 
 #### 3.12.4. Control Guarantees and Authority
 
-A time limit can constrain the establishment of a result, the delivery of a response or the physical cessation
-of work. These constraints concern different events. A mechanism that provides one guarantee does not establish
-the others. A physical bound on detection, response or cessation requires evidence for that bound under §3.1.8.
-An observed maximum is not such a guarantee. The possibility of a missed deadline must not be concealed by the
-control result.
+A limit can govern result establishment, response delivery or physical cessation. Each guarantee concerns its
+own event (§3.12.1). A physical bound on detection, response or cessation requires the evidence law in §3.1.8.
 
-The required control and qualification depend on the owning obligation. A timed response requirement can need a
-separate allowance for detection and response work. That does not authorize the backend to reduce an existing
-Budget's declared allowance. Domain-specific treatment of missed deadlines remains with the relevant owning law.
+For `Relative Elapsed Time`, the existing Budget law has the following scope:
 
-A circuit breaker can reject new work based on previously observed failures. Its state and decision are not
-consequences of Duration arithmetic. A timeout or circuit-breaker library does not establish additional Budget
-or Governance authority.
+| Obligation or claim                                                  | Basis                                                                                         |
+|----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| Judgment on the subject's declared elapsed-time allowance            | §3.11 and ADR-0051.                                                                           |
+| Eligibility of a normal result or dependent progress                 | §3.12.2.                                                                                      |
+| Detection, response delivery or physical cessation by that allowance | Not established by the Budget judgment alone. Each physical bound requires its own guarantee. |
+| Resource release or rollback of external effects                     | §3.12.3 and the owning resource or effect law.                                                |
 
-This ADR does not define a new Timeout Contract or extend Capacity to time-dependent load. ADR-0051 owns the Budget
-judgment. ADR-0057 and ADR-0058 own Failure and Publication. Governance and the planned Whole World design own the
-system-wide execution policy and control of interference and failure propagation. The temporal basis supplies facts
-for those decisions; it does not establish their policy. A change to a 1D Contract must be decided in its owning ADR.
+A control result must not conceal that a deadline may have been missed. Claim timely occurrence only on
+evidence that establishes it (§3.1.8). Apply the distinction between insufficient evidence and a confirmed
+limit violation in §§3.1.8 and 3.11.
+
+The owning obligation determines the needed qualification and control. A timed response requirement may need a
+separate allowance for detection and response work. It cannot authorize reducing another Budget's declared
+allowance. The owning law determines the domain-specific treatment of missed deadlines.
+
+A circuit breaker can reject new work based on earlier observed failures. That decision belongs to its control
+law, not Duration arithmetic. A timeout or circuit-breaker library grants no new Budget or Governance
+authority.
+
+This ADR introduces no Timeout 1D Contract and no time-dependent extension to Capacity. Ownership remains as
+follows:
+
+| Owner                                     | Responsibility                                                              |
+|-------------------------------------------|-----------------------------------------------------------------------------|
+| ADR-0051                                  | Budget judgment and enforcement.                                            |
+| ADR-0057                                  | Failure.                                                                    |
+| ADR-0058                                  | Publication.                                                                |
+| Governance and planned Whole World Design | System-wide execution policy, interference control and failure propagation. |
+
+The temporal basis supplies facts for these decisions; it selects no policy. Changes to a 1D Contract belong
+to its own ADR.
 
 ### 3.13. Compiler and Realization Boundary
 
-The temporal basis in §3.1.1 supplies the meaning of resolved Source Operations and the compiler's own temporal
-operations. A resolved calculation contributes to the HIR candidate only after its meaning is sufficient for
-the receiving 1D. ADR-0071 governs the candidate boundary. Establishment belongs to the owning 1D under ADR-0063.
+The temporal basis applies to resolved Source Operations and internal compiler operations (§3.1). A resolved
+calculation contributes to a HIR candidate only once its meaning is sufficient for the receiving 1D (ADR-0071). The
+owning 1D establishes Material under ADR-0063.
 
-The interpretation and realization of a selected platform operation follow ADR-0073 and ADR-0084. The temporal
-basis does not select the implementation. The JVM does not acquire authority to reinterpret an established Contract.
+The selected platform operation follows ADR-0073 and ADR-0084. The JVM cannot reinterpret an established
+Contract. Physical realization follows §3.1.1.
 
-Time used for compiler scheduling, query waiting, profiling, or performance experiments is not a semantic input to
-Contract Identity merely because the compiler records it. If the compiler actually uses a temporal datum as a
-determining semantic input, that dependence must instead be represented according to its owning law and the established
-compiler-result reuse rules. Reuse of a derivation over retained observations does not establish that a new physical
-observation occurred.
+Time recorded by the compiler is not automatically a Contract Identity input. This applies, for example, to:
 
-The internal reference and source depend on the purpose of the operation. The common law in §3.3 does not require
-an absolute wall-clock scale for internal calculations. The following purpose-specific bases are the direction of
-Time and Measurement Design. They do not select a physical provider or a measurement mechanism.
+- Scheduling.
+- Query waiting.
+- Profiling.
+- Performance experiments.
+
+If the compiler actually uses a temporal datum as a determining semantic input, represent that dependence
+under its owning law and compiler-result reuse rules. Retained observation reuse follows §3.1.7.
+
+The following purpose-specific references guide Time and Measurement Design under §3.3. They select neither a
+physical provider nor a measurement mechanism.
 
 | Purpose                                             | Default basis                                                                                              |
 |-----------------------------------------------------|------------------------------------------------------------------------------------------------------------|
@@ -1099,111 +1168,99 @@ Time and Measurement Design. They do not select a physical provider or a measure
 | Precise absolute-time work                          | A scale suitable for the required domain, such as TAI or the PTP time scale                                |
 | Deterministic simulation and property-based testing | An established model reference and controlled source where time is part of the model                       |
 
-Monotonicity is a source property (§3.1.6), not the name of an international absolute time scale. The concrete
-reference, handling of suspension and provider qualification remain to be established for each internal use. A journal's
-external timestamp does not itself establish execution order. Relating an internal measurement to an external timestamp
-requires the applicable correspondence. It does not turn a derived timestamp into a fresh external observation.
+Monotonicity is a progression property (§3.1.6), not an international absolute time scale. The actual
+reference, suspension behavior and provider qualification remain to be established for each use. Event-order
+claims follow §3.1.5. Relating an internal measurement to an external timestamp requires §3.1.4; a derived
+timestamp is not a fresh external observation (§3.1.7).
 
-The planned Time and Measurement subsystems use this basis. Their detailed contracts and realization remain to be
-established. Shared meaning does not require a common physical service or passage through the Query Engine.
-Provider selection, execution mechanisms and compiler optimization remain in Design. Qualification must cover
-the actual backend and its execution conditions under §3.11.
+The planned Time and Measurement subsystems use these laws. Their detailed contracts and realization remain
+open. Shared meaning requires neither a centralized physical service nor Query Engine access. Provider
+selection, execution mechanisms and optimization belong to Design. Qualification applies to the actual backend
+and execution conditions under §3.11.
 
 ## 4. Consequences
 
-The basis in §3.1.1 supplies common meaning for both 1D judgments and internal compiler operations. It also lets the
-compiler state what its physical measurements describe and what the resulting claims establish. Individual time values
-and operations can be defined through composition without duplicating the basic laws.
+The common temporal laws allow new composed meanings without another fundamental law (§3.1.1). Contract
+judgments and engineering measurements use the same basis while retaining their own authorities.
 
-A compiler may rely on a selected time-zone rule set, but it cannot silently treat the current runtime's zone database
-as the same semantic basis. Previously established temporal presentations are not rewritten when the database changes.
+Temporal products can depend on a selected semantic basis. Changes to rule data are handled under §§3.5 and
+3.10.
 
-Temporal source recognition becomes broader than executable eligibility. The compiler must be able to report an
-unsupported or insufficiently qualified operation without turning that compiler limitation into an invented Contract
-violation. ADR-0084 and ADR-0074 govern the corresponding result boundary.
+The compiler must be able to report unsupported or insufficiently qualified operations without inventing a
+Contract violation. The qualification and result boundaries follow §3.9, ADR-0084 and ADR-0074.
 
-Physical measurement and time-based execution control require independent backend evidence. This is especially important
-for the existing Budget obligation: returning a timeout or recording a timestamp does not by itself satisfy
-`Budget Stop`.
+Backend conformance must establish physical measurement and control capability separately from interpretation
+and simulated-time tests (§§3.11–3.12).
 
 ## 5. Conformance and Remaining Decisions
 
-The temporal SDK interpretation work must compare the qualified meaning with the exact selected Java/Kotlin operations.
-The supporting design must also examine the basis against the time systems and measurement practices it is intended
-to explain. At minimum, the conformance work should exercise these cases:
+The temporal SDK interpretation work must compare qualified meaning with the exact selected Java/Kotlin
+operations. Supporting design must also examine the applicable time systems and measurement practices.
 
-| Case                                              | Required distinction                                                                                                 |
-|---------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| DST spring gap and autumn overlap                 | Adjustment, strict rejection, and offset selection depend on the operation.                                          |
-| Calendar day versus 24-hour Duration              | Results can differ across a zone transition.                                                                         |
-| Same Instant with different offsets               | Instant equality does not replace source or Input equality.                                                          |
-| Invalid date and parsing pattern                  | Failure occurs according to the selected parser or constructor.                                                      |
-| Range and precision boundaries                    | Overflow, saturation, truncation, and rounding preserve the source law.                                              |
-| Kotlin/Java Duration and Instant interoperation   | Infinite, bounded, and exceptional outcomes are not collapsed.                                                       |
-| TZDB or locale-data change                        | Products depending on the old basis are not reused without the required compatibility.                               |
-| System Clock or default-zone read                 | External observation is not mistaken for a closed calculation.                                                       |
-| Timer expiration and cancellation                 | Timeout response is distinguished from the actual end of work.                                                       |
-| Physical Budget boundary                          | Measurement and stop capability are checked separately from simulated judgment logic.                                |
-| Cyclic counter or protocol timestamp              | A residue does not establish its unwrapped position without the required context.                                    |
-| Logical and physical ordering                     | A logical relation does not imply an elapsed interval.                                                               |
-| Source adjustment or holdover                     | Continued readings do not establish validity of the former correlation or guarantee.                                 |
-| Disjoint and overlapping measurement extents      | Span, union, accumulation and subject attribution retain their respective measurands.                                |
-| Acquisition and event boundary                    | A delayed or indirect observation is not the event itself.                                                           |
-| Correlated measurement errors                     | A shared error can cancel only under an established dependency law.                                                  |
-| Physical bound and statistical range              | The type of claim and its premises determine what it can establish.                                                  |
-| Authenticated external time assertion             | Authentication does not by itself establish accuracy or continued validity.                                          |
-| Clock correlation and precision                   | Exact conversion arithmetic does not prove an exact physical relation.                                               |
-| Fractional time amounts and intermediate rounding | Binary fractional seconds and an ideal media period retain their mathematical meaning; support and loss follow §3.7. |
-| Protocol quantity fields                          | Exponent decoding, reserved correction values, and error fields are interpreted under their specified domains.       |
-| Units with different defining conventions         | Fixed month conventions, calendar amounts, and uncertain physical unit correspondences retain their meanings.        |
-| Scale-dependent and model-derived amounts         | Coordinate-time differences, proper time, and equivalent processing time are not conflated.                          |
-| Clock cycles and physical-time constraints        | An adequate relation is established before judging combined cycle and elapsed-time requirements.                     |
-| Nonuniform samples and attributed time            | Equal total time does not establish equal intermediate positions or equal measurands.                                |
-| Partial calendar position and cyclic comparison   | A complete position in its own domain need not denote an Instant or admit a global order.                            |
-| Epoch, leap seconds, and scale conversion         | Equal coordinate fields do not establish equivalence across POSIX, UTC, TAI, and smeared scales.                     |
-| Internal and external time references             | Internal elapsed measurements and external timestamps retain their respective meanings and correspondence.           |
-| Correspondence and resolver outcome               | A resolver adjustment does not establish a counterpart of a position in a gap.                                       |
-| Inverse conversion and discarded distinctions     | A many-to-one projection or intermediate rounding may prevent recovery of the original value.                        |
-| Composed calibration and reference segments       | A changed calibration, reset, or path with a different guarantee is not silently substituted.                        |
-| Occurrence and record association                 | Scheduled, actual and recorded positions retain their meanings.                                                      |
-| Temporal relations and execution order            | Coordinate order, causal constraints and required execution order are not conflated.                                 |
-| Overlapping uncertainty bounds                    | Shared error dependencies can establish order even when individual bounds overlap.                                   |
-| Recurrence and completion                         | Anchored and prior-occurrence-based repetitions can differ; a schedule does not prove execution.                     |
-| Temporal completeness                             | A time frontier or watermark does not establish completion beyond its supported claim and scope.                     |
-| Distinct read operations and model time           | A retained, derived or controlled reading is not necessarily a new physical observation.                             |
-| Monotonic progression and suspension              | Nondecreasing readings do not establish constant rate or inclusion of suspension.                                    |
-| Source disruption and continuity                  | Migration, reset and source replacement do not establish or destroy continuity by identity alone.                    |
-| Missing and partial measurements                  | An unavailable reading differs from partial evidence such as a censored observation.                                 |
-| Measurement model and instrumentation             | Observed, inferred and model-generated samples retain their meaning; uninstrumented time requires its own basis.     |
-| Shared-computation attribution                    | Attributed inclusive time does not determine physical execution time or Budget charges.                              |
-| Aggregate and cumulative measurement reuse        | Sample counts, overlap, extent and reset affect lawful composition of results.                                       |
-| Nonlinear uncertainty and finite bounds           | The resulting bound must include possible interior results and preserve containment after rounding.                  |
-| Inconsistent and incomplete uncertainty evidence  | An inconsistent joint basis and an unreported error are not evidence of an exact value.                              |
-| Uncertainty at a limit                            | Evidence for a numerical limit is distinct from the owning Contract's judgment and control outcome.                  |
+At minimum, the conformance work should exercise the following cases. The referenced law supplies the expected
+result. For a Source Operation, use the exact qualified callable profile. The tables identify test coverage;
+they introduce no new judgment law.
 
-The following additional cases exercise the composed meanings and time-control boundary:
+| Case                                                                                             | Check                                                                                                                                 | Governing law    |
+|--------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|------------------|
+| DST spring gap and autumn overlap; correspondence and resolver outcome                           | Exercise a gap under an adjusting and a strict resolver. Project an overlap value and resolve it again. Compare the selected results. | §§3.1.4, 3.5     |
+| Calendar day versus 24-hour Duration                                                             | Run the New York transition example.                                                                                                  | §3.4             |
+| Same Instant with different offsets                                                              | Compare the two Offset Date-Time values using each specified comparison. Check Input Sameness independently.                          | §§3.2, 3.6       |
+| Invalid date and parsing pattern                                                                 | Run the selected parser or constructor on invalid operands. Check the defined unsuccessful outcome.                                   | §§3.1.3, 3.7–3.9 |
+| Range and precision boundaries                                                                   | Exercise each numeric outcome in the §3.7 table at its domain boundary.                                                               | §3.7             |
+| Kotlin/Java Duration and Instant interoperation                                                  | Exercise infinity conversion and out-of-range Instant arithmetic under each selected profile.                                         | §3.9             |
+| TZDB or locale-data change                                                                       | Change the determining data and check product reuse eligibility.                                                                      | §3.10            |
+| System Clock or default-zone read                                                                | Compare an ambient call with a calculation on eligible supplied data.                                                                 | §3.10            |
+| Cyclic counter or protocol timestamp; partial calendar position and cyclic comparison            | Exercise the eight-bit displacement and ordering examples. Check complete partial calendar positions in their own domains.            | §3.1.3           |
+| Logical and physical ordering; temporal relations and execution order                            | Compare coordinate, logical and required execution relations for the same events.                                                     | §§3.1.3, 3.1.5   |
+| Fractional time amounts and intermediate rounding                                                | Exercise both fractional amounts in §3.7 and a composition with intermediate rounding.                                                | §§3.1.1, 3.7     |
+| Protocol quantity fields                                                                         | Exercise exponent decoding, a reserved correction value and a field defined as an error.                                              | §§3.1.2, 3.1.8   |
+| Units with different defining conventions                                                        | Compare fixed-month conventions with a calendar amount. Exercise a physical-model conversion.                                         | §§3.1.2, 3.4     |
+| Scale-dependent and model-derived amounts                                                        | Compare the quantity meanings in the Quantity Formation table.                                                                        | §3.1.2           |
+| Clock cycles and physical-time constraints                                                       | Judge a combined requirement with and without the required cycle-to-time relation.                                                    | §§3.1.2, 3.1.4   |
+| Epoch, leap seconds, and scale conversion                                                        | Exercise equal coordinate fields and a leap adjustment across the applicable POSIX, UTC, TAI and smeared-scale profiles.              | §3.3             |
+| Internal and external time references                                                            | Relate a monotonic measurement to an external timestamp using a qualified correspondence.                                             | §§3.1.4, 3.13    |
+| Inverse conversion and discarded distinctions                                                    | Attempt round-trip recovery after a many-to-one projection or intermediate rounding.                                                  | §§3.1.4, 3.7–3.8 |
+| Composed calibration and reference segments; correlation at a later position or over an interval | Vary the calibration or reference segment. Exercise direct and chained conversions for each physical claim in §3.1.4.                 | §§3.1.4, 3.1.8   |
+| Occurrence and record association                                                                | Compare the scheduled, actual and recorded positions of an event.                                                                     | §3.1.5           |
+| Recurrence and completion; missed recurring deadline                                             | Compare anchored and prior-occurrence-based repetitions. Exercise a missed occurrence.                                                | §§3.1.5, 3.12.1  |
+| Temporal completeness                                                                            | Exercise a time frontier or watermark with incomplete occurrences in the claimed scope.                                               | §3.1.5           |
+| Repeated calendar adjustment; calendar operation with zone resolution                            | Run the month-addition example. Exercise the selected zone resolver at an intermediate position.                                      | §§3.1.1, 3.4–3.5 |
 
-| Case                                                | Required distinction                                                                                     |
-|-----------------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| Repeated calendar adjustment                        | Intermediate adjustment affects the composed result; a combined amount need not preserve it.             |
-| Calendar operation with zone resolution             | The selected resolver applies at the required intermediate boundary.                                     |
-| Correlation at a later position or over an interval | The relation must support the particular position, boundary difference or interval claim.                |
-| Clock adjustment and correlation                    | Observing a relation and changing source progression have different meanings.                            |
-| Parallel execution and interference                 | Overlap, interruption and causal latency influence remain distinct.                                      |
-| Marginal and joint latency results                  | Corresponding occurrences may be required to establish the combined distribution.                        |
-| Incomplete execution decomposition                  | Unexplained time is retained; overlapping components are not treated as a partition.                     |
-| Measurement perturbation                            | Actual execution delay differs from observation error and an estimate without instrumentation.           |
-| Deadline and delayed notification                   | Notification latency does not change the deadline or authorize a prohibited successful result.           |
-| Accepted observation near the allowance             | Numerical judgment does not assert exact physical time or silently extend the allowance.                 |
-| Observation followed by delayed establishment       | A stale reading is not accepted as evidence of a different boundary.                                     |
-| Concurrent completion and Failure establishment     | A lawful terminal result cannot be overwritten; an established stop prohibits dependent normal progress. |
-| Delayed monitor and late result attempt             | The result path applies the time judgment independently of the monitor's delivery.                       |
-| One observation violating multiple Budgets          | Required Failure results survive the stop transition.                                                    |
-| Failure and later cleanup                           | Contract stop, response and physical cessation retain their distinct extents and resource meanings.      |
-| Shared interference and several time failures       | Individual failures and common explanatory evidence retain their meaning.                                |
-| Missed recurring deadline                           | Scheduled and actual occurrences are distinguished.                                                      |
-| Deadline communicated across time domains           | Transmission and reference correspondence affect preservation of the original limit.                     |
-| Time-control latency and qualified bounds           | An observed control delay does not establish a future physical bound.                                    |
+The following cases exercise physical and model-time observations. They also cover measurement claims and
+time-based control:
+
+| Case                                                                                 | Check                                                                                                                                   | Governing law         |
+|--------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|-----------------------|
+| Distinct read operations and model time                                              | Compare retained, derived and controlled readings with a fresh observation.                                                             | §§3.1.6–3.1.7         |
+| Monotonic progression and suspension                                                 | Compare nondecreasing sources with different rates or suspension behavior.                                                              | §3.1.6                |
+| Source disruption and continuity                                                     | Exercise migration, reset and source replacement with and without valid compensation.                                                   | §3.1.6                |
+| Source adjustment or holdover; clock adjustment and correlation                      | Change progression after a correlation. Check the validity of the former relation or guarantee during holdover.                         | §§3.1.4, 3.1.6, 3.1.8 |
+| Disjoint and overlapping measurement extents; nonuniform samples and attributed time | Exercise the measurement extent table. Compare equal totals with different intermediate positions or targets; include disjoint extents. | §3.1.7                |
+| Acquisition and event boundary                                                       | Use delayed or indirect acquisition relative to the intended event. Check the resulting claim.                                          | §3.1.7                |
+| Missing and partial measurements                                                     | Compare an unavailable reading with a censored observation.                                                                             | §§3.1.7, 3.11         |
+| Measurement model and instrumentation; measurement perturbation                      | Compare acquired and model-generated samples. Exercise the instrumented elapsed extent and a claim about uninstrumented execution.      | §3.1.7                |
+| Shared-computation attribution                                                       | Attribute one computation to multiple subjects; check the physical total and Budget charge separately.                                  | §3.1.7 and ADR-0051   |
+| Aggregate and cumulative measurement reuse                                           | Compose samples with counts and successive cumulative totals, including a reset.                                                        | §3.1.7                |
+| Marginal and joint latency results                                                   | Compare equal marginal distributions with different underlying pairings.                                                                | §3.1.7                |
+| Parallel execution and interference                                                  | Exercise overlap, interruption and claims of causal latency influence.                                                                  | §3.1.7                |
+| Incomplete execution decomposition                                                   | Exercise overlapping components and an unexplained portion of the extent.                                                               | §3.1.7                |
+| Correlated measurement errors; overlapping uncertainty bounds                        | Run the shared-offset example with and without its dependency. Compare order claims under overlapping bounds.                           | §3.1.8                |
+| Physical bound and statistical range                                                 | Evaluate claims based on each applicable statement in the Uncertainty Semantics table.                                                  | §3.1.8                |
+| Authenticated external time assertion                                                | Check its physical claim separately from the authentication result.                                                                     | §§3.1.7–3.1.8         |
+| Clock correlation and precision                                                      | Convert with exactly recorded coefficients but an uncertain physical correlation.                                                       | §§3.1.4, 3.1.8        |
+| Nonlinear uncertainty and finite bounds                                              | Run the square example and check containment after finite-format rounding.                                                              | §3.1.8                |
+| Inconsistent and incomplete uncertainty evidence                                     | Exercise conflicting constraints and an unreported error contribution.                                                                  | §3.1.8                |
+| Uncertainty at a limit; accepted observation near the allowance                      | Exercise all relations to the limit in §3.1.8. Check the separate measurement-based Budget judgment.                                    | §§3.1.8, 3.11         |
+| Timer expiration and cancellation; failure and later cleanup                         | Exercise response and Failure establishment before actual cessation or resource release.                                                | §§3.12.1, 3.12.3      |
+| Physical Budget boundary                                                             | Verify simulated judgment logic separately from physical boundary and stop capability.                                                  | §§3.11–3.12           |
+| Deadline and delayed notification; delayed monitor and late result attempt           | Delay notification until after a result establishment attempt at a prohibited time.                                                     | §3.12.2               |
+| Observation followed by delayed establishment                                        | Use an earlier observation that lacks applicability to the result establishment boundary.                                               | §3.11                 |
+| Concurrent completion and Failure establishment                                      | Exercise both competing establishment orders.                                                                                           | §3.12.2               |
+| One observation violating multiple Budgets                                           | Exercise the stop transition with several required Failures.                                                                            | §3.12.2               |
+| Shared interference and several time failures                                        | Exercise common explanatory evidence and the separate Failure evidence for each subject.                                                | §3.12.3               |
+| Deadline communicated across time domains                                            | Transmit a remaining duration and check the original deadline after receipt.                                                            | §3.12.1               |
+| Time-control latency and qualified bounds                                            | Compare an observed control delay with a claim of a future physical bound.                                                              | §§3.1.8, 3.12.4       |
 
 The remaining decisions are owned as follows:
 
@@ -1213,13 +1270,13 @@ The remaining decisions are owned as follows:
 | ADR-0079 / ADR-0084 and SDK Design   | Qualify the exact temporal callable inventory for declared JDK and Kotlin profiles, including applicable external data.                                               |
 | ADR-0051 and Backend Conformance     | Align the elapsed-time judgment and stop law with §§3.11–3.12; qualify boundary observations and competing establishment.                                             |
 | Each other 1D ADR                    | Decide whether new time-dependent judgments or time-based resource quantities are needed.                                                                             |
-| ADR-0082                             | Complete the remaining temporal domains and operation laws. Settle their semantic representation and detailed conversion laws.                                        |
+| ADR-0082                             | Complete any remaining temporal-domain and operation laws under the established fundamental laws. Settle their semantic representation and detailed conversion laws.  |
 | ADR-0078                             | Decide additional Numeric Formats if required for exact temporal Datum support; do not infer Rational support from §3.7.                                              |
-| ADR-0082 and Measurement Design      | Establish the concrete measurement models and uncertainty operations under §§3.1.7–3.1.8, including their result laws and representations.                            |
+| ADR-0082 and Measurement Design      | For concrete measurement models and uncertainty operations, establish their result laws and representations under §§3.1.7–3.1.8.                                      |
 | Compiler Time and Measurement Design | Realize the purpose-specific bases of §3.13. Qualify providers and execution boundaries. Establish control, evidence acquisition and physical measurement mechanisms. |
 | Verification and QA Design           | Distinguish simulated-time tests from physical timing tests. Verify establishment races, delayed observation and instrumentation overhead.                            |
 | Governance and Whole World Design    | Establish system-wide execution and failure-containment policy using the temporal evidence; no such policy is selected here.                                          |
 
-This Draft makes no claim that the entire standard-library callable inventory has been qualified, or that a JVM backend
-already satisfies hard elapsed-time Budget enforcement. Those are evidence requirements for execution, not facts
-established by accepting a common temporal-semantics ADR.
+This Draft makes no claim that the entire standard-library callable inventory has been qualified, or that a
+JVM backend already satisfies hard elapsed-time Budget enforcement. Those are evidence requirements for
+execution, not facts established by accepting a common temporal-semantics ADR.
