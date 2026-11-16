@@ -94,15 +94,15 @@ The temporal basis consists of seven contracts. Each supplies a law that can be 
 explain a temporal value or operation. A composed meaning is not a new basic contract merely because it has a name
 in a library or protocol.
 
-| Basic contract              | Law subject                                                           | Definition |
-|-----------------------------|-----------------------------------------------------------------------|------------|
-| **Temporal Quantity**       | What a temporal amount means                                          | §3.1.2     |
-| **Temporal Reference**      | What a position in a temporal system means                            | §3.1.3     |
-| **Temporal Correspondence** | How temporal meanings relate or convert                               | §3.1.4     |
-| **Temporal Occurrence**     | How time relates to events and their boundaries                       | §3.1.5     |
-| **Temporal Source**         | How a time source produces readings and progresses                    | §3.1.6     |
-| **Temporal Measurement**    | What is measured and how observations establish a measurement result  | §3.1.7     |
-| **Temporal Uncertainty**    | What can be asserted about an uncertain temporal quantity or position | §3.1.8     |
+| Basic contract              | Law subject                                                                                       | Definition |
+|-----------------------------|---------------------------------------------------------------------------------------------------|------------|
+| **Temporal Quantity**       | What a temporal amount means                                                                      | §3.1.2     |
+| **Temporal Reference**      | What a position in a temporal system means                                                        | §3.1.3     |
+| **Temporal Correspondence** | How a counterpart is established across temporal domains or under an additional temporal relation | §3.1.4     |
+| **Temporal Occurrence**     | What time describes about events and the relations between them                                   | §3.1.5     |
+| **Temporal Source**         | How a time source produces readings and progresses                                                | §3.1.6     |
+| **Temporal Measurement**    | What is measured and how observations establish a measurement result                              | §3.1.7     |
+| **Temporal Uncertainty**    | What can be asserted about an uncertain temporal quantity or position                             | §3.1.8     |
 
 These contracts are not mutually exclusive value families. Their number is not a claim of mathematical minimality.
 They do not prescribe the representation or physical subsystem structure. The same laws can be realized by a host
@@ -248,43 +248,123 @@ an occurrence (§3.1.5). The temporal value distinctions remain in §3.2.
 
 #### 3.1.4. Temporal Correspondence
 
-A Temporal Correspondence states a relation between temporal meanings. A conversion must identify the source and
-target domains. It must establish the rule and the conditions in which the rule applies. The relation can be total
-or partial. A position may have no counterpart or more than one counterpart in the target domain.
+A Temporal Correspondence establishes how a value has a counterpart in another temporal domain or under an additional
+relation within a domain. For example, it can relate positions in two time scales or relate a counter displacement to
+an elapsed amount. The intrinsic quantity and position laws remain with §§3.1.2–3.1.3. Relations between events
+belong to §3.1.5.
 
-An inverse or a composition is valid only where the participating laws establish its meaning. An implementation may
-use an offset, a rate conversion or a more complex rule without defining a different basic contract. A calendar rule
-can also establish a correspondence without using a linear equation.
+| Law                          | Required meaning                                                                             |
+|------------------------------|----------------------------------------------------------------------------------------------|
+| Correspondence Determination | The participating domains and the conditions under which a counterpart exists                |
+| Conversion Semantics         | What a selected operation does with the correspondence                                       |
+| Correspondence Composition   | The conditions under which inverse relations and composed conversions preserve their meaning |
+
+**Correspondence Determination.** The relation must establish the source and target domains and its applicable rule.
+Its domain of applicability may cover all source values or only some of them. A value may have no counterpart or
+more than one counterpart. No fixed upper bound on their number is implied. The structured value laws of ADR-0081
+apply when the result is represented as a Collection. The relation itself need not be finite or enumerable.
+
+An implementation may use an offset or a rate conversion without defining a different basic contract. A more complex
+rule, including a calendar rule, can also establish a correspondence. A rule may apply only over a particular segment
+of a reference. For example, the same spacecraft counter value may occur again after a reset. Its partition can be
+necessary to identify the applicable correlation.
 
 An exact relation under a selected rule differs from a physical relation inferred from observations. A calibration may
 provide a conversion law whose coefficients are recorded exactly, while its correspondence to physical time remains
-uncertain. The conversion uses this contract; the observation and uncertainty follow §§3.1.7–3.1.8. The availability
-of several counterparts under an exact rule is not measurement uncertainty.
+uncertain. The observation and uncertainty follow §§3.1.7–3.1.8.
 
 A descriptor identifies a rule or reference by its admitted descriptive meaning. It does not establish the rule's
-contents or authorize its acquisition. Named zones are governed by §3.5. External rule data follows §3.10.
+contents or authorize its acquisition. External rule data follows §3.10.
+
+**Conversion Semantics.** A correspondence does not by itself determine the outcome of a conversion operation. The
+selected operation may return the available counterparts or select one of them. It may instead adjust the operand
+under its own law or reject it. Named-zone resolution in §3.5 illustrates why an adjusted result need not be a
+counterpart of the original position.
+
+| Condition                   | Distinction                                                                                   |
+|-----------------------------|-----------------------------------------------------------------------------------------------|
+| No counterpart              | The established relation has no result for the supplied value.                                |
+| Several counterparts        | More than one result satisfies the established relation. This is not measurement uncertainty. |
+| Insufficient basis          | The data or context needed to establish the relation is unavailable.                          |
+| Uncertain physical relation | The correspondence is subject to the conditions of §3.1.8.                                    |
+| Unrepresentable result      | A counterpart exists but the required result domain cannot represent it under §3.7.           |
+
+These conditions do not introduce a new failure taxonomy. The selected operation determines its result and preserves
+its Source semantics under ADR-0078. Its owning law determines the treatment of an unsuccessful calculation.
+
+**Correspondence Composition.** An inverse relation need not be a function. A conversion that discards a distinction
+may not admit an operation that recovers the original value. The same holds when a mathematically reversible relation
+is realized through a representation that loses information (§3.7).
+
+A composition requires the participating relations to apply to the intermediate domain under consistent determining
+conditions (§3.1.1). For example, let one conversion add a calibration offset and another subtract it. Cancellation
+requires a basis establishing that both offsets agree. Reusing the same formula with a different calibration does not
+establish that basis. The treatment of shared uncertain inputs follows §3.1.8.
+
+A direct correspondence and a chain of correspondences need not provide the same result or physical guarantee. A chain
+can be used when it establishes the relation required by the operation. Substituting one conversion path for another
+requires preservation of the observations of that operation under §3.1.1. The existence of a path is not sufficient.
+No graph representation or path-selection algorithm is prescribed by this law.
 
 #### 3.1.5. Temporal Occurrence
 
-A Temporal Occurrence relates an event to time. An event and the position attributed to it are distinct. Two events
-can occupy the same recorded position without becoming the same event. The applicable law identifies the event
-or subject and states the temporal relation being asserted.
+A Temporal Occurrence relates an event to time. An event and its temporal position are distinct. The applicable event
+law identifies the event or subject. This contract does not establish general event Identity.
 
-| Law         | Meaning                                                                                                 |
-|-------------|---------------------------------------------------------------------------------------------------------|
-| Association | Which event a temporal value describes; the event of acquisition or delivery may differ from that event |
-| Boundary    | Which event begins or ends the selected extent                                                          |
-| Ordering    | Which ordering relation applies to the selected occurrences                                             |
-| Attribution | Which subject or activity the occurrence belongs to                                                     |
-| Recurrence  | How additional occurrences relate to a temporal schedule or another occurrence                          |
+| Law                    | Required meaning                                                        |
+|------------------------|-------------------------------------------------------------------------|
+| Occurrence Association | Which event the temporal meaning describes                              |
+| Occurrence Boundary    | Which events delimit the selected temporal extent                       |
+| Occurrence Relations   | Which temporal relations hold between events and on what basis          |
+| Occurrence Recurrence  | How repeated events relate to a temporal rule or to earlier occurrences |
 
-Coordinate order does not establish causal order by itself. Logical order may represent causal constraints without
-measuring an elapsed duration. Encounter order and Publication order keep the meanings of their owning laws. This
-contract does not establish general event Identity or confer execution control authority.
+**Occurrence Association.** The event described by a temporal value may differ from the event at which the value is
+acquired or delivered. For example, the time of an operation can differ from the time at which its record is published.
+Two events can occupy the same recorded position without becoming the same event.
 
-An event extent can be formed from selected boundaries under the applicable reference law. Interval formation and
-structural operations follow ADR-0081. Measurement of that extent follows §3.1.7. A scheduled occurrence does not
-establish that the corresponding actual event occurred.
+A temporal association may describe an actual occurrence or a position assigned to an event that has not occurred.
+For example, a model can assign a position to a predicted event. Such a position does not establish that the event
+actually occurred. The subject to which an event belongs follows its owning law. Attribution of a measured amount
+follows §3.1.7.
+
+**Occurrence Boundary.** An event extent is formed from selected boundary events under the applicable reference law.
+The request for an operation, the start of its execution and the delivery of its result may delimit different extents.
+ADR-0081 governs interval formation and structural operations. Measurement of an extent follows §3.1.7. Selection of
+resource enforcement boundaries remains with the owning Contract (§3.11).
+
+**Occurrence Relations.** A temporal relation must identify the events it relates and the basis on which it holds.
+For example, an occurrence can precede another or take place within an extent bounded by other events. Positional
+relations follow §3.1.3. Comparisons requiring a further correspondence follow §3.1.4. The conditions under which
+uncertain positions establish a relation follow §3.1.8.
+
+Equal recorded positions do not by themselves establish physical simultaneity. Coordinate order does not establish
+causal order by itself. Logical order may represent causal constraints without measuring an elapsed duration. An
+incomparable pair under a relation differs from a pair for which the available evidence does not establish the relation.
+Neither case establishes that the events occurred at the same time. The absence of evidence for a relation also differs
+from evidence that it does not hold.
+
+General relation and ordering laws follow ADR-0081. Encounter order and Publication order keep the meanings of their
+owning laws. Causal and execution constraints remain with the laws that establish them. An observed execution order
+is not by itself a required execution order. A required temporal relation does not determine a total execution order
+unless the owning law requires one. Deterministic realization follows ADR-0075.
+
+The advance of a time coordinate does not establish that all events up to that position have been received. Any claim
+of completeness over a temporal extent must follow the applicable data or result law. The claim concerns the selected
+scope; it need not apply to all occurrences in the system.
+
+**Occurrence Recurrence.** A recurrence establishes how the positions of repeated events are determined. Its basis may
+be an original scheduled position or the outcome of an earlier occurrence. A calendar progression and a repetition
+based on a previous completion need not produce the same positions. For example, Java `LocalDate.datesUntil` can
+produce a progression anchored at the first date. Repeatedly adding the same Calendar Period to the preceding date
+can yield different positions after an end-of-month adjustment (§3.4).
+
+A repeated event can retain its original scheduled position even when its schedule is changed. The original position,
+the revised position and the actual occurrence have their respective associations. The progression structure follows
+ADR-0081. A recurrence does not establish that any scheduled occurrence took place.
+
+None of these laws confers execution control authority. The selected execution law determines whether an operation
+starts
+or is cancelled. It also determines the treatment of missed or overlapping repetitions (§3.12).
 
 #### 3.1.6. Temporal Source
 
@@ -418,7 +498,8 @@ Continued holdover can change the uncertainty of a current-time estimate without
 recorded coordinate.
 
 For two valid enclosing bounds on event positions in a common reference, a strict separation establishes their
-coordinate order. Overlapping bounds do not establish equality or a unique order.
+coordinate order. Overlapping bounds alone do not establish equality or a unique order. An established dependency
+can provide sufficient additional information to decide a relation, as in the shared-offset example above.
 
 A statement that a limit is met requires evidence sufficient for that judgment. A statistical latency percentile
 or an observed maximum cannot replace a guaranteed physical upper bound. When available evidence does not establish
@@ -517,7 +598,8 @@ difference law already establish the elapsed quantity.
 A Zone Descriptor and the rules used to resolve it are separate semantic inputs. Named-zone resolution requires rules
 applicable to the local date-time or instant being interpreted.
 
-Local-time resolution has three relevant cases:
+The available counterparts and the behavior of a resolver are distinct under §3.1.4. Local-time resolution has
+three relevant cases:
 
 | Case                | Available offset interpretations | Consequence                                                                           |
 |---------------------|----------------------------------|---------------------------------------------------------------------------------------|
@@ -527,7 +609,9 @@ Local-time resolution has three relevant cases:
 
 For example, `2024-03-10T02:30` does not occur in `America/New_York`. Java `LocalDateTime.atZone` adjusts that local
 time forward into the valid interval, whereas `ZonedDateTime.ofStrict` can reject an invalid local-time/offset
-combination. The compiler must preserve the selected callable's behavior.
+combination. The compiler must preserve the selected callable's behavior. During an overlap, projecting a resolved
+position to its local date-time can discard the selected offset. For example, projecting `2024-11-03T01:30-05:00`
+in `America/New_York` and then applying `atZone` can select UTC−04:00 instead. The original instant is not recovered.
 
 The resolved presentation must not be silently reinterpreted against the current TZDB each time it is observed. ADR-0064
 expressly preserves its submitted date-time, offset, and descriptor. A later operation that checks consistency with zone
@@ -601,7 +685,8 @@ Parsing `2024-03-10` as an ISO date is therefore a different operation from pars
 unspecified host default.
 
 Formatting may erase distinctions needed for a later round trip. For example, a format that omits an offset cannot be
-assumed to reconstruct the original Offset Date-Time. A pattern that emits only seconds can lose fractional precision.
+assumed to reconstruct the original Offset Date-Time (§3.1.4). A pattern that emits only seconds can lose fractional
+precision.
 
 ISO chronology does not silently authorize every `java.time.chrono` calendar. Non-ISO chronologies may be supported when
 their operations and required semantic data are qualified. Their dates do not become ISO Input Leaves through a host
@@ -788,6 +873,14 @@ to explain. At minimum, the conformance work should exercise these cases:
 | Partial calendar position and cyclic comparison   | A complete position in its own domain need not denote an Instant or admit a global order.                            |
 | Epoch, leap seconds, and scale conversion         | Equal coordinate fields do not establish equivalence across POSIX, UTC, TAI, and smeared scales.                     |
 | Internal and external time references             | Internal elapsed measurements and external timestamps retain their respective meanings and correspondence.           |
+| Correspondence and resolver outcome               | A resolver adjustment does not establish a counterpart of a position in a gap.                                       |
+| Inverse conversion and discarded distinctions     | A many-to-one projection or intermediate rounding may prevent recovery of the original value.                        |
+| Composed calibration and reference segments       | A changed calibration, reset, or path with a different guarantee is not silently substituted.                        |
+| Occurrence and record association                 | Scheduled, actual and recorded positions retain their meanings.                                                      |
+| Temporal relations and execution order            | Coordinate order, causal constraints and required execution order are not conflated.                                 |
+| Overlapping uncertainty bounds                    | Shared error dependencies can establish order even when individual bounds overlap.                                   |
+| Recurrence and completion                         | Anchored and prior-occurrence-based repetitions can differ; a schedule does not prove execution.                     |
+| Temporal completeness                             | A time frontier or watermark does not establish completion beyond its supported claim and scope.                     |
 
 The remaining decisions are owned as follows:
 
