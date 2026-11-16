@@ -1,6 +1,6 @@
 # ADR-0082: Temporal Values, Operations, Sources, and Measurement
 
-**Status:** Draft
+**Status:** Accepted
 
 **Date:** 2026-10-25
 
