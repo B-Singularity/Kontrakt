@@ -36,63 +36,39 @@ ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 
 ## 1. Context
 
-Input is the first one-dimensional Contract of the inbound airlock, and its primary semantic subject is one complete
-inbound presentation Contract. It states the presentation meaning that outside material must realize at an Interaction
-boundary. The Input Contract does not include the Interaction that selects it, the Operation that may later consume
-material derived from it, the host carrier that expresses source evidence, or the binding relation that connects it to
-one Interaction.
+Input is the first one-dimensional Contract of the inbound airlock. It defines one complete presentation meaning that
+external material must realize at an Interaction boundary. Input does not own the selecting Interaction or its Binding,
+downstream Operations or Contracts, or the host carrier that supplies evidence.
 
-Later Contracts retain their own authority over the material that follows Input. Canonicalization may establish a stable
-same-shape representative when selected, Admission decides whether the material presented to its judgment may continue,
-and Lowering owns the explicit relation from Input coordinates toward Operation-parameter and Fact coordinates. Their
-composition and ordering are not Input authority.
+A supported host declaration may already express that presentation completely, so a duplicate Kontrakt-specific DTO is
+not required. Host representation and runtime behavior may affect program observations but cannot become Contract
+authority. Kontrakt must resolve, refine, and ratify the source evidence before it becomes authoritative Input meaning,
+independent of the source language or carrier.
 
-A host declaration may already state useful external contract evidence. Closed scalar values, finite alternatives,
-presence distinctions, bounded presentations, and other explicitly defined Input forms do not become silent merely
-because Kotlin, Java, or another frontend carries them. However, neither the host declaration nor its object instances
-receive Kontrakt authority directly. The declaration only nominates external evidence, which Kontrakt must refine and
-ratify before it becomes Input authority.
+Input admits only finite, closed, directly inspectable presentations. Its established meaning remains available to later
+authorities that may lawfully observe it. Material that cannot meet this law must be formed into a supported
+presentation
+before invocation.
 
-## 2. Problem
+Input does not own later judgments, transformations, composition, or ordering. Those remain with the Contracts and
+composition law that own them.
 
-The boundary must accept ordinary external presentations without allowing the host representation to become Contract
-authority. Host mechanics can influence what a program observes even when the declared data appears unchanged, so Input
-needs a refinement boundary that removes those mechanics before authority is granted. Sections 7.3 through 7.7 define
-the applicable immutability, carrier, inheritance, presence, and opaque-value rules.
+## 2. Decision Drivers
 
-A supported host declaration may already express one Input presentation completely. In that case the frontend should
-refine the declaration rather than require a second Kontrakt-specific DTO that restates the same Contract evidence. V1
-therefore needs a narrow ratifiable presentation law whose result is finite and directly inspectable at the Input
-boundary and by any later authority that is legally allowed to observe it. Material that cannot meet that law must be
-formed into a supported presentation before invocation.
+- Supported host declarations should express Input without requiring duplicate carriers, while Contract authority
+  remains with Kontrakt.
+- Input must support finite, closed, structured values without introducing nested Contract authorities or direct Input
+  coordinates.
+- Input Definition meaning must be complete and deterministic, independent of the Interaction or Policy World that
+  selects it.
+- Invocation must judge already-formed immutable material without making Input responsible for acquisition or snapshot
+  timing.
+- Compiler-side non-entry and Input-owned refusal must remain distinct. Refused Input material cannot proceed to later
+  inbound Contracts.
 
-## 3. Decision Drivers
+## 3. Decision
 
-Input owns presentation rather than truth, and Section 7.8 defines that authority boundary. Source evidence may nominate
-an Input Definition Candidate, but only Input-owned Establishment grants Contract authority. At the invocation boundary,
-one exact Input semantic application presents already-formed material to the Input judgment. Input neither chooses a
-capture point nor derives a snapshot from live mutable state. The resulting Input Occurrence is that semantic
-application
-rather than a runtime object, wrapper, allocation, or storage unit. Once established, occurrence-specific Input meaning
-is observed through the producer-owned Established Input Semantic Protocol while its physical realization remains
-replaceable.
-
-V1 keeps the directly addressable Input coordinate surface flat under Section 4.2. A direct coordinate may contain a
-closed value topology under Section 7.9, but nested constituents do not become nested Contract authorities or additional
-direct Input coordinates. The owning Input law alone determines Definition Meaning, while selection context remains
-outside that meaning unless this ADR explicitly makes the context determinant; Section 5.4 closes that split. Several
-Interactions may select one Input Definition when they intentionally require the same complete Contract meaning under
-Section 4.4, while Section 8 prevents reuse from becoming an authoring objective.
-
-Definition-time refinement must be deterministic. Section 9 distinguishes compiler-side non-entry from Input-owned
-Definition Refusal and occurrence-time `Refused`; after a Refused Input occurrence, no later inbound authority is
-reached. Policy, Governance, Budget, and Capacity retain their own authority when they independently apply. Different
-declared Policy Worlds may select different Input Definitions for one Interaction under Section 4.4, while the
-Governance API that makes an applicable world usable by an external caller remains outside this ADR.
-
-## 4. Decision
-
-### 4.1. Input Meaning
+### 3.1. Input Meaning
 
 Input is the boundary presentation Contract, with the following authority path:
 
@@ -112,95 +88,36 @@ the distinctions that its law makes observable. Later Contracts may observe thos
 relations, but they do not retroactively add Input meaning. Input does not decide whether presented values may continue,
 canonicalize them, lower them into core Fact meaning, or invoke the user Operation.
 
-### 4.2. Flat V1 Presentation
+### 3.2. Flat V1 Presentation
 
 V1 keeps the directly addressable Input coordinate surface flat, exposing one finite set of direct Input coordinates.
 Each direct coordinate may itself carry a finite,
-closed, acyclic value presentation under Section 7.9.
+closed, acyclic value presentation under Section 6.9.
 
 Nested members, alternatives, elements, keys, and values are constituents of that coordinate's Input meaning. They do
 not become nested Input Definitions, independent Input Occurrences, or additional direct Input coordinates merely
 because the presentation has internal structure.
 
-A host carrier may contain richer topology, but Input does not recursively adopt host object ancestry, alias structure,
-runtime implementation graphs, or lifecycle relations. Section 7.9 owns the legal value topology. Section 7.4 owns
-carrier separation.
+A host carrier may contain richer topology, but Input does not adopt host runtime structure or
+lifecycle relations as presentation meaning. Section 6.9 owns the legal value topology. Section 6.4
+owns carrier separation.
 
 Material whose complete presentation cannot be resolved under those laws must be formed into a supported declared
 presentation before it reaches the Input boundary.
 
-### 4.3. Source Evidence Is Not Authority
+### 3.3. Source Evidence Is Not Authority
 
 A supported Java or Kotlin declaration may nominate Input evidence under the carrier-and-Contract separation law in
-Section 7.4. Section 7.11 owns the direct-carrier exception for a host form
+Section 6.4. Section 6.11 owns the direct-carrier exception for a host form
 that already realizes a legal Input presentation.
 
-A different frontend may resolve to the same Input Definition Meaning without making frontend syntax, host type
-identity, or source location part of that meaning. Section 5 owns the separate laws for Definition identity, semantic
-equality, and physical reuse.
+A different frontend may resolve to the same Input Definition Meaning. Frontend-specific source
+evidence does not become a determinant of that meaning. Section 4 owns the separate laws for
+Definition identity, semantic equality, and physical reuse.
 
-### 4.4. Input Definition and IDL Selection Binding
+## 4. Definition Establishment
 
-ADR-0071 separates Definition Candidate meaning from the IDL Binding Candidate that selects it. Input uses that common
-separation and does not introduce a second selection model.
-
-An Input Definition Candidate contains the complete resolved Input presentation meaning described in Section 5. An Input
-IDL Binding Candidate records one exact frontend selection occurrence that selects that candidate for the Input role.
-
-The selecting semantic context follows the Contract World authoring form already owned by the Interface and Policy laws.
-An Interface without Policy has one static Contract arrangement. An Interface with named Policies has a separate
-complete Contract World declaration under each exact Policy Definition Candidate. This ADR does not introduce a
-universal `ContractWorldRef` or another authority between those declarations and their selections.
-
-Under ADR-0054, a Policy Definition Candidate preserves the exact constituent Contract selections that determine its
-Contract World meaning. For Input, the pre-authority relation therefore reaches one exact Input Definition Candidate
-Reference. The relation does not establish the Input Definition and does not transfer Input authority into Policy. After
-the independently owned establishments complete, the authoritative Policy World preserves the corresponding exact
-established Contract relation under ADR-0054 and ADR-0063.
-
-Conceptually, each legal form expresses one exact Input selection relation.
-
-```text
-static Interface arrangement
-    Interaction A / Input
-        -> exact Input Definition Candidate D
-
-Policy Definition Candidate P
-    Interaction A / Input
-        -> exact Input Definition Candidate D
-```
-
-The Binding Candidate preserves only the semantic context required to identify that exact selection occurrence. It also
-preserves the exact Interaction, the Input role, and the exact target Input Definition Candidate Reference when those
-distinctions are not already carried structurally by typed HIR references. Physical encoding does not create a universal
-Binding record.
-
-One exact selection occurrence has one exact target. Duplicate declarations or competing targets for the same exact
-selection position are invalid; declaration order, source order, HID order, or another realization order does not
-arbitrate the conflict.
-
-Several legal Input IDL Binding Candidates may select the same Input Definition Candidate when they intentionally select
-the same complete Input Contract meaning. This permission does not make shared Input extraction a default authoring
-pattern.
-
-Different declared Policy Worlds may also select different Input Definition Candidates for the same Interaction. Those
-are different Contract World selections and may lawfully denote different Input Contracts. They do not merge merely
-because they occupy the same Interaction Input role.
-
-The Binding Candidate owns the selection relation. It does not copy the Input Definition payload. The selecting
-Interaction does not become an Input Definition determinant merely because it participates in the selection. A
-containing Policy context, when present, likewise does not transfer Policy authority into the Input Definition.
-
-This ADR does not decide how Governance exposes or acquires the applicable Policy World for an external caller, nor how
-a generated external API projects Policy-variable Input. Section 11 leaves that Governance and Interface-realization
-question open without restricting the Policy-owned selection law above.
-
-Operation remains the separate action or realization-callback Contract surface. Lowering owns any later relation from
-direct Input coordinates to Operation parameters or Fact coordinates.
-
-## 5. Definition Establishment
-
-### 5.1. Resolved Input Definition Candidate
+### 4.1. Resolved Input Definition Candidate
 
 ADR-0071 owns the common HIR boundary. Input specializes it through the Resolved HIR Candidate Protocol rather than
 creating an Input-specific second IR.
@@ -228,71 +145,54 @@ ADR-0071; consumer convenience does not weaken or redefine the Candidate. Candid
 Established Occurrence, which remains a separate ADR-0063 category when the owning law gives one application meaning of
 its own.
 
-### 5.2. Complete Input Candidate Meaning
+### 4.2. Complete Input Candidate Meaning
 
-The Input Definition Meaning is the complete Input-owned presentation meaning defined by this ADR, and the Candidate
-preserves the complete direct coordinate surface required by Sections 7.1 and 7.2. Section 7.6 owns
-presence and absence. Section 7.8 owns form-defining bounds. Section 7.9 owns the closed value-presentation algebra,
-nested constituent law, collection observation law, and closed Leaf-presentation boundary.
+The Resolved Input Definition Candidate must preserve the complete declared direct coordinate surface and every
+Input-visible distinction of its closed presentation meaning.
 
-A structural distinction enters Candidate meaning only when the owning Input law makes that distinction observable. The
-Candidate therefore retains the exact presentation family, constituent topology, presence law, form-defining
-cardinality, Presentation Sameness law, and any order-observation obligation required by Section 7.9. Membership
-uniqueness and Association key uniqueness are determined by the applicable constituent or key Presentation Sameness
-rather than by a separately selectable Input equivalence law. Compiler observation order, physical storage order, host
-traversal order, host equality, and backend hashing never substitute for those laws.
+Every meaning-determining semantic law or reference must be fully resolved before Visible HIR, through complete resolved
+meaning or an exact legally owned reference. Establishment cannot recover missing meaning through later source
+resolution,
+host behavior, or ambient state.
 
-When one of those laws depends on an exact semantic basis or another exact semantic reference, the Candidate retains
-enough resolved meaning or exact legally owned reference material to interpret that law before Visible HIR. It cannot
-postpone unresolved relation meaning to arbitrary later traversal, ambient platform state, or executable host behavior.
+Common Input rules need not be duplicated as Candidate payload when HIR formation or typed projections already enforce
+them.
 
-The Candidate contains candidate-specific meaning rather than a property bag of common invariants. A common Input rule
-should be enforced by HIR formation or its typed projection when that is sufficient.
-
-### 5.3. Information Retention and Loss
+### 4.3. Information Retention and Loss
 
 Frontend resolution may erase source or host details after their contribution to Input meaning has been resolved
-completely. Section 7.4 identifies carrier mechanics that do not survive into Contract meaning, and Section 7.11 applies
+completely. Section 6.4 identifies carrier mechanics that do not survive into Contract meaning, and Section 6.11 applies
 that rule to the zero-adapter path.
 
 An Input-visible distinction cannot be erased when Establishment or another legal HIR observer would then need to reopen
-source to recover it. Sections 7.1, 7.6, 7.8, and 7.9 own the semantic distinctions that must survive when applicable.
+source to recover it. Sections 6.1, 6.6, 6.8, and 6.9 own the semantic distinctions that must survive when applicable.
 
 Visible Input HIR cannot use a recovery placeholder in place of required meaning. It also cannot silently prune an
 undeclared semantic coordinate. If richer external material must be projected into the declared Input surface, that
 transformation happens before Input unless a future Input law explicitly owns it.
 
-Compiler mechanisms used to acquire, order, index, compare, or verify the source remain realization unless an owning
-Input law explicitly makes their result observable.
+Compiler processing of source evidence remains realization unless an owning Input law explicitly
+makes its result observable.
 
-### 5.4. Definition Meaning Determinants
+### 4.4. Definition Meaning Determinants
 
-Input Definition Meaning is determined only by Contract-visible material that this ADR makes part of the declared
-presentation. Under that rule, the direct coordinate surface is a determinant under Sections 7.1 and 7.2.
-Presentation-family and constituent meaning
-are determinants under Section 7.9 whenever changing them would change the Input-visible presentation. Presentation
-Sameness is determined by that complete Input-owned meaning. An ordering law or exact semantic basis is an additional
-determinant only when Section 7.9 makes that distinction part of the presentation meaning. An implementation or provider
-version is not a determinant merely because it realizes an unchanged semantic law.
+Input Definition Meaning is determined by its exact direct coordinate surface and complete Input-visible presentation
+meaning. Presentation Sameness follows from that meaning. Ordering laws and semantic bases are determinants only when
+they affect an Input-visible distinction.
 
-The surrounding selection context is not a determinant merely because it selects or can later consume the Input. The
-exact selecting context required by Section 4.4 remains Binding meaning. The selecting Interaction therefore does not
-enter Input Definition Meaning merely because it occupies that relation. When a Policy Definition Candidate provides the
-Contract World declaration context, that Policy context also remains outside Input Definition Meaning. The later
-Operation and Lowering targets remain outside Input Definition Meaning under Section 10.
+The selecting Interaction, IDL Binding, Policy World, downstream Contracts, source provenance, and host or compiler
+realization do not determine Input Definition Meaning. Changes to those contexts alter the Definition Meaning only when
+they change the exact resolved Input presentation meaning.
 
-Source provenance remains separate from semantic meaning under ADR-0071. Host identity and host behavior remain outside
-meaning under Section 7.4. Compiler lookup and reuse identities remain realization under ADR-0071 and ADR-0063. The
-common HIR law also excludes ambient compiler or process state from silently becoming an Input determinant.
+### 4.5. Definition Identity, Version, and Candidate Reference
 
-### 5.5. Definition Identity, Version, and Candidate Reference
+ADR-0053 governs Contract Version and Authority continuity. ADR-0063 governs authoritative Definition identity and
+Establishment.
 
-ADR-0053 owns Contract Authority continuity and Contract Version semantics. ADR-0063 owns authoritative Definition
-identity and Definition Reference. This section states only the Input specialization required by those common laws.
-
-One explicitly declared Input Contract denotes one Input Contract Authority. In the current Input model, one Input
-Authority owns one complete Input Definition for each Contract Version. Input therefore requires no additional
-Authority-Local Definition Coordinate.
+One explicitly declared Input Contract denotes one Input Authority. Each exact Input Authority and Contract Version
+identifies one complete Input Definition without an additional Authority-Local Definition Coordinate. Conflicting
+meanings
+cannot be established for the same pair, and equal meanings under different Authorities or Versions remain distinct.
 
 ```text
 exact Input Contract Authority
@@ -302,51 +202,35 @@ exact Contract Version
 exact versioned Input Definition
 ```
 
-The same exact Input Authority and Version cannot establish conflicting Input Definition Meaning. Equal Definition
-Meaning under different Authorities or different Versions does not merge those Definitions. ADR-0063 and ADR-0053 own
-the common conflict, Version, and history rules.
+Before Visible HIR, the authored Version Claim must resolve to an exact authority-scoped Resolved Version Candidate
+Coordinate. The `InputDefinitionCandidateRef` designates that coordinate together with the exact resolved Input
+Authority.
+It is distinct from the authoritative Definition Reference and cannot be promoted into one. Establishment creates the
+authoritative Version Binding and Definition Reference; Version selection is never implicit.
 
-Before Establishment, the corresponding Input Definition Candidate Reference designates the exact resolved Input
-Contract Authority coordinate together with the exact authority-scoped Resolved Version Candidate Coordinate. The Input
-reference kind is preserved by the typed HIR reference domain; it need not be repeated as a generic scalar tag.
+A change to Contract-visible Input presentation meaning under the same Authority requires a new Contract Version. Source
+or realization changes do not require a new Version when the complete resolved Input meaning remains unchanged.
 
-The authored Version Claim is resolved to the exact authority-scoped Resolved Version Candidate Coordinate before the
-Input Candidate becomes visible. That coordinate participates in exact versioned candidate designation rather than in
-the presentation payload described by Section 5.2. Establishment forms the authoritative Version Binding and Definition
-Reference under ADR-0063; a Candidate Reference is not cast or promoted into a Definition Reference. ADR-0053's
-prohibition on implicit Version selection applies unchanged.
+### 4.6. Semantic Equality, Presentation Sameness, Merge, and Physical Reuse
 
-A change to Contract-visible Input presentation meaning requires a new Contract Version when the user continues the same
-Authority. This includes a change to Presentation Sameness, an ordering law, or semantic basis material whose change can
-alter the resolved Input meaning. A frontend-only, carrier-only, library-only, or provider-only change that preserves
-the exact resolved Input meaning does not create a new Input meaning merely because realization changed. ADR-0053
-remains the owner of rename, replacement, continuity, and history rules. Current HIR identity is independently resolved
-from current semantic inputs; it does not inherit identity from a previous compiler generation under ADR-0071.
+Input Definition Meaning is equal only when all Input-owned meaning determinants are equal under their owning laws.
 
-### 5.6. Semantic Equality, Presentation Sameness, Merge, and Physical Reuse
+Presentation Sameness, defined in Section 6.9, compares legal values under one exact Input presentation meaning. It
+governs Membership uniqueness and Association key uniqueness without a separate user-selectable equality law.
 
-Input Definition Meaning equality is producer-owned. Two meanings are equal only when every Input-owned determinant is
-equal under the laws that define that meaning.
+Presentation Sameness does not determine Candidate Reference equality, Definition or Occurrence identity, Fact sameness,
+or Canonicalization equivalence. Equal Input meanings under different Authorities or Versions remain distinct.
 
-Section 7.9 separately defines Input Presentation Sameness for values judged under one exact presentation meaning.
-Membership uniqueness and Association key uniqueness use that same applicable Presentation Sameness law; Input does not
-introduce a second user-selectable equality or equivalence relation for those purposes. Presentation Sameness does not
-establish Candidate Reference equality, authoritative Definition identity, Occurrence identity, Fact sameness, or
-Canonicalization equivalence. ADR-0053 likewise keeps different Contract Versions distinct even when their
-contract-specific presentation meaning happens to compare equal.
+Input does not merge Definitions through structural equality. Multiple legal Binding Candidates may select the same
+already-identified Input Definition, but that selection is not a semantic merge. Physical reuse likewise cannot
+establish
+semantic equality or Contract identity.
 
-Input defines no implicit semantic merge from structural equality. Section 4.4 covers the different case in which
-several Binding Candidates deliberately select one already-identified Input Definition.
+### 4.7. Definition Establishment Judgment and Result
 
-Physical reuse remains available to the compiler. ADR-0071 and ADR-0063 govern the rule that caching, hashing,
-interning, or representation sharing cannot create semantic equality or Contract identity.
-
-### 5.7. Definition Establishment Judgment and Result
-
-An Input Definition judgment legally enters only after the complete Input Definition Candidate is available as valid
-Visible HIR. The judgment consumes the Input Definition Candidate meaning through the Resolved Input HIR Candidate
-Protocol defined in Section 5.8 together with the exact authoritative Version prerequisite permitted by ADR-0053 and
-ADR-0063. The Input IDL Binding Candidate is not a Definition Establishment input.
+An Input Definition judgment may enter only when its complete Candidate is available as valid Visible HIR. It consumes
+the Candidate meaning through the Input HIR Protocol and the exact authoritative Version prerequisite under ADR-0053 and
+ADR-0063. The Input IDL Binding Candidate is not an input to this judgment.
 
 The judgment has two Input-owned semantic results:
 
@@ -360,25 +244,23 @@ complete resolved Candidate
     -> Input Definition Refusal
 ```
 
-The judgment applies the already-resolved Presentation Sameness, collection uniqueness, order-observation law, and any
-exact semantic-law reference required by Section 7.9. It does not discover those meanings by calling host equality, a
-comparator, a provider, or another runtime behavior.
+The judgment applies the exact presentation laws already resolved in the Candidate. It cannot obtain missing meaning
+from host behavior or ambient state.
 
-Failure to form valid Visible HIR is different. Unresolved source, recovery material, poison, a dangling semantic
-reference, or another HIR-seal failure prevents the Input Definition judgment from legally entering. Such a case is a
-compiler-side unsuccessful result owned by the applicable frontend or HIR judgment rather than an Input Definition
-Refusal. The exact common compiler-result representation remains outside this ADR and currently depends on Proposed
+A Candidate that fails HIR sealing cannot enter this judgment. Such failure belongs to the responsible compiler
+judgment,
+not to Input Definition Refusal. The common unsuccessful-result representation remains a dependency on Proposed
 ADR-0074.
 
-Successful Establishment preserves the exact Definition Meaning and identity relations required by ADR-0063. Compiler
-acquisition, planning, storage, visibility, and code generation may use replaceable representations, but none of those
-representations creates a second Input authority path.
+Successful Establishment preserves the complete Input Definition Meaning and its authoritative identity under ADR-0063.
+Compiler representation does not create another Input authority path.
 
-### 5.8. Resolved Input HIR Candidate Protocol
+### 4.8. Resolved Input HIR Candidate Protocol
 
-Input specializes the common ADR-0071 Resolved HIR Candidate Protocol without creating another IR, semantic stage,
-serialization layer, or mandatory copy. The Input-facing Protocol contains these typed semantic reference domains when
-that reference is required by the legal observation:
+Input specializes the ADR-0071 Resolved HIR Candidate Protocol without introducing another IR, semantic stage, or
+mandatory physical copy.
+
+The Protocol exposes these typed reference domains when required by a legal observation:
 
 ```text
 ContractInterfaceRef
@@ -388,14 +270,11 @@ InputIDLBindingCandidateRef
 ResolvedInputCoordinateRef
 ```
 
-`ResolvedInputCoordinateRef` identifies one direct Input coordinate under one exact Input Definition Candidate. Its
-semantic form is the exact Candidate Reference plus the exact nominal direct coordinate defined by Section 7.2. A source
-ordinal, constructor position, HIR row, dense handle, table offset, or storage address cannot substitute for either
-part.
-Nested members, alternatives, elements, keys, and values do not automatically enter this direct-coordinate reference
-domain.
+`ResolvedInputCoordinateRef` identifies one direct Input coordinate through its exact `InputDefinitionCandidateRef` and
+nominal coordinate identity. Source positions, physical storage, and nested presentation constituents do not determine
+that reference.
 
-The complete Input Protocol catalog is:
+The Input Protocol catalog is:
 
 ```text
 Input Definition Candidate Projection
@@ -415,78 +294,74 @@ Fine-Grained Semantic Projections
     Input Binding Target Projection
 ```
 
-The **Input Candidate Coordinate Surface Projection** is complete for the direct externally addressable coordinate
-surface
-of one exact Input Definition Candidate. It preserves each direct nominal coordinate and the complete presentation
-meaning required to interpret that coordinate.
+The **Input Candidate Coordinate Surface Projection** exposes the complete direct coordinate surface of one exact
+Candidate, including each nominal coordinate and its resolved presentation meaning.
 
-The **Input Candidate Presentation Law Projection** is complete for the presentation topology owned by that Candidate,
-including presence and absence, form-defining cardinality or extent, Presentation Sameness, collection uniqueness,
-observable collection order, closed Leaf laws, and exact semantic-law references when those references determine Input
+The **Input Candidate Presentation Law Projection** exposes the complete Candidate-owned presentation topology and its
+applicable laws:
+
+- presence and absence;
+- form-defining cardinality or extent;
+- Presentation Sameness and collection uniqueness;
+- observable collection order;
+- closed Leaf laws; and
+- exact semantic-law references when they determine Input meaning.
+
+The **Input Binding Target Projection** exposes one exact Input selection occurrence and its target Input Definition
+Candidate without copying the Definition payload.
+
+Each projection is complete only for its declared observation. A fine-grained projection compares only that exact
+observation; equal projection payload does not merge Candidate References, Binding Candidate References, or
+authoritative
+Definitions. Omitted material is not semantic absence.
+
+Logical projections do not require separate physical representations. They may share immutable backing or physical reads
+while preserving their distinct semantic observation boundaries.
+
+### 4.9. Input HIR Seal and Establishment Handoff
+
+An Input Definition Candidate may become Visible HIR only when:
+
+- its exact Input Authority and Resolved Version Candidate Coordinate are known;
+- its complete Definition Meaning and direct coordinate surface are closed;
+- every required semantic reference is exact; and
+- its presentation topology is complete under Section 6.9.
+
+The corresponding Input Binding Candidate must resolve the selecting context, Interaction, Input role, and exact target
+Candidate. The same selection occurrence cannot have competing targets.
+
+Recovery or poison material, unresolved references, or incomplete meaning prevent HIR sealing. HIR sealing verifies
+resolution and
+completeness, not whether the Candidate satisfies the Input Definition law. A sealed Candidate may still receive Input
+Definition Refusal under Section 4.7.
+
+Establishment may use only legal Resolved HIR observations, authoritative prerequisites permitted by the Input identity
+law, and its explicit judgment input. It cannot reconstruct missing Candidate meaning from source, host behavior,
+compiler storage, or ambient state.
+
+ADR-0071 governs HIR lifecycle, generation validity, coherence, and Protocol evolution. An unknown required Input
+semantic extension fails closed unless a permitted compatible projection or validated migration preserves the required
+Input observation.
+
+### 4.10. Required Basis and Applicability Boundary
+
+Input owns no ADR-0063 Required Basis Law, Basis Resolution, Basis Binding, Complete Basis, separate Input Applicability
+judgment, Input arbitration, or Input Composition judgment. These categories are `NOT-APPLICABLE` to the current Input
+law.
+
+An exact semantic law or reference may still determine Input presentation meaning. When required, it is part of the
+complete Input Definition Meaning and must be resolved before Visible HIR. It is not a deferred Required Basis to be
+discovered at occurrence time.
+
+Selection of an Established Input Definition for an Interaction belongs to Interface, Policy, and Governance law. Input
+does not reselect the Contract World or incorporate independent governing context into its Definition or Occurrence
 meaning.
 
-The **Input Binding Target Projection** is complete for one exact Input selection occurrence and its one exact target
-Input Definition Candidate. It does not copy the Definition Candidate payload.
+Meaning-determining semantic references follow the ADR-0063 prerequisite law. Input provides no fixed-point exception:
+cyclic semantic Establishment dependencies remain illegal. Compiler query or analysis cycles do not themselves
+constitute such dependencies.
 
-Projection semantics are producer-owned. Full Candidate semantic equality follows Section 5.6. A fine-grained projection
-compares only the exact Input observation for which that projection is declared complete. Equal projection payload does
-not merge Candidate References, Binding Candidate References, or later authoritative Definitions. Omitted material is
-not
-semantic absence.
-
-One logical projection does not imply one object, query, cache entry, table, allocation, or physical range. Several
-projections may share immutable backing, and one bulk physical read may serve several legal projections while preserving
-their distinct semantic observation boundaries.
-
-### 5.9. Input HIR Seal and Establishment Handoff
-
-Visible Input HIR must already satisfy the common ADR-0071 resolution and visibility laws. For Input specifically, a
-Definition Candidate cannot become visible until the exact Input authority and Resolved Version Candidate Coordinate are
-known, its complete Definition Meaning and direct coordinate surface are closed, every required semantic reference is
-exact, and the presentation topology required by Section 7.9 is complete.
-
-The corresponding Input Binding Candidate must identify its selecting context, Interaction, Input role, and exact target
-Candidate without a competing target for the same exact selection occurrence. Recovery nodes, poison, unresolved
-placeholders, and incomplete semantic material are not legal Input HIR.
-
-HIR seal verification does not decide whether the resolved Candidate is a legal Input Definition. A fully resolved,
-coherent Candidate may pass the HIR seal and still receive Input Definition Refusal under Section 5.7. Conversely,
-material that cannot satisfy the HIR seal does not enter that Input judgment.
-
-Establishment may derive Input authority only from legal Resolved HIR observations, separately Established authoritative
-prerequisites admitted by the Input identity law, and the explicit Input judgment input. It must not reopen authored
-source, traverse host topology, consult query or cache topology, infer meaning from physical HIR containment, or obtain
-an ambient mutable value to complete Candidate meaning.
-
-Input adds no separate HIR lifecycle or Protocol-evolution model. ADR-0071's visibility, generation, stale-reference,
-coherence, extension, migration, and compatibility laws apply unchanged. An unknown required Input semantic extension
-fails closed unless ADR-0071 permits a compatible projection or validated migration that preserves the required Input
-observation.
-
-### 5.10. Required Basis and Applicability Boundary
-
-Input Definition meaning does not own an ADR-0063 Required Basis Law. Input also does not own Basis Resolution, Basis
-Binding, Complete Basis, a separate Input Applicability judgment, Input arbitration, or a separate Input Composition
-judgment. Those checklist categories are `NOT-APPLICABLE` for the current Input law.
-
-An exact semantic law or semantic reference may still determine a closed Leaf, ordering, or other Input presentation
-law.
-When it does, that exact law is direct Input Definition meaning and is preserved by the Candidate under Sections 5.2 and
-5.4. It is not a request to find an Established Basis later at occurrence time.
-
-The established Contract World relation that selects the exact Input Definition for one Interaction is also not an Input
-Basis or Input Applicability result. Interface, Policy, and Governance retain ownership of selection and governing
-applicability. Once that relation supplies the exact Established Input Definition, the Input occurrence judgment does
-not
-reselect the Policy World or copy Policy, Governance, State, Budget, Capacity, or an ambient run context into Input
-meaning merely because those values exist elsewhere in the machine.
-
-Any exact semantic-law reference that determines Input Definition meaning participates in the common ADR-0063 semantic
-prerequisite law. Input does not introduce a fixed-point or cyclic establishment exception merely because the referenced
-law is represented compactly in HIR; a semantic dependency cycle remains illegal. Compiler query or analysis cycles do
-not become Input dependency for that reason.
-
-### 5.11. Established Input Definition Material
+### 4.11. Established Input Definition Material
 
 Successful Definition Establishment produces one complete Established Input Definition. Its Input-owned semantic surface
 contains:
@@ -500,33 +375,34 @@ Established Input Definition
     direct established relation to each direct Input coordinate
 ```
 
-The complete Definition Meaning is the same source-owned meaning closed by Sections 5 and 7: the direct coordinate
-surface, presentation topology, presence and absence, form-defining cardinality or extent, Presentation Sameness,
-collection uniqueness, observable collection order when owned, closed Leaf laws, and exact semantic-law references when
-those references determine the presentation.
+The complete Definition Meaning is the same source-owned meaning closed by Sections 4 and 6. It
+includes:
 
-Each direct coordinate may be observed through an `EstablishedInputCoordinateRef`. Its semantic form is the exact
-`EstablishedInputDefinitionRef` plus the exact nominal direct Input coordinate. The compiler may encode that reference
-with a dense handle, packed value, slab row, or another current representation, but the encoding is not the coordinate
+- the direct coordinate surface and presentation topology;
+- presence and absence;
+- form-defining cardinality or extent;
+- Presentation Sameness and collection uniqueness;
+- observable collection order when owned;
+- closed Leaf laws; and
+- exact semantic-law references when they determine the presentation.
+
+Each direct coordinate may be observed through an `EstablishedInputCoordinateRef`. Its semantic form
+is the exact `EstablishedInputDefinitionRef` plus the exact nominal direct Input coordinate. The
+compiler may use a replaceable physical encoding for that reference. The encoding is not coordinate
 identity and cannot make nested constituents into direct Input coordinates.
 
 Input establishes no third Input-specific material family beside Definition and Occurrence material. Selection bindings,
 world material, Basis material, and application-context relations remain owned by their respective authorities or are
 not semantic material at all.
 
-## 6. Invocation Boundary
+## 5. Invocation Boundary
 
 For one applicable Interaction, the established Contract World relation identifies the exact Established Input
 Definition
 that governs that Interaction's Input boundary. Invocation does not query or reinterpret the pre-authority Input IDL
 Binding Candidate.
 
-An Interface without Policy obtains the relation from its static Contract arrangement. When Policy participates, the
-applicable established Policy World supplies the corresponding relation under the Policy and Governance laws. Section
-4.4 permits different declared Policy Worlds to reach different Input Definitions for the same Interaction. Input does
-not own that selection.
-
-### 6.1. Occurrence-Time Input Presentation Judgment
+### 5.1. Occurrence-Time Input Presentation Judgment
 
 Input has independent occurrence meaning. One Input semantic application is one fresh entry of actual boundary material
 into the Input judgment for one exact Established Input Definition at one exact applicable Interaction Input boundary.
@@ -557,12 +433,12 @@ presentation law. Input Establishment establishes `Refused` as the result of tha
 no Input-authoritative presentation relation is established from the malformed or incompatible material, so no later
 inbound authority is reached.
 
-The judgment includes the presentation-level uniqueness and relation obligations owned by Section 7.9 when they apply,
-but it does not decide whether an otherwise correctly presented value may continue. Section 7.8 defines Input's side of
+The judgment includes the presentation-level uniqueness and relation obligations owned by Section 6.9 when they apply,
+but it does not decide whether an otherwise correctly presented value may continue. Section 6.8 defines Input's side of
 that boundary, while Admission owns the continuation judgment under its own Contract.
 
-Carrier formation and the separation between carrier mechanics and Contract meaning follow Section 7.4. Immutability
-follows Section 7.3. Input does not repair, snapshot, normalize, or reinterpret material that reaches the boundary in a
+Carrier formation and the separation between carrier mechanics and Contract meaning follow Section 6.4. Immutability
+follows Section 6.3. Input does not repair, snapshot, normalize, or reinterpret material that reaches the boundary in a
 form those laws reject.
 
 Definition-time verification establishes that a declaration can produce a legal Input Definition. It does not authorize
@@ -570,12 +446,12 @@ arbitrary runtime material merely because the host type appears compatible. Occu
 Established Input Definition reached through the applicable established Contract relation; it does not reconstruct that
 definition from source, HIR Binding material, graph state, cache state, or backend representation.
 
-### 6.2. Input Occurrence Identity and Fresh Re-Entry
+### 5.2. Input Occurrence Identity and Fresh Re-Entry
 
-Every legally entered Input application has one typed `EstablishedInputOccurrenceRef` identifying that exact semantic
-application. Occurrence identity is nominal application identity owned by Input. It is not computed from presentation
-value equality and is not supplied by a JVM invocation object, compiler query, thread, timestamp, cache entry, object
-identity, presentation hash, or another realization coordinate.
+Every legally entered Input application has one typed `EstablishedInputOccurrenceRef` identifying
+that exact semantic application. Occurrence identity is nominal application identity owned by Input.
+Neither presentation value equality nor a physical execution or storage coordinate supplies that
+identity.
 
 The same Definition and the same Presentation may therefore participate in several distinct Input Occurrences.
 
@@ -601,11 +477,11 @@ speculative, retried compiler work may converge on one semantic occurrence when 
 application. This is different from two fresh boundary entries, which remain distinct occurrences even when every
 presentation distinction is equal.
 
-### 6.3. Established Input Occurrence Material
+### 5.3. Established Input Occurrence Material
 
-A legally entered Input judgment establishes one complete occurrence-specific semantic result under ADR-0063. This
-material is a set of exact semantic relations owned by Input. It does not require an occurrence object, wrapper, record,
-allocation, or storage unit.
+A legally entered Input judgment establishes one complete occurrence-specific semantic result under
+ADR-0063. This material consists of exact Input-owned semantic relations. It does not require a
+dedicated physical object.
 
 For a successful presentation, the established relations are:
 
@@ -650,7 +526,7 @@ Input occurrence result relation
 ```
 
 These relations preserve only direct Input-owned attribution that actually determines the application meaning. The
-current Input law has no Required Basis or Input-owned Applicable Context under Section 5.10, so Policy World,
+current Input law has no Required Basis or Input-owned Applicable Context under Section 4.10, so Policy World,
 Governance Binding, State, Budget, Capacity, run state, and the surrounding transitive semantic world do not become
 occurrence-specific Input relations.
 
@@ -659,16 +535,22 @@ one Input semantic application occurs at one exact Interaction Input boundary. A
 is unnecessary: the reference domain already identifies an Input Occurrence and the Interaction relation identifies the
 boundary to which that application belongs.
 
-A `Refused` application establishes no relation from its `EstablishedInputOccurrenceRef` to the raw mutable carrier,
-malformed partial presentation, thrown exception, or runtime object as Input-authoritative meaning. Separate Diagnostic
-or provenance products may preserve permitted evidence under their own laws without turning that evidence into Input
-meaning.
+A `Refused` application establishes no Input-authoritative relation from its
+`EstablishedInputOccurrenceRef` to rejected material, runtime exceptions, or the runtime carrier.
+Separate Diagnostic or provenance products may preserve permitted evidence under their own laws
+without turning that evidence into Input meaning.
 
-Once established, these occurrence-specific semantic relations are immutable. A later Version, Policy, Governance,
-State, world replacement, retry, or compiler generation may affect a later application, but it cannot rewrite the
-meaning already established for the earlier Input Occurrence Reference.
+Once established, these occurrence-specific semantic relations are immutable. A later application may
+be affected by:
 
-The producer-owned Established Input Semantic Protocol defined in Sections 10.2 through 10.4 is the legal observation
+- a later Version, Policy, Governance, or State;
+- Contract World replacement;
+- retry; or
+- a later compiler generation.
+
+None of these can rewrite the meaning already established for the earlier Input Occurrence Reference.
+
+The producer-owned Established Input Semantic Protocol defined in Sections 9.2 through 9.4 is the legal observation
 boundary for these relations. Consumers do not obtain occurrence meaning by dereferencing an occurrence object or by
 traversing compiler storage topology.
 
@@ -677,40 +559,27 @@ the declared Contract relations that own those changes. The material eventually 
 preserve the meaning lawfully derived through the complete declared inbound pipeline. Undeclared substitution, mutation,
 reinterpretation, or introduction of different meaning is not a valid realization.
 
-The compiler and runtime must prove or check the required integrity at the boundaries where the applicable law cannot be
-guaranteed otherwise. This obligation does not require one generated reader, wrapper, token, or mandatory recheck
-strategy. Equivalent realization may use static proof, generated checks, controlled immutable material, specialized
-invocation, or another mechanism that preserves the same Contract result.
+The compiler and runtime must prove or check the required integrity at the boundaries where the
+applicable law cannot be guaranteed otherwise. This obligation does not prescribe a particular
+generated access or recheck strategy. Any realization must preserve the same Contract result, whether
+it proves the obligation statically or checks it at the required boundary.
 
 Policy, Governance, Budget, Capacity, and other independently applicable authorities retain their own results. Their
 negative or stopping results do not become Input Refusal and do not create an Input Occurrence when they prevent the
 Input judgment from legally entering.
 
-## 7. V1 Ratifiability Law
+## 6. V1 Ratifiability Law
 
-The V1 Input boundary accepts only presentation meaning that can be resolved completely before authority is granted. The
-resulting surface must be finite, directly inspectable, immutable at the boundary, and closed against hidden host
-behavior.
+V1 Input ratifies only finite, closed, directly inspectable presentation meaning that is fully resolved before Visible
+HIR. Actual Input material must already be immutable when it enters the Input boundary.
 
-The frontend may use a selected host declaration as evidence when that declaration already expresses the required Input
-presentation. This avoids duplicate carrier authoring for one Contract; it does not create a reuse rule between
-different Interactions.
+Ratification cannot depend on implicit interpretation, executable host behavior, or live external state. A selected host
+declaration may provide evidence, but selection alone does not establish Input authority.
 
-Ratification rejects three kinds of hidden meaning. Hidden authority occurs when implementation behavior is allowed to
-decide Contract meaning; Sections 7.3 through 7.5 close that route. Hidden choice occurs when one source form admits
-more than one Contract interpretation and the compiler selects one implicitly; Sections 7.1, 7.2, and 7.6 close that
-route. Hidden movement occurs when observation performs behavior or depends on a live external capability; Sections 7.7
-and 7.12 close that route.
-
-Slot selection therefore nominates a candidate but does not guarantee ratification. Sections 5.7 and 9 distinguish
-compiler-side non-entry, Input Definition Refusal, and an entered Input Occurrence whose result is Refused.
-
-The following sections define the conditions that an Input source candidate must satisfy before it is ratifiable.
-
-### 7.1. Coordinate Closure
+### 6.1. Coordinate Closure
 
 One exact Input IDL selection occurrence identifies the source material that is refined into its target Input Definition
-Candidate under ADR-0071 and ADR-0047. Section 4.4 owns the exact selecting context.
+Candidate under ADR-0047 and ADR-0071.
 
 Input does not infer, broaden, replace, merge, or arbitrate that selection. One exact selection occurrence must resolve
 to one exact target before the resulting Binding Candidate can become Visible HIR.
@@ -725,45 +594,41 @@ The closed Input surface does not silently accept or prune an undeclared semanti
 additional transport- or application-level structure must be projected into the declared Input presentation before this
 boundary unless a future Input law explicitly owns that projection.
 
-### 7.2. Direct Coordinate Identity and Meaning
+### 6.2. Direct Coordinate Identity and Meaning
 
-Every direct Input coordinate has one exact nominal identity within its Input Definition and resolves to one complete
-and closed presentation meaning. The resolved nominal coordinate, not its source declaration ordinal, constructor
-position, record-component position,
-HIR row, table position, storage offset, or traversal order, identifies that direct coordinate. Structural resemblance
-also does not create coordinate identity.
+Every direct Input coordinate has one exact nominal identity within its Input Definition and resolves
+to one complete and closed presentation meaning. The resolved nominal coordinate identifies that
+direct coordinate. Source declaration positions, traversal order, and physical storage coordinates do
+not. Structural resemblance also does not create coordinate identity.
 
 Changing a direct coordinate's nominal identity changes Input presentation meaning. Reordering the declarations of the
 same nominal coordinates does not change Input meaning unless another explicitly declared Input law independently makes
 an order observable.
 
-Before Establishment, the HIR Protocol may refer to one direct coordinate through `ResolvedInputCoordinateRef`. That
-reference is semantically anchored by the exact `InputDefinitionCandidateRef` and the exact nominal direct coordinate;
-it is not the source ordinal, JVM member identity, dense handle, or physical address. Section 5.8 owns its Protocol
-exposure.
+Before Establishment, the HIR Protocol may refer to one direct coordinate through
+`ResolvedInputCoordinateRef`. That reference is semantically anchored by the exact
+`InputDefinitionCandidateRef` and the exact nominal direct coordinate. Source or physical coordinates
+cannot define it. Section 4.8 owns its Protocol exposure.
 
-Nested presentation members may have Input-local constituent identity under Section 7.9. They do not thereby become
+Nested presentation members may have Input-local constituent identity under Section 6.9. They do not thereby become
 direct Input coordinates, cross-authority coordinate references, or Lowering source coordinates.
 
-Because Input authority depends on the resolved coordinate meaning rather than the host type used to present it, a
-frontend may admit a source form only when it preserves every distinction required by the declared Input meaning.
-Primitive types, strings, enum forms, nullable forms, and other host-language categories are frontend evidence, not
-Input Contract vocabulary by themselves.
+Because Input authority depends on the resolved coordinate meaning rather than the host type used to
+present it, a frontend may admit a source form only when it preserves every distinction required by
+the declared Input meaning. Host-language type categories are frontend evidence, not Input Contract
+vocabulary by themselves.
 
-### 7.3. Explicit Immutability
+### 6.3. Explicit Immutability
 
-The presentation judged at an Interaction's Input boundary is immutable, and material participating in an Input
-occurrence must already provide the complete declared presentation without contract-visible mutation when it reaches
-that boundary. Input judges this already-formed presentation rather than creating an admissible Input by copying,
-snapshotting, freezing, repairing, normalizing, or otherwise transforming mutable incoming material. Construction,
-adaptation, copying, or other formation may occur before the Input boundary, where it remains outside Input authority.
+The complete Input presentation, including all nested constituents, must already be formed and immutable when it enters
+the Input boundary. Input judges that presentation; it does not make mutable material legal through copying,
+snapshotting,
+freezing, or transformation. Such formation must occur before the boundary.
 
-The immutability obligation covers the complete declared Input presentation, including every constituent value of a
-legal collection or bounded presentation. The presentation cannot depend on mutable backing state, externally mutable
-aliases, live views, lazy materialization, proxy activation, or framework lifecycle. Host-language immutability
-mechanisms may provide evidence to a frontend or realization, but they do not define the Contract obligation.
+The presentation must not depend on mutable backing state, external aliases, or lazy materialization. Host immutability
+mechanisms may provide evidence, but they do not define the Contract obligation.
 
-### 7.4. Carrier and Contract Separation
+### 6.4. Carrier and Contract Separation
 
 A host carrier may express Input evidence without owning the resulting Input meaning. Its runtime identity and storage
 are realization. The mechanisms that constructed it are also realization,
@@ -774,22 +639,19 @@ already-declared evidence, but observing that accessor does not give its impleme
 or generated access may acquire the same evidence; neither mechanism defines the Contract surface.
 
 A frontend may therefore interpret a supported host form only as evidence for meaning that the Input law already
-defines. Section 7.11 covers the case where the same host declaration also serves as the direct runtime carrier.
+defines. Section 6.11 covers the case where the same host declaration also serves as the direct runtime carrier.
 
-### 7.5. Inheritance and Polymorphism Boundary
+### 6.5. Inheritance and Polymorphism Boundary
 
-Input meaning must be complete in the selected Input definition, so inheritance does not supply missing Input meaning.
-The same rule applies when a runtime subtype or executable dispatch
-would be needed to discover the presentation after the definition was established.
+ADR-0079 governs source-language inheritance and generic type resolution. A frontend may use fully resolved inherited
+member information as evidence for an explicitly declared Input presentation only when the applicable Input carrier and
+closure laws permit it. Host inheritance does not select Input coordinates or add Contract meaning.
 
-A frontend may admit a host source only when it can resolve the complete Input presentation without depending on
-inherited semantic material or runtime implementation choice. Host interfaces and default behavior remain evidence at
-most; they do not enlarge the authoritative Input definition.
+The selected Input Definition must contain its complete presentation independently of host inheritance or runtime
+implementation choice. At invocation, runtime subtype discovery or dispatch cannot add, select, or reinterpret Input
+coordinates or alternatives.
 
-At invocation time, the actual material is judged against that already-established definition. Runtime realization
-cannot add or reinterpret coordinates through a more specific implementation type.
-
-### 7.6. Presence, Absence, and Finite Choice
+### 6.6. Presence, Absence, and Finite Choice
 
 Input may declare presence, absence, and finite alternatives as explicit presentation distinctions, but it must
 preserve every distinction required by the declared presentation meaning and cannot silently collapse distinct
@@ -800,9 +662,9 @@ nullable type, optional wrapper, sentinel value, or another source representatio
 itself. A frontend may map such a source form to declared Input meaning only when that mapping is complete and
 unambiguous.
 
-Input does not apply defaults. A constructor default, language default, factory default, serializer default, or another
-creation-time default remains pre-boundary formation and does not become Input authority. Input judges the actual
-presentation supplied at its boundary.
+Input does not apply defaults. Source-language and construction-time defaults remain pre-boundary
+formation; they do not become Input authority. Input judges the actual presentation supplied at its
+boundary.
 
 If omission is legal, absence must be an explicit declared alternative. If a concrete coordinate is required, the
 supplied presentation must already contain it.
@@ -813,7 +675,7 @@ subtype discovery or implementation-specific behavior.
 
 Frontend or backend representation of those alternatives remains realization.
 
-### 7.7. Opaque Values and External Denotation
+### 6.7. Opaque Values and External Denotation
 
 Host object-reference identity does not provide Input meaning or semantic identity. An Input coordinate may nevertheless
 carry a declared immutable value that denotes something outside the Input presentation. Input
@@ -823,38 +685,28 @@ denoted target is not established by Input.
 A reference-valued Input coordinate does not by itself create a Definition Reference, Occurrence Reference, object
 relation, lookup obligation, or dereference authority under ADR-0063.
 
-An opaque value is admissible only when its complete Input-visible presentation distinctions are fixed by an exact Input
-presentation law. Opaque treatment does not permit Input to adopt an arbitrary user object while ignoring its behavior,
-mutability, lifecycle, inheritance, graph structure, or runtime identity.
+An opaque value is admissible only when its complete Input-visible presentation distinctions are
+fixed by an exact Input presentation law. Opaque treatment cannot admit an arbitrary user object by
+disregarding its behavior, mutability, identity, or lifecycle.
 
-A frontend may map a supported host type to that already-defined presentation meaning only when the mapping is complete.
-The host type does not define the Input law, and its methods, equality, hashing, parsing, normalization, serialization
-behavior, provider access, or other operations do not become Input meaning merely because they are associated with the
-carrier.
+A frontend may map a supported host type to that already-defined presentation meaning only when the
+mapping is complete. The host type does not define the Input law. Its operations do not become Input
+meaning merely because they are associated with the carrier.
 
 Input does not establish canonical identity or normalized meaning for an opaque value. Those meanings remain with the
 Contract that owns them.
 
-### 7.8. Presentation-Only Authority
+### 6.8. Presentation-Only Authority
 
-Input owns only the distinctions required to determine whether the actual material supplied at the Input boundary
-realizes the declared presentation shape. Sections 7.1, 7.2, 7.6, and 7.9 define those presentation distinctions; this
-section adds no second shape vocabulary and only fixes the boundary between presentation authority and later Contract
-judgment.
+Input judges whether boundary material realizes its declared presentation. A structural bound belongs to Input when it
+defines the required presentation form, such as extent or cardinality. Conditions governing whether correctly presented
+values may continue belong to Admission or another owning authority.
 
-A presentation bound constrains the form in which Input material may be presented. It does not decide whether an
-otherwise correctly presented value may continue. Structural extent, cardinality, or another bound may therefore belong
-to Input when that bound is part of the declared presentation form; value-domain, business, Policy, or
-operation-specific admissibility conditions do not.
+Input establishes no authority over a target denoted by a presented value. It also does not establish downstream
+Contract
+meaning, governing selection, or machine movement. Those judgments remain with their respective authorities.
 
-A value may denote something outside the Input presentation, but Input owns only the declared presentation of that value
-and does not acquire authority over the denoted target. It also does not decide whether a correctly presented value may
-continue; Admission owns that judgment. Input does not establish canonical identity, Fact or core meaning, State or
-Transition legality, Policy or Governance selection, Publication authority, Output meaning, or machine movement.
-Those meanings remain with their owning Contract
-authorities or, for machine movement, the State-Machine axis.
-
-### 7.9. V1 Presentation Algebra
+### 6.9. V1 Presentation Algebra
 
 Input uses a small closed value-presentation algebra. These semantic families describe Contract-visible value topology.
 They are not Java or Kotlin classes, and they do not prescribe one generated host API form.
@@ -875,12 +727,12 @@ Membership
 Association
 ```
 
-Their exact authoring tokens and physical HIR encoding remain open under Section 11.
+Their exact authoring tokens and physical HIR encoding remain open under Section 10.
 
 A **Leaf** is a complete presentation meaning that Input does not further decompose into constituent topology. Its
 complete legal domain, Input-visible distinctions, and Presentation Sameness are fixed by the Kontrakt-owned Input law.
 When that meaning genuinely consumes versioned or external semantic data, the exact meaning-determining semantic law
-material must be explicitly ratified and closed rather than supplied by ambient provider state. Section 5.10
+material must be explicitly ratified and closed rather than supplied by ambient provider state. Section 4.10
 distinguishes
 that Definition determinant from ADR-0063 Required Basis.
 
@@ -904,19 +756,20 @@ An **Association** contains zero or more key/value associations. Keys are unique
 Presentation Sameness law. Key and value are presentation constituents rather than Input coordinate identities.
 Association itself has no intrinsic entry position.
 
-#### 7.9.1. Presentation Sameness and Input Uniqueness
+#### 6.9.1. Presentation Sameness and Input Uniqueness
 
-Every exact Input presentation meaning defines **Presentation Sameness** from the complete set of distinctions that
-Input owns for that presentation. Presentation Sameness asks whether two legal values preserve the same Input-visible
-meaning. It is not JVM `equals`, Candidate semantic equality, Definition identity, Occurrence identity, Fact sameness,
-Canonicalization equivalence, HID equality, serialized-byte equality, or backend representation equality.
+Every exact Input presentation meaning defines **Presentation Sameness** from the complete set of
+distinctions that Input owns for that presentation. Presentation Sameness asks whether two legal
+values preserve the same Input-visible meaning. It remains distinct from Host equality, Candidate
+semantic equality, Definition and Occurrence identity, Fact sameness, Canonicalization equivalence,
+HID equality, and physical representation equality.
 
-Presentation Sameness is intrinsic to the resolved presentation meaning and is fixed by the Kontrakt-owned Input
-semantic law. It is not selected by the user through a semantic option, comparator, callback, collation, normalization
-policy, or equality strategy. A Leaf obtains its sameness from its exact resolved presentation meaning. Named Product,
-Closed Tagged Choice, and Sequence lift constituent Presentation Sameness through their declared structure. Membership
-and Association preserve the exact presented constituent or key representatives and every Input-visible order
-distinction.
+Presentation Sameness is intrinsic to the resolved presentation meaning and is fixed by the
+Kontrakt-owned Input semantic law. V1 provides no user-selectable Input equality, collation,
+normalization, or equivalence strategy. A Leaf obtains its sameness from its exact resolved
+presentation meaning. Named Product, Closed Tagged Choice, and Sequence lift constituent Presentation
+Sameness through their declared structure. Membership and Association preserve the exact presented
+constituent or key representatives and every Input-visible order distinction.
 
 For every legal complete value in one exact presentation domain, Presentation Sameness must be deterministic, reflexive,
 symmetric, and transitive. Missing, unresolved, malformed, unsupported, or otherwise illegal material is outside that
@@ -933,12 +786,12 @@ are the same under constituent Presentation Sameness cannot coexist as distinct 
 are the same under key Presentation Sameness cannot coexist as distinct Association keys. Input does not choose
 first-wins, last-wins, silent deduplication, or a representative.
 
-A JVM `equals` method, Kotlin equality behavior, comparator object, lambda, callback, object identity, hash function,
-collation, normalization routine, ambient locale, current provider state, or backend lookup structure cannot redefine
-Input Presentation Sameness or collection uniqueness. A host carrier is usable only when the supported boundary mapping
-can preserve every Input distinction required by the Kontrakt-owned presentation law. If the carrier has already
-collapsed values that Input distinguishes, direct binding is not a lossless Input presentation and must be rejected or
-formed through another legal boundary before Input. ADR-0073 owns that platform-support and preservation gate.
+Host operations, ambient environment state, and backend implementation details cannot redefine Input
+Presentation Sameness or collection uniqueness. A host carrier is usable only when the supported
+boundary mapping can preserve every Input distinction required by the Kontrakt-owned presentation
+law. If the carrier has already collapsed values that Input distinguishes, direct binding is not a
+lossless Input presentation and must be rejected or formed through another legal boundary before
+Input. ADR-0073 owns that platform-support and preservation gate.
 
 A later Contract may intentionally establish a different relation without retroactively changing Input. In particular,
 Canonicalization may explicitly declare an equivalence and establish a stable representative that collapses distinctions
@@ -947,7 +800,7 @@ inserted; the Established Input Presentation remains unchanged when observed by 
 Fact sameness, HIR semantic equality, Definition and Occurrence identity, and other later relations remain owned by
 their respective authorities.
 
-#### 7.9.2. Constituent Closure
+#### 6.9.2. Constituent Closure
 
 A direct coordinate may contain these families recursively only as a finite, closed, acyclic presentation graph. Nested
 members, cases, elements, keys, and values belong to the containing Input Definition. They do not create
@@ -958,9 +811,9 @@ presentation, runtime cyclic graph used as presentation meaning, lazy constituen
 Input presentation.
 
 Host aliasing and shared-reference topology do not change Input meaning. If an external relation must be presented, it
-is carried as an explicitly declared descriptive value under Section 7.7 rather than as pointer identity.
+is carried as an explicitly declared descriptive value under Section 6.7 rather than as pointer identity.
 
-#### 7.9.3. Collection Order Observation
+#### 6.9.3. Collection Order Observation
 
 Sequence owns positional order intrinsically, while Membership and Association may own one of the following
 order-observation laws:
@@ -998,29 +851,30 @@ Contract-visible order
     != physical storage order
 ```
 
-The compiler may sort an unordered presentation to produce deterministic HIR encoding, fingerprints, diagnostics, tests,
-or backend material. That realization order does not become Input meaning. Conversely, a declared encounter or
-ordered-by obligation cannot be erased in the name of deterministic implementation.
+The compiler may sort an unordered presentation for deterministic compiler processing or
+representation. That realization order does not become Input meaning. Conversely, deterministic
+implementation cannot erase a declared encounter or ordered-by obligation.
 
-An exact JVM collection surface never selects one of these Input order-observation laws. Sequenced, sorted, navigable,
-implementation-specific, or other platform behavior is platform evidence only. ADR-0073 may admit such a surface for an
-Input role only when it preserves the already-declared Input order, constituent Presentation Sameness, uniqueness, and
-every other required Input distinction without loss. Additional platform observations remain platform meaning; they do
-not enlarge Input meaning.
+An exact JVM collection surface never selects one of these Input order-observation laws. Platform
+collection behavior is platform evidence only. ADR-0073 may admit such a surface for an Input role
+only when it preserves the already-declared Input order, constituent Presentation Sameness,
+uniqueness, and every other required Input distinction without loss. Additional platform observations
+remain platform meaning; they do not enlarge Input meaning.
 
-An effective platform comparator, natural ordering, insertion or access order, or traversal behavior is not adopted as
-Input authority. A platform order may realize `Ordered By` only when its zero-equivalence and observable order preserve
-the exact Input ordering law. A carrier that has already collapsed Input-distinct members or keys cannot be repaired at
-the Input boundary. Order compatibility alone does not establish direct-carrier legality; immutability, constituent
-closure, alias safety, capability isolation, and the other applicable Input and ADR-0073 laws still apply.
+Host collection ordering behavior is not adopted as Input authority. A platform order may realize
+`Ordered By` only when its zero-equivalence and observable order preserve the exact Input ordering
+law. A carrier that has already collapsed Input-distinct members or keys cannot be repaired at the
+Input boundary. Order compatibility alone does not establish direct-carrier legality; immutability,
+constituent closure, alias safety, capability isolation, and the other applicable Input and ADR-0073
+laws still apply.
 
-Lookup, navigation, first/last access, reverse traversal, range views, mutation behavior, random-access complexity,
-hashing strategy, and similar host or generated operations are not Input presentation relations and do not create
-additional fundamental presentation families. When a supported platform or generated API exposes such operations, its
-owning API law and ADR-0073 own the separate preservation and use-legality obligation. No such operation may silently
-introduce a broader equality, ordering, or key-equivalence relation into Input.
+Host or generated collection operations are not Input presentation relations and do not create
+additional fundamental presentation families. When a supported platform or generated API exposes such
+operations, its owning API law and ADR-0073 own the separate preservation and use-legality
+obligation. No such operation may silently introduce a broader equality, ordering, or key-equivalence
+relation into Input.
 
-#### 7.9.4. Derived Presentations and Deliberate V1 Exclusions
+#### 6.9.4. Derived Presentations and Deliberate V1 Exclusions
 
 A semantic shorthand does not require a new fundamental family when the existing algebra preserves every Input-visible
 distinction.
@@ -1048,11 +902,15 @@ revision may add one only after demonstrating a Contract-visible distinction tha
 loss and after passing the same HIR, Establishment, platform-preservation, and API review applied here. Unsupported
 meaning is not approximated through a supported family.
 
-Open records, extensible tables, flexible or unknown alternatives, open rows, dynamic `Any` or document values, untagged
-unions selected by runtime shape, recursive presentations, object/reference topology, capabilities, resources, futures,
-streams, callbacks, and executable values are not V1 Input presentation families.
+V1 excludes the following Input presentation categories:
 
-#### 7.9.5. Closed Leaf Presentations
+- Open structures: open records, extensible tables, open rows, and flexible or unknown alternatives.
+- Dynamically interpreted structures: dynamic `Any` or document values and untagged unions selected by runtime shape.
+- Recursive or reference-based structures: recursive presentations and object/reference topology.
+- Executable or externally controlled material: capabilities, resources, futures, streams, callbacks, and executable
+  values.
+
+#### 6.9.5. Closed Leaf Presentations
 
 A Leaf is ratifiable only when its complete legal presentation domain, every Input-visible distinction, and Presentation
 Sameness are closed by the submitted presentation together with fixed Kontrakt-owned law and, only when that meaning
@@ -1060,15 +918,13 @@ actually requires it, an explicitly ratified closed semantic basis. Runtime-sele
 environment, host defaults, user-selected comparison policy, or executable application behavior cannot complete the Leaf
 meaning.
 
-This section fixes semantic Leaf meanings. It does not ratify a Java or Kotlin carrier, constructor, parser, resolver,
-comparison operation, or other platform callable. ADR-0073 independently determines whether an exact platform surface is
-Native, Carrier Only, Adapter Required, or Unsupported in the requested Input role and whether every remaining legal
-platform and Contract observation can be preserved.
+This section defines V1 Input Leaf presentation profiles and their Presentation Sameness. Shared Numeric, Text, and
+Temporal value meanings remain governed by ADR-0078, ADR-0080, and ADR-0082. ADR-0073 governs the separate legality
+of Java and Kotlin carriers and operations.
 
-The following baseline V1 Leaf semantics are fixed at the Input semantic level. A concrete published Leaf is ratifiable
-only after every range, bound, epoch, unit, grammar, or other meaning-affecting determinant referenced by its law is
-closed. The names below are semantic labels in this ADR; they do not require the same public authoring tokens or
-generated API type names.
+The following table defines the baseline V1 Input Leaf profiles and their Presentation Sameness. All meaning-determining
+requirements must be closed before a concrete Leaf can be published. The listed names are semantic labels, not required
+authoring or generated API names.
 
 | Leaf meaning                           | Legal Input presentation                                                                                                        | Presentation Sameness                                                           | Distinctions not supplied by Input                                                                           |
 |----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
@@ -1085,78 +941,48 @@ generated API type names.
 | Numeric UTC Offset                     | one exact numeric offset in the applicable closed offset domain                                                                 | the numeric offsets are equal                                                   | zone identity, zone rules, or source offset spelling                                                         |
 | Offset Date-Time                       | one exact offset date-time whose retained distinctions include local civil date-time and numeric UTC offset                     | the retained local date-time and offset distinctions are the same               | same-instant equivalence, zone identity, or source timestamp spelling                                        |
 | Duration                               | one exact signed duration quantity under the fixed unit and resolution law                                                      | the duration quantities are equal under that law                                | lexical duration spelling or calendar-relative period meaning                                                |
-| Instant                                | one exact coordinate under the fixed Kontrakt Instant epoch, unit, range, and resolution law                                    | the complete epoch coordinate is equal                                          | source timestamp spelling, source offset, zone, clock provenance, or leap-second parse evidence              |
+| Instant                                | one position under the fixed Kontrakt Instant Temporal Reference (origin, time scale, leap-second law, unit, range, resolution) | the complete coordinate is equal under the exact fixed Temporal Reference       | source timestamp spelling, source offset, zone, clock provenance, or leap-second parse evidence              |
 | Zone Descriptor                        | one exact closed zone descriptor, preserving its descriptor kind and payload                                                    | the descriptor kind and exact descriptor payload are the same                   | current zone rules, current offset, provider availability, alias resolution, or resource authority           |
 | Resolved Zoned Date-Time               | one exact resolved zoned date-time whose retained distinctions include local date-time, numeric UTC offset, and Zone Descriptor | all retained temporal and zone-descriptor distinctions are the same             | current time-zone-rule consistency, same-instant equivalence, or future rule interpretation                  |
 | URI Reference                          | one syntactically legal closed URI-reference presentation under the applicable grammar                                          | the retained component presence and character presentation are exactly the same | resource identity, dereference result, scheme-specific resolution, or URI normalization                      |
 
-For Decimal, scale is an Input-visible distinction. `2.0` and `2.00` are therefore not Presentation Same merely because
-a numerical comparison could place them in one cohort. Any later collapse of that distinction requires an explicitly
-selected later authority such as Canonicalization.
+Input Text follows the Unicode Scalar meaning defined by ADR-0080. A Java or Kotlin `String` is only a possible carrier
+and must preserve the admitted Input Text meaning. Normalization and case folding are not implicit Input operations.
 
-For Binary32 and Binary64, signed zero and every admitted NaN bit distinction remain Input-visible because Presentation
-Sameness is exact over the admitted binary datum. A JVM or Kotlin equality rule, boxing rule, numerical comparator, or
-arithmetic operation cannot replace that law. If an exact JVM carrier or operation cannot preserve the admitted
-distinctions for the requested role, ADR-0073 must classify that platform use accordingly rather than weakening Input
-meaning.
+Temporal Input Leaves represent already-formed values under ADR-0082. `Instant` requires its exact fixed Temporal
+Reference. `Zone Descriptor` does not establish zone rules. `Resolved Zoned Date-Time` preserves its declared local
+date-time, offset, and zone descriptor independently of later changes to time-zone rules.
 
-Text is a sequence of Unicode scalar values rather than a JVM UTF-16 code-unit sequence. A Java or Kotlin `String` is
-therefore only a possible carrier. A source value that contains material outside the legal Text presentation domain does
-not become legal merely because `String` can physically contain it. Normalization and case folding remain later explicit
-meaning-changing operations when selected by an owning Contract.
+Temporal acquisition, zone-rule resolution, and conversions using versioned temporal data remain separate operations
+under ADR-0082 and ADR-0073. They cannot introduce ambient provider state into Input meaning. Local Date-Time and Zone
+Descriptor do not automatically establish a Resolved Zoned Date-Time.
 
-The temporal Leaf meanings separate already-formed values from operations that acquire or derive them. `Instant` owns
-only its closed epoch coordinate. `Zone Descriptor` owns only the descriptor and does not acquire the time-zone rules
-denoted by a named zone. `Resolved Zoned Date-Time` preserves the submitted local date-time, resolved offset, and zone
-descriptor even when a later time-zone rule basis would judge that combination differently. Current `ZoneRulesProvider`
-contents or current TZDB consistency do not decide whether that already-formed presentation is a legal Input value.
+A host type name or scalar-shaped carrier does not establish an Input Leaf. A separately ratified descriptive value
+must have closed presentation meaning and Presentation Sameness, and cannot import external resource authority. An
+existing Input family may represent that value when it preserves the declared meaning.
 
-Operations that obtain the current time or default zone, resolve a Zone Descriptor to rules, form a resolved zoned value
-from a local time and named zone, convert an Instant through named-zone rules, or otherwise consume versioned temporal
-data are separate platform or Contract questions. ADR-0073 requires the exact semantic basis for any such legal
-operation and forbids ambient provider state from entering merely because the resulting value type is closed. A future
-local schedule expressed as a Local Date-Time plus a Zone Descriptor is therefore not silently reinterpreted as a
-Resolved Zoned Date-Time.
-
-Generic `Token`, `Identifier`, `Path`, and `URL` are not universal V1 Leaf meanings. A specific closed descriptive value
-may be ratified separately when its complete presentation and sameness law are actually closed, or it may be represented
-through another existing family such as Text, Bytes, or URI Reference. A token or identifier that grants authority over
-a live resource remains subject to Section 7.12 and ADR-0073 rather than becoming a Leaf merely because its carrier is
-scalar-shaped. A generic filesystem `Path` does not import provider, filesystem, case, root, or resolution semantics
-into Input by name alone.
-
-Period-like calendar amounts do not require a new fundamental Leaf merely because a host library provides a `Period`
-class. When their Contract-visible meaning is exactly a finite set of calendar components, the existing Named Product
-family can preserve that meaning. A future dedicated Leaf would require an independently justified Contract-visible
-distinction.
-
-Section 7.8 determines whether a bound belongs to Input or to a later authority. A concrete V1 Leaf law that requires a
-finite range or bound must fix that bound completely before Visible HIR; an unspecified implementation limit cannot
-complete the law later. The internal compiler representation, catalog, table schema, lookup mechanism, or other reusable
-compiler structure used to resolve these Leaf laws is Design work and is not a user-selectable Input semantic surface.
-
-### 7.10. V1 User-Facing Authoring Classes
+### 6.10. V1 User-Facing Authoring Classes
 
 The V1 user-facing policy classifies host forms only to determine whether they can express an already-declared Input
 presentation. The host category does not create Contract meaning.
 
-| Authoring class                                                  | V1 treatment                                                                                                           | Examples                                                                                                                                                                                          | V1 frontend consequence                                                                                                                                              |
-|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Direct closed immutable presentation                             | Refine and ratify directly when every declared distinction is complete, immutable, supported, and legal under ADR-0073 | Primitive and `String` source forms where the exact mapping is lossless, closed enum source forms, approved immutable Leaves, flat Kotlin data class, flat final Kotlin carrier, flat Java record | The selected declaration may supply external Contract evidence without a duplicate carrier declaration; actual invocation material remains subject to Input judgment |
-| Closed structured meaning without a ratified direct host mapping | Require explicit formation into a supported presentation before Input                                                  | Nested DTO, embedded Value Object, nested collection carrier, unsupported sealed hierarchy, host collection surface whose full observable law cannot be preserved                                 | The semantic presentation may be legal under Section 7.9, but this host carrier does not become authority merely because its shape resembles that presentation       |
-| Implementation-shaped carrier                                    | Require explicit formation or reject the source                                                                        | Mutable JavaBean, framework DTO, proxy, entity, custom getter, delegated property, interface root, runtime-discovered implementation, third-party lifecycle object                                | Host conventions, mutable observation, lifecycle, and implementation relationships do not become Input meaning                                                       |
-| Behavior, capability, movement, or role leakage                  | Reject from Input                                                                                                      | Callback, lambda, validator, service, repository, clock, executor, transaction, resource handle, stream, future, core Fact authority, State, backend handle                                       | The material belongs to another role or is not Input presentation data                                                                                               |
+| Authoring class                                                  | V1 treatment                                                                                                           | Examples                                                                                         | V1 frontend consequence                                                                                                                                              |
+|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Direct closed immutable presentation                             | Refine and ratify directly when every declared distinction is complete, immutable, supported, and legal under ADR-0073 | Losslessly mapped primitive or `String`; closed enum form; flat Kotlin data class or Java record | The selected declaration may supply external Contract evidence without a duplicate carrier declaration; actual invocation material remains subject to Input judgment |
+| Closed structured meaning without a ratified direct host mapping | Require explicit formation into a supported presentation before Input                                                  | Nested DTO; unsupported sealed hierarchy; collection carrier with non-preserved observations     | The semantic presentation may be legal under Section 6.9, but this host carrier does not become authority merely because its shape resembles that presentation       |
+| Implementation-shaped carrier                                    | Require explicit formation or reject the source                                                                        | Mutable JavaBean; proxy; runtime-discovered implementation                                       | Host conventions, mutable observation, lifecycle, and implementation relationships do not become Input meaning                                                       |
+| Behavior, capability, movement, or role leakage                  | Reject from Input                                                                                                      | Callback; service; live resource; stream; core Fact authority; State; backend handle             | The material belongs to another role or is not Input presentation data                                                                                               |
 
-Arrays, `List`, `Set`, `Map`, sequenced or sorted collections, and other platform collection surfaces are not accepted
-or rejected by host category alone. Section 7.9 defines Input semantic meaning. ADR-0073 owns the platform-surface
-ratification and constituent-closure gate that determines whether a particular host surface can realize that meaning
-without loss.
+A platform collection category does not by itself determine whether a carrier is accepted or
+rejected. Section 6.9 defines Input semantic meaning. ADR-0073 owns the platform-surface ratification
+and constituent-closure gate that determines whether a particular host surface can realize that
+meaning without loss.
 
 The exact V1 direct-support matrix for nested and collection-shaped Java or Kotlin carriers remains
 compiler/platform-support work. A legal Input presentation does not imply that every familiar host carrier for a similar
 shape is a legal zero-adapter carrier.
 
-### 7.11. Zero-Adapter Direct Carrier
+### 6.11. Zero-Adapter Direct Carrier
 
 A selected host declaration may serve as both source evidence and runtime carrier when it already realizes a legal
 immutable V1 presentation under this ADR and passes the applicable ADR-0073 gate.
@@ -1165,52 +991,50 @@ For the current JVM V1 zero-adapter path, a flat Kotlin data class may provide t
 selected coordinate has a supported presentation meaning. The same is true for a flat final Kotlin class whose selected
 coordinates are primary-constructor `val` properties, and for a flat Java 17+ record whose components satisfy the same
 requirement. These forms describe the current direct-support path, not a restriction on the nested semantic
-presentations permitted by Section 7.9.
+presentations permitted by Section 6.9.
 
 Only the resolved Input-visible coordinate surface survives into meaning. Constructor behavior and generated host
-machinery remain outside authority under Section 7.4.
+machinery remain outside authority under Section 6.4.
 
 Source declaration order may help the frontend acquire the surface deterministically, but it is not Input semantic order
-and does not identify a direct coordinate. Section 7.2 owns direct coordinate identity. Section 7.9 owns any order that
+and does not identify a direct coordinate. Section 6.2 owns direct coordinate identity. Section 6.9 owns any order that
 is actually observable inside a presentation.
 
 A direct carrier cannot depend on runtime implementation discovery or recursive host traversal that has not been
 ratified as a closed constituent mapping. Material that needs unsupported traversal or external lifecycle behavior must
 be formed into a supported presentation before invocation.
 
-Another frontend may later realize semantically equal Input presentation meaning. Section 5.6 prevents that equality
+Another frontend may later realize semantically equal Input presentation meaning. Section 4.6 prevents that equality
 from merging independently declared Contract identities.
 
-### 7.12. Behavior and Capability Are Not Opaque Leaves
+### 6.12. Behavior and Capability Are Not Opaque Leaves
 
-Labeling a callback, service, repository, live resource, async control surface, or other executable capability as
-opaque does not make it legal Input. Input may instead carry a specifically declared descriptive identifier, token-like
-value, coordinate, source text, bounded bytes, URI Reference, Zone Descriptor, or another approved closed value that
-refers to something outside the machine.
-The execution capability, live resource authority, provider state, or resource ownership denoted by that value remains
-outside Input authority. A bearer or capability token is not rescued by scalar-shaped presentation.
+Labeling an executable capability as opaque does not make it legal Input. Input may instead carry an
+approved closed descriptive value that denotes something outside the machine, under the applicable
+Leaf or structured-presentation law. The execution capability, live resource authority, provider
+state, or resource ownership denoted by that value remains outside Input authority. A bearer or
+capability token is not rescued by scalar-shaped presentation.
 
 ---
 
-## 8. Authoring Boundary
+## 7. Authoring Boundary
 
 Each declared Input selection is authored from the complete Contract meaning intended for that selection rather than
-from a reuse target, although Section 4.4 permits several legal selection occurrences to select one Input Definition
-when they intentionally select the same complete meaning. Those occurrences may belong to different Interactions or
-to different declared Contract
-World contexts. Similar host shape is insufficient. If two Inputs were declared independently, Section 5.6 prevents
-later structural equality from merging them.
+from a reuse target. Several legal selection occurrences may deliberately select one already-identified Input Definition
+under ADR-0047 and ADR-0071. Those occurrences may belong to different Interactions or declared Contract World
+contexts. Similar host shape is insufficient. If two Inputs were declared independently, Section 4.6 prevents later
+structural equality from merging them.
 
 A supported host-facing declaration may still remove the need for a second carrier declaration when it completely
 expresses one selected Input Contract. That frontend convenience is separate from sharing one Input Definition across
 several selection occurrences.
 
 Richer application objects remain legal outside Kontrakt, but they must be formed into the applicable Input presentation
-before invocation unless their exact host surface passes the applicable direct-carrier gate. Section 7.9 defines the
+before invocation unless their exact host surface passes the applicable direct-carrier gate. Section 6.9 defines the
 semantic presentation independently of that platform support. The authoring surface therefore does not force the
 application object model into the Contract Core.
 
-## 9. Refusal Boundary
+## 8. Refusal Boundary
 
 Input distinguishes compiler-side non-entry from two Input-owned negative results. A source or Candidate that cannot
 satisfy the Resolved HIR seal does not enter the Input Definition judgment. Unresolved
@@ -1233,23 +1057,23 @@ stop
 owned by Policy, Governance, Budget, Capacity, or another authority remains the result of that owner rather than an
 Input Refusal.
 
-Sections 7.3 through 7.7 define material that Input does not repair into legality after entry. Neither Input Definition
+Sections 6.3 through 6.7 define material that Input does not repair into legality after entry. Neither Input Definition
 Refusal nor an Input Occurrence result of `Refused` automatically becomes ADR-0057 Failure; the Failure Contract retains
 its own authority. Diagnostic evidence may explain either Input result, but Diagnostic does not create or rewrite that
 meaning.
 
-## 10. Relationship to Later Contracts
+## 9. Relationship to Later Contracts
 
 Input establishes only Input-owned Definition and Occurrence meaning and creates no later pipeline authority. Admission
-owns continuation under Section 7.8, Canonicalization may establish a stable same-shape representative when selected,
+owns continuation under Section 6.8, Canonicalization may establish a stable same-shape representative when selected,
 and Lowering owns the later declared relation from Input coordinates toward Operation parameters and Fact coordinates.
 Which later authority observes an Established Input Presentation directly is determined by the selected inbound
-composition rather than by Input. Nested constituents under Section 7.9 do not become Lowering source coordinates
+composition rather than by Input. Nested constituents under Section 6.9 do not become Lowering source coordinates
 merely because they are addressable inside the Input presentation. None of those later authorities enters Input
 Definition identity, and their negative results remain distinct from Input Definition Refusal and Input Occurrence
-`Refused` under Section 9.
+`Refused` under Section 8.
 
-### 10.1. World and Occurrence Semantic Placement
+### 9.1. World and Occurrence Semantic Placement
 
 Established Input Definition Material is definition-world meaning and is made available through the Canonical Contract
 World under ADR-0063. Direct Input coordinate meaning belongs to that complete Established Definition surface.
@@ -1280,7 +1104,7 @@ the Established Input Definition. Independently complete Input Definitions may b
 Definition partially authoritative. Source provenance remains an adjacent relation rather than Definition or Occurrence
 identity.
 
-### 10.2. Established Input Semantic Protocol
+### 9.2. Established Input Semantic Protocol
 
 Input specializes the common ADR-0063 Established Semantic Protocol as the legal observation boundary over
 Input-owned Established meaning. The Protocol is not an occurrence object model, DTO layer, storage schema, or mandatory
@@ -1310,37 +1134,27 @@ Fine-Grained Established Input Projections
 Input has no additional authority-specific Established Material family that requires a separate projection category.
 Definition and Occurrence material are sufficient for the Input-owned meaning closed by this ADR.
 
-### 10.3. Projection Completeness and Availability
+### 9.3. Projection Completeness and Availability
 
-The **Established Input Definition Projection** is complete for one exact Definition: its
-`EstablishedInputDefinitionRef`, Owning Input Authority Binding, Version Binding, complete Input Definition Meaning, and
-the complete direct established coordinate relation owned by that Definition.
+Each Established Input Projection is complete only for its declared observation:
 
-The **Established Input Occurrence Projection** is complete for observation of one exact Input application. It exposes
-the `EstablishedInputOccurrenceRef`, the direct relation to the exact Definition Reference, the direct Interaction
-attribution relation, the exact occurrence result relation, and, when that result is `Presented`, the exact Established
-Presentation relation.
+| Projection                                    | Complete observation and availability                                                                                                                                                                                                                        |
+|-----------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Established Input Definition Projection**   | Exact `EstablishedInputDefinitionRef`, Owning Input Authority Binding, Version Binding, complete Input Definition Meaning, and all direct established coordinate relations of that Definition.                                                               |
+| **Established Input Occurrence Projection**   | Exact `EstablishedInputOccurrenceRef`, its Definition and Interaction relations, its result, and the Established Presentation relation only when the result is `Presented`.                                                                                  |
+| **Established Input Presentation Projection** | Available only for `Presented` occurrences. Exact Occurrence, Definition, and Interaction References and the complete immutable Established Presentation relation.                                                                                           |
+| **Input Direct Coordinate Value Projection**  | For one direct coordinate of a `Presented` occurrence, exact `EstablishedInputOccurrenceRef` and `EstablishedInputCoordinateRef`, explicit presence state, and the presented value when present. Nested constituents do not become direct Input coordinates. |
 
-The **Established Input Presentation Projection** exists only for an application whose occurrence result relation is
-`Presented`. It exposes the exact Occurrence Reference, Definition Reference, Interaction Reference, and complete
-immutable Established Presentation relation. Its unavailability is not an alternative way to infer Contract result
-meaning; the exact result relation remains observable through the Input Occurrence Outcome Projection.
+When the Established Input Presentation Projection is unavailable, the occurrence result must still be observed through
+the Input Occurrence Outcome Projection. Projection equality follows each declared observation; equal payloads do not
+merge Definition or Occurrence References.
 
-The **Input Direct Coordinate Value Projection** observes one direct coordinate for one `Presented` Input application
-through the exact `EstablishedInputOccurrenceRef` and `EstablishedInputCoordinateRef`. It exposes the coordinate's
-explicit presence state and, when present, the exact presented coordinate value. It does not promote a nested member,
-element, key, or value into a direct Input coordinate.
+Observing Input projections does not transfer Input or Publication authority. Semantic absence is distinct from
+unretained physical representation, delayed physical materialization, unsupported observation machinery, or corrupt
+storage. Failure to provide a required legal observation is a compiler-side availability problem under Section 9.6 and
+ADR-0074, not Input absence or Refusal.
 
-Projection equality follows the Input-owned observation that each projection declares complete. Equal projection payload
-does not merge distinct Definition or Occurrence References. In particular, two distinct Input Occurrences may expose
-semantically equal Established Presentations while remaining different occurrences.
-
-Observing these projections neither transfers Input authority nor grants Publication authority. Semantic absence is also
-not the same as physical representation not retained, a projection not yet physically materialized, unsupported
-observation machinery, or corrupt compiler storage. If a required legal observation cannot be supplied, Section 10.6
-and ADR-0074 govern the compiler-side availability boundary rather than fabricating Input absence or Refusal.
-
-### 10.4. Direct Relations and Consumer Law
+### 9.4. Direct Relations and Consumer Law
 
 Input owns only these direct established relation families:
 
@@ -1355,32 +1169,24 @@ Established Input Occurrence
     -> exact Interaction
 ```
 
-A Policy World relation that selects an Input Definition is owned by Policy, Interface, or Governance law rather than by
-Input. A later relation from an Input coordinate toward Lowering is owned by Lowering. The Established Input Semantic
-Protocol does not reverse those ownership directions merely because a consumer wants convenient navigation.
+Contract World selection of an Input Definition belongs to the selecting authority, and subsequent relations toward
+Lowering belong to Lowering. Consumer navigation does not change those ownership directions.
 
-A later inbound authority may consume the Established Input Presentation Projection only when the selected inbound
-composition makes that Established Input Presentation its direct semantic input. Such a consumer does not reopen the
-JVM carrier, call host `equals` or `hashCode`, recover a source declaration, inspect runtime object identity, or
-rediscover the collection law. Canonicalization may consume the legal presentation observation when it is selected as
-the direct consumer of Input; when Canonicalization is not selected, Admission may consume that observation under its
-own Contract. The Protocol does not authorize a later authority to bypass an intervening established result and recover
-the earlier Input presentation as its occurrence value.
+A later inbound Contract may consume the Established Input Presentation Projection only when the selected composition
+makes it that Contract's direct semantic input. Canonicalization may be that consumer when selected; otherwise Admission
+may consume it under its own law. No consumer may bypass an intervening established result, reopen the host carrier, or
+rederive Input meaning from Source or host operations.
 
-Lowering may consume Definition-level Input coordinate meaning through the legal Definition projections when its own law
-requires the Input coordinate relation. Its occurrence-time value source is governed by the Lowering Contract and the
-selected inbound composition rather than granted by Input. Diagnostics may consume the Established Input Occurrence
-Projection or the narrower Input Occurrence Outcome Projection, while generated API formation, verification, and PBT
-planning may consume the Definition projection. These consumers select producer-defined legal projections rather than
-creating `Diagnostic Input Meaning`, `Backend Input Meaning`, `Test Input Meaning`, or another consumer-specific
-Contract semantics.
+Lowering may observe Definition-level Input coordinates where its own law requires them. Its occurrence-time value
+source
+remains governed by Lowering and the selected composition. Diagnostics may use Occurrence or Outcome projections;
+generated API formation, Verification, and PBT planning may use Definition projections when legal.
 
-If a consumer joins several Input observations, computes transitive reachability, proves a property, builds a summary,
-or performs another new judgment, that result belongs to the consuming compiler product or later owning authority. It is
-not retroactively an Established Input Projection, and a compiler product dependency does not become an Input authority
-chain.
+Consumers observe Input through its producer-owned projections. Any additional judgment belongs to the responsible
+consumer or derived-result producer, not to Input or an Established Input Projection. A compiler product dependency does
+not create an Input authority relation.
 
-### 10.5. Reuse and Current Validity
+### 9.5. Reuse and Current Validity
 
 Input Definition and HIR work may be reused when current validity is established under ADR-0071 and ADR-0063. A retained
 Definition or projection is reusable only when the current Input authority and Version still correspond, every
@@ -1393,53 +1199,52 @@ removed; validating only the old coordinates is insufficient.
 
 Occurrence authority follows a different law. A fresh Input boundary entry never reuses an older occurrence as the new
 semantic occurrence, even when the same Definition and Presentation yield the same deterministic result. Realization may
-reuse validated non-authoritative computation or physical representation under Section 10.6, but such reuse cannot
+reuse validated non-authoritative computation or physical representation under Section 9.6, but such reuse cannot
 substitute an older `EstablishedInputOccurrenceRef` for the fresh application or make two Occurrence References equal.
 
 Conversely, duplicated physical computation of one already-identified exact occurrence does not create two semantic
 occurrences. Parallel or speculative realizations may converge on the same legal occurrence result and Protocol
 observation when they are evaluating that same exact application.
 
-Clean formation, validated in-memory reuse, persistent reload, future incremental repair, and parallel formation must
-produce the same legal Input Protocol observations. Cache state, fingerprints, HIDs, dependency topology, or retained
-bytes may justify work avoidance only through separately validated current-validity evidence; they do not create Input
-meaning or authority.
+Clean formation and every validated reuse or reconstruction path must produce the same legal Input
+Protocol observations. Cache state, fingerprints, HIDs, dependency topology, or retained bytes may
+justify work avoidance only through separately validated current-validity evidence; they do not
+create Input meaning or authority.
 
 A cache miss or rejected reuse attempt is not itself an Input or compiler unsuccessful result. The compiler may return
 to
 the clean deterministic path when retained material cannot be validated. Successfully decoding or locating persisted
 bytes likewise does not establish current semantic validity without the checks above.
 
-### 10.6. Coherent Observation, Representation Freedom, and Verification
+### 9.6. Coherent Observation, Representation Freedom, and Verification
 
 One legal Input Protocol observation must be coherent. A consumer cannot combine a Definition from one semantic
 generation with a stale presentation-law projection or coordinate relation from another merely because old physical
 representation remains reachable. Cross-generation physical reuse may participate only after current validity has
 established one coherent logical observation.
 
-Protocol crossing does not require a wrapper allocation, occurrence object, or full copy. The physical realization
-behind Resolved HIR and Established Input Protocol observations may use primitive arrays, typed slabs, columnar ranges,
-dense generation-local handles, shared immutable backing, memory-mapped storage, or another replaceable representation
-that preserves the same legal observations. These are realization choices only. Physical sharing does not merge semantic
-entities or turn a storage coordinate into an Input semantic reference.
+Protocol crossing does not require a dedicated object or full copy. The physical realization behind
+Resolved HIR and Established Input Protocol observations is replaceable, provided it preserves the
+same legal observations. Physical sharing does not merge semantic entities or turn a storage
+coordinate into an Input semantic reference.
 
 Lazy physical materialization is permitted only after the semantic unit and its legal membership are already complete. A
 consumer cannot treat unresolved semantic meaning as a value that will become complete on first access. Typed reference
 kinds remain distinct even when their physical handles use the same width, and stale generation-local handles or
 wrong-kind references must fail closed rather than resolve through unchecked numeric substitution.
 
-Every optimized or reused path remains checkable against the clean deterministic path and the producer-owned Input
-Protocol laws. The exact conformance harness, differential oracle, fuzzing strategy, and adversarial-resource tests are
-Verification or Design work. Oversized input, extreme nesting, malformed persistent data, corrupted handles, hostile
-hash behavior, or cyclic physical carrier graphs must not be solved by weakening the Input semantics. Semantic bounds
-remain distinct from compiler Budget and resource-safety limits.
+Every optimized or reused path remains checkable against the clean deterministic path and the
+producer-owned Input Protocol laws. The conformance and adversarial-testing strategy remains
+Verification or Design work. Malformed or resource-hostile input and physical representations must
+not be handled by weakening Input semantics. Semantic bounds remain distinct from compiler Budget and
+resource-safety limits.
 
 If already-Established Input meaning exists but compiler machinery cannot supply a required legal observation, that is a
 compiler availability problem rather than an Input Refusal. The observation failure does not revoke or rewrite the
 already-Established Input meaning. The exact common unsuccessful-result representation remains owned by Proposed
 ADR-0074.
 
-### 10.7. Non-Normative Compiler-Native Access Sketch
+### 9.7. Non-Normative Compiler-Native Access Sketch
 
 The semantic laws above do not require an object graph. A V1 realization may use a shape such as the following without
 making these arrays or handles Contract meaning.
@@ -1489,12 +1294,11 @@ may replace them without changing the Contract meaning or the producer-owned Pro
 consumer reads the presentation through the Established Input Presentation Projection rather than through these physical
 columns or the carrier used to form them.
 
-## 11. Open in This Section
+## 10. Open in This Section
 
-No further V1 Input semantic question is left open by this ADR. The Input HIR bundle, Definition and Occurrence
-Establishment bundle, Established Material family, and Established Input Semantic Protocol are closed by Sections 5, 6,
-and 10. The remaining items are API, platform-support, Governance, HIR realization, Verification, or Design work that
-must preserve that closed Input law.
+No further V1 Input semantic question is left open by this ADR. Sections 4, 5, and 9 define its HIR, Establishment,
+Established Material, and Semantic Protocol boundaries. Remaining implementation and integration work must preserve the
+closed Input law.
 
 ```text
 Input / ADR-0064
@@ -1506,193 +1310,44 @@ Input / ADR-0064
     Physical Realization           -> DESIGN
 ```
 
-ADR-0074 remains Proposed. Compiler-owned unsuccessful results, recovery, unentered-later-stage representation,
-availability aggregation, and Compiler Result Protocol details therefore remain a common provisional dependency rather
-than an Input-specific semantic open. Sections 5.7, 9, and 10 fix only the Input-side ownership boundary that those
-common compiler-result laws must preserve.
+Remaining work is owned outside Input semantics:
 
-The final authoring token spelling and exact public Java or Kotlin carrier syntax for Input remain open. Section 7.9
-fixes semantic families and relation semantics without requiring those family or relation names to appear in generated
-APIs.
+- **Compiler Result (ADR-0074, Proposed):** Common unsuccessful-result and recovery representation. Input retains the
+  distinction between compiler-side non-entry, Definition Refusal, and occurrence-time `Refused`.
+- **Authoring and API:** Final Input authoring tokens, public Java/Kotlin carrier syntax, the exact V1 set of concrete
+  bounded Leaf variants, and the generated Host API strategy for Policy-variable Input. Distinct Input Definitions
+  selected by different Contract Worlds need not share a host carrier.
+- **Platform (ADR-0073):** The exact Java/Kotlin direct-support matrix for Input Leaves and carrier operations. Legal
+  Input meaning does not by itself make a host carrier or operation legal.
+- **Interface, Policy, Governance, and HIR:** Exact Contract World selection and its HIR representation. That relation
+  must not be used to reconstruct missing Input Definition Meaning.
+- **Design:** Physical HIR representation, reusable Leaf-law representation, and compiler optimizations. None changes
+  Input meaning or introduces a user-selectable Input equality or normalization law.
 
-Section 7.9.5 closes the baseline Input Presentation Sameness laws for the V1 Leaf meanings listed there, including
-Decimal scale, floating-point signed zero and NaN bit distinctions, Unicode scalar Text, closed temporal values, Zone
-Descriptor, Resolved Zoned Date-Time, and URI Reference. The exact public authoring token names and the exact set of
-concrete bounded Leaf variants shipped by V1 remain API and platform-support work. Every concrete published Leaf law
-must nevertheless close its own legal range, bound, epoch, unit, grammar, or other meaning-affecting determinant before
-Visible HIR.
+Concrete V1 bounded Leaf variants remain subject to the complete closure requirements of Section 6.9.5 before Visible
+HIR. A Candidate must retain all resolved meaning and exact semantic bases needed by its presentation law. Compiler
+comparison acceleration, including hashes or indexes, must be validated against that exact law.
 
-The internal catalog, table, lookup, or other reusable compiler representation used to resolve those Leaf laws is Design
-work rather than an additional Input Contract concept. It cannot become a user-selectable Input equality or
-normalization surface. The Input Candidate must already contain the exact resolved presentation meaning and every exact
-semantic basis actually consumed by that meaning.
+Future presentation-family additions must preserve Input's closed meaning and external-authority boundaries. Host
+behavior,
+snapshot timing, open-world evolution, and backend representation cannot become Input meaning through such an extension.
 
-The exact Java and Kotlin direct-support matrix for the Leaf meanings in Section 7.9.5 remains ADR-0073 work. Ratifying
-an Input meaning does not automatically ratify `String`, `BigDecimal`, floating wrappers, `java.time` values,
-`java.net.URI`, collection carriers, their constructors, or their associated operations. Platform Use Verification must
-decide the exact role-specific result without weakening the Input law.
+## 11. Consequences
 
-Different Policy Worlds are permitted to select different Input Definitions for the same Interaction under Section 4.4.
-What remains open is the Governance and Interface-realization API that lets an external caller operate under the
-applicable world and the generated host API strategy that projects any resulting Policy-variable Input. This ADR does
-not require those distinct Input Definitions to share one host carrier.
+Input establishes an immutable boundary presentation with a flat direct coordinate surface. Each coordinate may contain
+a finite, closed, acyclic structured value. Host carriers remain evidence rather than Contract authority, and physical
+representation and generated APIs remain replaceable when they preserve the same Input meaning.
 
-The exact HIR representation of Policy-owned Contract World constituent relations remains Policy and HIR work. Input
-requires an exact legal selection relation and forbids reconstruction of Input Definition Meaning from that relation,
-but this ADR does not decide whether Policy exposes those constituent relations through dedicated IDL Binding Candidate
-projections, direct Policy Candidate relations, or another semantically equivalent producer-owned projection.
+Input owns the Presentation Sameness, uniqueness, and observable order of its declared values. Host equality or ordering
+cannot redefine those laws. Canonicalization may explicitly establish a different equivalence and representative;
+without it, no such relation is implied.
 
-The physical HIR schema, table layout, dense handles, Presentation Sameness encoding, canonical compiler traversal
-order, equality acceleration, collection realization, and the exact Java/Kotlin support matrix remain Design or ADR-0073
-work. Those choices may optimize the established meaning but cannot redefine Section 7.9. Hashes, fingerprints, indexes,
-and precomputed comparison keys may accelerate comparison only after collision-safe or otherwise sound validation under
-the exact resolved semantic law.
+Changes to meaning-determining presentation laws or semantic bases change Input meaning. Source, library, or provider
+changes that preserve the exact resolved meaning remain realization. An application carrier that cannot preserve Input
+meaning must be adapted into a legal presentation before invocation or use an ADR-0073-qualified direct mapping.
 
-Any future presentation-family expansion must preserve the authority boundaries established here. In particular, it
-cannot make runtime graph traversal, snapshot timing, open-world evolution, or backend representation a new source of
-Input meaning.
-
-## 12. Consequences
-
-Input becomes an explicit immutable boundary presentation rather than a host object treated as Contract authority. Its
-directly addressable surface remains flat, while one direct coordinate may carry a finite, closed, acyclic nested value
-presentation, keeping Contract authority topology simple without forcing Input values to be scalar-only. The six-family
-V1 presentation algebra gives HIR and Establishment a closed semantic target while leaving Java/Kotlin carrier choice,
-storage layout, collection realization, and generated API projection replaceable.
-
-Collection order is represented only when the Input presentation law makes that order observable. ADR-0073 separately
-determines whether a platform surface can preserve that already-declared order in the requested role, while compiler
-canonical order and physical storage order remain realization. Presentation Sameness is derived from complete
-Input-visible meaning and is the sole V1 uniqueness relation for Membership constituents and Association keys. Input
-exposes no user-selectable equality, collation, normalization, or coarser equivalence surface. A later Canonicalization
-Contract may explicitly collapse Input-preserved distinctions and establish a representative under its own authority;
-omission creates no hidden replacement relation.
-
-A meaning-affecting relation or semantic-basis change changes Input meaning, whereas a backend, library, or provider
-upgrade that provably preserves the same exact resolved law remains realization. Some application objects therefore
-cannot cross the boundary directly even when their business data could be represented by a legal Input presentation.
-They need an ADR-0073-compatible direct mapping or explicit presentation formation before invocation, preserving the
-distinction between application representation and Input authority.
-
-Input preserves application multiplicity explicitly: retry, restart, redelivery, or another fresh boundary re-entry
-creates a new Input Occurrence even when deterministic judgment produces the same semantic result. Later Fact identity
-may converge equal factual meaning without collapsing those earlier boundary occurrences. The HIR and Established
-Semantic Protocols expose producer-owned legal observations instead of consumer-specific semantic copies. Each consumer
-may use only the projection made legal by its own authority and the selected composition, so Canonicalization,
-Admission,
-Lowering, diagnostics, verification, generated APIs, and test synthesis do not need to rebuild Input meaning from source
-or host carriers.
-
-Definition reuse and occurrence reuse remain intentionally asymmetric. Stable Definition projections may avoid compiler
-work after complete current-validity checks, while a fresh boundary entry always has fresh occurrence identity. Any
-validated physical reuse remains a realization concern and cannot substitute physical identity for that semantic
-application identity. Logical Protocol boundaries also impose no occurrence object or physical indirection: a V1
-compiler may use dense handles, primitive slabs, columnar storage, or shared immutable ranges while keeping Candidate,
-Established Definition, Established Occurrence, and consumer observations semantically distinct.
-
-## 13. Migration History
-
-This ADR was extracted mechanically from the Input-owned material of ADR-0048, and that extraction did not change the
-accepted Input Contract semantics.
-
-A 2026-09-02 review clarified the Contract/frontend boundary for coordinate closure, direct presentation meaning,
-immutability, carrier separation, inheritance and polymorphism, presence and finite choice, opaque values, presentation
-bounds, and supported presentation profiles. The review also removed the scalar-only implication from flatness without
-yet fixing the exact V1 collection taxonomy.
-
-A 2026-09-20 review aligned Input with ADR-0071 and ADR-0063. The review made the Definition Candidate complete before
-Establishment and separated Definition meaning from the IDL Binding Candidate that selects it. It also specialized the
-common identity model so the current Input law has one Definition per Authority and Version, with no additional
-authority-local Definition coordinate. Semantic equality no longer implies reference or Contract identity, implicit
-merge is prohibited, and host declaration order is nonsemantic by default. Shared selection remains legal only when the
-complete Input meaning is intentionally shared; reuse itself is not an authoring objective.
-
-A later 2026-09-20 review corrected the Binding specialization after reconciling Input with ADR-0054. Input selection is
-no longer modeled as inherently Interaction-side. The exact selecting context follows the static Interface form or the
-applicable Policy-world declaration form, while Input Definition Meaning remains independent of that surrounding
-selection context. The review also separated pre-authority IDL Binding Candidates from invocation-time established
-Contract relations.
-
-A subsequent 2026-09-20 review closed the cross-Policy Input-target question in favor of explicit Policy-variable Input.
-Different declared Policy Worlds may select different Input Definitions for the same Interaction. The remaining question
-belongs to Governance and Interface realization: how an external caller obtains the applicable world and how generated
-host APIs project that variation.
-
-The same review closed the V1 direct-coordinate and presentation-topology laws. Direct Input coordinates are nominal and
-declaration order is nonsemantic. Flatness now means a flat directly addressable authority surface rather than
-scalar-only value topology. A direct coordinate may contain a finite, closed, acyclic presentation built from Leaf,
-Named Product, Closed Tagged Choice, Sequence, Membership, and Association. Nested constituents do not become new Input
-authorities or Lowering coordinates. Collection-visible order is separated from Presentation Sameness, deterministic
-compiler order, and storage order. Tuple, Multiset, generic Result, open or dynamic structures, recursive presentations,
-capabilities, resources, and executable or time-dependent forms are not V1 fundamental Input families.
-
-A 2026-09-21 review closed the V1 Membership and Association equivalence authority model. Input Presentation Sameness is
-intrinsic to the complete resolved presentation meaning and is the default uniqueness relation only when it satisfies
-the required equivalence law. Membership uniqueness equivalence and Association key equivalence remain subordinate
-Input-owned laws and may instead select one exact ratified semantic equivalence resolved before Visible HIR. Such a law
-is homogeneous, deterministic, purpose-bounded, complete in its meaning-affecting semantic basis, and cannot be supplied
-by application callbacks, host `equals`, comparator objects, ambient locale or provider state, hashes, or backend
-indexes. Presentation Sameness must imply the selected uniqueness equivalence. Duplicate-equivalent members or keys are
-invalid rather than silently deduplicated. V1 `Ordered By` zero-equivalence must coincide with the applicable uniqueness
-equivalence. Canonicalization, Fact sameness, HIR semantic equality, Definition and Occurrence identity, platform
-equality observation, and physical equality remain separate authorities or relations.
-
-A later 2026-09-21 review superseded the user-selectable/coarser Input-equivalence part of that decision. V1 Input now
-fixes Membership uniqueness and Association key uniqueness exclusively through the applicable Kontrakt-owned
-Presentation Sameness law. Input exposes no separate equality, collation, normalization, comparator, or equivalence
-selection. A platform carrier may be used only when the ADR-0073 support boundary can preserve every required Input
-distinction; carrier behavior does not redefine Input uniqueness. Any deliberate collapse of Input-preserved
-distinctions belongs to an explicitly selected later authority such as Canonicalization. The earlier history entry is
-retained to record the superseded design rather than to remain normative.
-
-A subsequent 2026-09-21 Leaf audit closed the baseline V1 Leaf-presentation laws after a reverse review against
-ADR-0073. Boolean, fixed-width signed and unsigned Integer, Bytes, Unicode-scalar Text, UUID, Decimal, Binary32,
-Binary64, ISO Date, Local Time, Local Date-Time, Numeric UTC Offset, Offset Date-Time, Duration, Instant, Zone
-Descriptor, Resolved Zoned Date-Time, and URI Reference now have fixed Input Presentation Sameness laws independent of
-host equality, normalization, provider behavior, or generated representation. Decimal preserves scale. Binary32 and
-Binary64 preserve the complete admitted bit datum, including signed-zero and admitted NaN distinctions. Text preserves
-exact Unicode scalar order rather than JVM UTF-16 storage. Instant preserves only its fixed epoch coordinate. Zone
-Descriptor is separated from the time-zone rules it denotes, and Resolved Zoned Date-Time preserves the submitted local
-date-time, offset, and descriptor without revalidating them against the current TZDB. The review also corrected an
-earlier over-broad exclusion of temporal values: closed temporal values may be Input presentations even when separate
-formation or resolution operations consume a ratified temporal basis. Runtime-selected clocks, default zones, provider
-contents, and other ambient sources remain outside Input authority. Generic Token, Identifier, Path, and URL are not
-universal V1 Leaf meanings, while specific closed descriptors may be ratified separately. The internal compiler
-representation for these laws is deferred to Design and does not become a user-selectable Input surface. This review
-also clarifies that the earlier exclusion of time-dependent forms refers to live, ambient, lazy, or provider-dependent
-sources rather than already-formed closed temporal values.
-
-A later 2026-09-21 Input closure audit reconciled collection order and carrier preservation with ADR-0073. Sequence
-position and the three Membership and Association order-observation laws remain Input-owned meaning. A JVM collection
-surface, implementation, comparator, equality relation, insertion or access order, traversal behavior, or constructor
-does not select those laws. Such a surface is usable only when Platform Use Verification can preserve the
-already-declared Input order, Presentation Sameness, uniqueness, immutability, constituent closure, and other applicable
-obligations without loss. Platform-only observations remain platform meaning. Lookup, navigation, range, mutation, and
-complexity operations remain separate API or platform-operation questions and do not enlarge Input presentation
-semantics. The same audit removed residual normative use of `profile` as an Input semantic concept; any reusable
-compiler representation for closed Leaf law material remains Design work. No further V1 Input semantic question remains
-open in this ADR.
-
-A subsequent 2026-09-21 HIR–Establishment closure audit applied the common ADR-0071/ADR-0063 master checklist to Input.
-The audit defined the Input-specific Resolved HIR Candidate Protocol, including typed Definition, Binding, and direct
-coordinate references and the complete producer-owned projection catalog. It separated HIR seal failure from Input
-Definition Refusal, marked Required Basis, Basis Binding, Complete Basis, Input-owned Applicability, and Input-owned
-arbitration as not applicable, and closed the complete Established Input Definition surface. It also established Input
-Occurrence as an independent semantic application: every fresh boundary re-entry creates a new occurrence, `Presented`
-and `Refused` are the occurrence result vocabulary, and equal presentations or equal results do not merge occurrences.
-Established Definition material remains in the Canonical Contract World while occurrence-specific Established meaning
-remains semantically separate and is observed through the Established Input Semantic Protocol. Physical storage and
-reclamation remain replaceable realization concerns. The audit defined the Established Input Semantic Protocol, direct
-relation ownership, consumer access law, complete-set reuse validation, coherent observation, and the distinction
-between reusable physical representation and fresh occurrence authority. Compiler unsuccessful-result and recovery
-details remain a
-provisional common dependency on Proposed ADR-0074; physical HIR schema, query, cache, persistence, and JVM carrier
-realization remain Design or ADR-0073 work rather than Input meaning.
-
-A 2026-09-29 consistency review removed residual assumptions that Admission directly follows every successful Input
-Occurrence. Input still establishes the same Definition and Occurrence meaning, including the Established Input
-Presentation, but the selected inbound composition determines which later authority may observe that presentation
-directly. The Established Input Semantic Protocol no longer grants a later authority occurrence-time access that would
-bypass an intervening established result. Definition-level Input coordinate observations remain available to later laws
-that legally require them, while occurrence-time value sourcing remains owned by the consuming Contract and the selected
-composition. ADR-0048 remains the owner of the shared inbound-airlock composition and core-entry relation.
+Every fresh boundary entry establishes a distinct Input Occurrence, even when an earlier occurrence has the same
+presentation and result. Later Fact identity may converge without merging those occurrences. Validated Definition or
+physical computation reuse cannot replace a fresh Occurrence identity. HIR and Established Semantic Protocols let
+consumers observe permitted Input meaning without reconstructing it from source or host carriers, while physical sharing
+remains separate from Contract identity.
