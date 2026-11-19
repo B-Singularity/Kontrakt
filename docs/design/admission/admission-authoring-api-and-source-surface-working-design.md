@@ -238,8 +238,8 @@ assume an exact legal Input coordinate named `amount` and an appropriate integer
 
 Kotlin named local functions are supported when their closure can be resolved. Capture of an already-established,
 immutable judgment-local value is supported; an arbitrary object receiver or escaping function value is not. Lambdas
-and callable references are not free-standing Admission callbacks. They may be accepted inside an individually
-qualified finite binder with an exact invocation law. Fresh mutable capture is conditional on that law being known,
+and callable references are not free-standing Admission callbacks. They may contribute through exactly resolved and
+qualified operations under ADR-0065 Section 7.4. Fresh mutable capture is conditional on the invocation law being known,
 sequential where necessary, and compatible with the judgment-local escape and alias restrictions of ADR-0065 Section
 7.2. Java and Kotlin do not share the same capture restrictions; the frontend must respect the actual language form.
 
@@ -303,11 +303,7 @@ otherwise prohibited authored form. This is not a requirement that all private h
 An independent Boolean method is composed under Section 3.1; an unused non-condition helper is neither automatically
 conjoined nor an error solely because it has no callers.
 
-This reviewed API rule has a **normative reconciliation pending**: ADR-0065 Section 7.5 currently permits discarding a
-provably unreachable branch containing unsupported syntax. The later user review requires legality qualification before
-optimization and does not adopt that exception. This Working Design cannot override the ADR. The owning ADR must be
-amended or the difference otherwise resolved before publishing a V1 conformance rule; no compiler optimization may be
-used to silently decide this legal question.
+Source legality and unreachable-code elimination follow ADR-0065 Section 7.5.
 
 A declared independent condition is not automatically a short-circuit guard for another condition. A partial read or
 operation must have its domain established on each path that reaches it under the actual source meaning. Compiler
@@ -322,8 +318,8 @@ expressions, finite fresh scalar accumulation, and exactly resolved overloads, g
 default arguments, and varargs. Negative cases include ambiguous or incompletely resolved overloads,
 recursive semantic cycles, instance or static mutable state, effectful initialization, escaping captured mutation,
 and a helper that performs external I/O or ambient observation. A legal unused helper is not rejected merely for being
-unused; its authored legality must nevertheless be checked. For a branch proven unreachable, qualification and later
-elimination are separate checks, subject to the unresolved ADR-0065 Section 7.5 discrepancy recorded above.
+unused; its authored legality must nevertheless be checked. For a branch proven unreachable, Source legality and later
+elimination remain separate checks under ADR-0065 Section 7.5.
 
 ## 3.2. Input-facing values and collection shapes
 
@@ -459,8 +455,8 @@ collection implementation simply by accepting its interface.
 |----------------------------|-------------------------------------------|------------------------------------------------|--------------------------------------------------------------------------------------|
 | `Sequence` cardinality     | `size`, `isEmpty()`                       | `size()`, `isEmpty()`                          | Exact finite presentation; cardinality is derived, not a new Input-owned observation |
 | `Sequence` position        | `seq[index]`, `first()`, `last()`         | `list.get(index)` and qualified endpoint reads | Exact position, bounds and nonempty guards; same sequence and index law              |
-| `Membership`               | `element in set`, `set.contains(element)` | `set.contains(element)`                        | Exact Input Presentation Sameness; no host equality or invented order                |
-| `Association` key presence | `map.containsKey(key)`                    | `map.containsKey(key)`                         | Exact key presence and key Presentation Sameness                                     |
+| `Membership`               | `element in set`, `set.contains(element)` | `set.contains(element)`                        | Exact Source comparison; Input-native membership uses Presentation Sameness          |
+| `Association` key presence | `map.containsKey(key)`                    | `map.containsKey(key)`                         | Exact Source key lookup; Input-native key presence uses key Presentation Sameness    |
 | `Association` value lookup | `map[key]`, guarded `getValue(key)`       | `map.get(key)`                                 | Preserve missing key versus present null-like value and partial lookup domain        |
 | Derived Association views  | `keys`, `values`, `entries`               | `keySet()`, `values()`, `entrySet()`           | Derived immutable presentation; no live host view or implicit iteration order        |
 
@@ -555,7 +551,7 @@ source profiles are distinguished:
 | Kotlin/Java primitive floating `==`, `!=`              | Support the exact numeric equality profile, including NaN and signed-zero behavior; do not replace it with bitwise Presentation Sameness.                                                |
 | Decimal and other structured leaves                    | Qualify the exact source type and callable before approval. Numerical comparison and Presentation-sensitive equality need not coincide.                                                  |
 | A collection element `element == target`               | Use that element operation's exact qualified equality. Do not silently rewrite it to the collection's membership relation.                                                               |
-| `set.contains(target)`, `map.containsKey(key)`         | Use the applicable Input constituent or key Presentation Sameness under ADR-0064, not host `equals` or `hashCode`.                                                                       |
+| `set.contains(target)`, `map.containsKey(key)`         | Preserve the exact qualified Source lookup semantics. Input-native membership and key-presence observations follow Input Presentation Sameness.                                          |
 | Whole-collection `a == b`                              | Conditionally support only an exact, complete structural comparison that preserves every distinction of the applicable presentations. Do not execute arbitrary host collection `equals`. |
 | Exact external enum case `status == Status.PAID`       | Support nominal closed-case comparison under Section 3.2.3; no enum initialization or user method is thereby authorized.                                                                 |
 | Kotlin `===`/`!==` or Java reference `==`/`!=`         | Do not use host object identity as Contract value equality.                                                                                                                              |
@@ -653,18 +649,13 @@ establish a legal guard when their exact value and path correspondence is verifi
 Boolean method is not an implicit guard for another method's partial operation. A Boolean result on sampled inputs or
 a host exception caught on a failing path is not proof of source legality.
 
-Host exception control is not a third Admission outcome. `throw`, exception-based `try`/`catch` conversion to a
-Boolean, Kotlin `require`/`check`/`error`, and Java/Kotlin `assert` are not V1 judgment authoring forms. In particular,
-Java assertion enablement cannot determine whether an Admission condition is evaluated. `requireNotNull`,
-`checkNotNull`, and `Objects.requireNonNull` are not implicitly approved as substitutes for an explicit presence
-guard. Potentially closed specialized forms still require a separate review rather than a blanket permission for
-exceptions or library methods.
+Exception control and exception-producing calls follow ADR-0065 Section 7.5. Exact Source meaning and total judgment
+completion are required; compiler conversion of exceptions into Admission outcomes is forbidden.
 
 The authored code must satisfy its source legality requirements **before** reachability-based optimization. Once a
 closed source is legal, the compiler may simplify or eliminate branches and calculations proved not to affect the
-judgment while preserving guarded domains, all required bases, result, and Diagnostic obligations. The normative
-ADR-0065 Section 7.5 inconsistency about removing unsupported unreachable syntax remains recorded in Section 3.1.3;
-this Working Design does not silently settle that ADR conflict.
+judgment while preserving guarded domains, all required bases, result, and Diagnostic obligations. Source qualification
+and later unreachable-code elimination remain governed by ADR-0065 Section 7.5.
 
 ### 3.3.6. Finite loops, `break`, and `continue` — bundle 4
 
@@ -740,8 +731,7 @@ order-invariant existential `break`, a first-member-dependent invalid `break` ov
 `continue`, a `while` loop whose `continue` prevents progress, Java counted-`for` update semantics, overflow that
 prevents termination, and a labeled/non-local jump without exact qualification. Legal but unreachable computations
 must be checked for source legality before later elimination; forbidden source in an unreachable branch does not
-receive an optimization-based legality exemption under the reviewed rule, subject to the outstanding ADR-0065 Section
-7.5 reconciliation.
+receive an optimization-based legality exemption under ADR-0065 Section 7.5.
 
 ## 3.4. Collection computations and derived relations
 
@@ -768,8 +758,8 @@ does not
 establish closure.
 
 Review exact numerical, text, binary, decimal, temporal, identifier, regular-expression, and other closed-domain
-operations as candidates. Do not admit entire libraries or every overload at once. ADR-0073 owns any required
-ratification of platform meaning; the API document will record the author-visible qualified forms and their limitations.
+operations as candidates. Do not admit entire libraries or every overload at once. Exact Source selection follows
+ADR-0079, SDK semantic qualification follows ADR-0084, and applicable platform ratification follows ADR-0073.
 
 ## 3.6. Authoring diagnostics and support status
 
@@ -864,13 +854,14 @@ cannot resolve it by fiat.
 Bundles 1–4 have reviewed class-level composition, basic Helper/Constant/Local forms, Input-facing observation
 source candidates, and Boolean, bitwise, equality, and control-flow source forms. Exact-name coordinate correspondence
 and external case-only enums are recorded in Sections 3.1–3.2; the reviewed expression and loop-control rules are in
-Section 3.3. Conditional forms still require their stated qualification. The whole-source legality/unreachability
-difference noted in Section 3.1.3 also requires reconciliation with ADR-0065 before the conformance policy is finalized.
+Section 3.3. Conditional forms still require their stated qualification. Source legality and unreachable-code
+elimination
+follow ADR-0065 Section 7.5.
 
-Next review the remaining type-specific numeric and bit-utility overloads, then finite collections and derived
-operations, followed by callable/library profiles and authoring diagnostics. Finally assemble the exact V1 support
-catalog and conformance corpus. Each review must produce actual Kotlin and Java source forms, allowed and rejected
-examples, exact semantic obligations, and an explicit support status. The present reviews do not settle all
-parameters, overloads, library methods, carrier mappings, or implementation algorithms.
+Next qualify exact Java/Kotlin Source and SDK operations against the established value and calculation laws, then
+complete authoring diagnostics, the V1 support catalog, and the conformance corpus. Each review must produce actual
+Kotlin and Java source forms, allowed and rejected examples, exact semantic obligations, and an explicit support status.
+The present reviews do not settle all parameters, overloads, library methods, carrier mappings, or implementation
+algorithms.
 
 The current design must not be treated as a complete public Admission API until those reviews are accepted.

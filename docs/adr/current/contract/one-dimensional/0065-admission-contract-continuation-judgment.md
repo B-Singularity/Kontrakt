@@ -242,8 +242,10 @@ optimization; it is not a prerequisite for Candidate formation.
 
 The Input Observation Requirement Law preserves every distinction the judgment actually requires. A nested read must
 retain the necessary constituent observation. A finite collection predicate must retain the required member
-observations and the applicable collection meaning. A presence test requires the exact absence distinction. A key
-comparison requires the applicable key sameness. Order matters only when the judgment observes it. The current Input
+observations and the applicable collection meaning. A presence test requires the exact absence distinction. Input-owned
+key membership and uniqueness follow key
+Presentation Sameness. Authored comparisons and lookups retain their exact qualified Source meaning. Order matters only
+when the judgment observes it. The current Input
 Definition and its particular coordinate binding do not enter Admission Definition meaning merely because the frontend
 used them to resolve the source.
 
@@ -680,14 +682,14 @@ limit rather than a permanent semantic ban on their syntax.
 
 Temporary derived computation is permitted when its operations have exact supported semantics and its result does not
 escape the judgment. The rule covers scalar interpretation as well as judgment-local collection reshaping or
-aggregation. If such computation introduces a relation that Input did not provide, that relation must become explicit
-Admission meaning. A new equality or ordering rule is a representative case; host conventions cannot silently supply the
-missing relation.
+aggregation. Any derived equality or ordering must have exact qualified meaning and be retained in the Admission
+judgment when
+relevant. It does not alter Input-owned sameness or order.
 
 ### 7.3. Known Operation Refinement
 
-A helper or library call may participate only when Kontrakt can remove that call as a source of Admission authority or
-preserve a separately ratified platform obligation under ADR-0073.
+A helper or library call requires exact source resolution under ADR-0079 and, for SDK operations, qualified meaning
+under ADR-0084. The call itself grants no Admission authority; eligible platform execution follows ADR-0073.
 
 An exact-target helper is acceptable when all semantically reachable behavior that can affect the judgment can be
 resolved into the one composed Admission judgment. The closure includes implicit behavior, not just the visible body.
@@ -703,16 +705,19 @@ resolved semantic operation and all reachable effects, as further constrained by
 
 ### 7.4. Finite Collection, Pipeline, and Binder Condition
 
-Admission may inspect collection constituents only through distinctions owned by the Established Input presentation.
+Admission may inspect Input collection constituents only through distinctions owned by the Established Input
+presentation.
 Input also decides the collection's membership or key relation and whether order or cardinality is semantic. If the
 Input law does not expose one of those distinctions, a host collection implementation cannot supply it implicitly.
 
-A finite Input collection need not have one fixed maximum cardinality. A traversal is legal when the compiler can prove
-that it ranges only over the actual finite presented domain through supported operations. Resource limits on that work
-belong to Budget, Capacity, compiler safety, or backend policy rather than to Admission semantics.
+A finite Input collection need not have one fixed maximum cardinality. A traversal is legal when its finite domain and
+completion can be established from lawful Input and closed Definition material through qualified operations. Resource
+limits
+on that work belong to Budget, Capacity, compiler safety, or backend policy rather than to Admission semantics.
 
-A lambda or function object is not itself Admission material. Such syntax may appear inside a recognized finite binder
-when its body is closed, does not escape, and has exact invocation semantics. This matters for mutation. A sequential
+A lambda or function object is not itself Admission material. It may contribute through an exactly resolved and
+qualified operation when its body and invocation semantics are closed and it does not escape the judgment. This matters
+for mutation. A sequential
 binder with a known invocation law may use a fresh local accumulator. An API that may reorder or duplicate callbacks
 cannot make captured mutation semantic unless that invocation law is itself closed.
 
@@ -781,9 +786,9 @@ Definition judgment retain their separate result ownership under Section 6.5.
 Pattern syntax is frontend evidence. Admission does not grant authority to a particular host regex engine or to its
 matching strategy.
 
-A supported pattern must be reducible to exact Admission-visible matching semantics together with a supported work law
-over the finite pattern and presented text or bytes. If result semantics, capture behavior, Unicode basis, or required
-work cannot be closed, the source is unsupported rather than delegated to arbitrary host behavior.
+A supported regex operation must have exact qualified Source meaning under ADR-0080 Section 3.6 and satisfy Admission's
+observation, closure, and finite-completion requirements. Unqualified behavior cannot be delegated to a host regex
+engine.
 
 ---
 
@@ -803,8 +808,8 @@ If Admission needs additional information, that information must first become ex
 law. The implementation cannot silently capture the current locale, Policy World, State, provider setting, or other
 ambient value merely because it is reachable.
 
-Section 7.4 is the only path by which Stream- or Sequence-like syntax can participate: the finite source and operation
-semantics must be closed, and the live host pipeline must disappear as authority.
+Stream- or Sequence-like calculations follow Section 7.4 and ADR-0081 Section 3.9. Their exact Source meaning and
+required finite completion must be established; a deferred or live host pipeline gains no Admission authority.
 
 Open runtime subtype discovery and callback completion are likewise forbidden. Ordinary host syntax may still express a
 type test or pattern when the frontend resolves it to an Input-owned `Closed Tagged Choice` or another exact closed
@@ -816,7 +821,7 @@ cannot alter Admission-visible semantics.
 
 ---
 
-## 9. Deterministic Refinement
+## 9. Admission Source Refinement
 
 Admission Definition Establishment requires a complete, legally resolved Candidate as defined in Section 6.5. Source
 refinement must preserve the Admission-owned judgment and the observation requirements defined in Sections 6 through 8.
@@ -831,16 +836,16 @@ At occurrence time, Admission evaluates the Established Definition against the e
 specified in Section 6.7, using legally qualified observations under ADR-0075. Section 8's hidden-observation
 prohibition applies during realization as well as source refinement.
 
-Host evaluation strategy is replaceable. Short-circuit syntax, iteration shape, temporary allocation, and matcher
-implementation may disappear when they are not Contract-visible. Any Input-visible order, guarded domain, exact numeric
-result law, or other distinction that can affect the Admission result must still be preserved.
+Host evaluation strategy is replaceable. Source evaluation forms may be eliminated or transformed only when the exact
+qualified Source and Admission semantics are preserved, including mandatory evaluation, guards, results, effects, and
+normal or abrupt completion.
 
-A host operation with several specification-permitted semantic outcomes is not made deterministic by compiler
-preference. V1 may accept it only when Admission selects one exact semantic operation, when all permitted outcomes are
-indistinguishable to the final judgment, or when another explicit preservation law justifies the narrowing.
+Exact Source operation resolution alone does not establish determinism. An operation permitting multiple outcomes may
+contribute to Admission only when a lawful deterministic refinement is qualified, or all permitted outcomes are
+indistinguishable under the complete Admission judgment and mandatory Source observations.
 
-The last condition may be satisfied by a lawful deterministic refinement qualified for the exact resolved Java/Kotlin
-Source operation under ADR-0079 and ADR-0084. Its result must remain within the Source-permitted outcomes, and its
+A lawful deterministic refinement must follow the exact resolved Source operation under ADR-0079, ADR-0084, and its
+applicable calculation law. Its result must remain within the Source-permitted outcomes, and its
 required encounter order, evaluation, callback, state, normal or abrupt completion, and other effects must be preserved.
 An unspecified Set traversal or `Stream.findAny()` may admit a deterministic permitted choice; the choice does not imply
 an Input-owned order or change `findAny()` into `findFirst()`. Source operations that actually use a random generator
