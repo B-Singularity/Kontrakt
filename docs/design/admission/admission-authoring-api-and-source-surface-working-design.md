@@ -67,10 +67,10 @@ name and members do not themselves establish Contract identity.
 
 No particular method name, including `admit`, is prescribed. One Boolean method or several independent Boolean
 condition methods may express the judgment. Independent conditions compose by logical conjunction; an exact-target
-Boolean helper contributes where called, not again as an independent condition. Differently named private helpers may
-contribute to the judgment, and reusing a method name within the selected class, including a host-language overload,
-is an authoring error. No privileged root method, annotation, getter or setter member, or additional IDL method
-selection is part of the Admission authoring form. ADR-0065 Section 5.2 owns this composition law.
+Boolean helper contributes where called, not again as an independent condition.
+Private helpers may contribute when their exact declarations and calls are resolved. Repeated method names, including
+overloads, are not independently disqualifying. No privileged root method, annotation, getter or setter member, or
+additional IDL method selection is part of the Admission authoring form. ADR-0065 Section 5.2 owns this composition law.
 
 Inheritance, overriding, dynamic specialization, object communication, and external callbacks cannot supply Admission
 authority. Constructors or initializer blocks that perform application behavior are not permitted, even when their
@@ -119,6 +119,7 @@ judgment, or multiple independent Boolean methods can contribute conditions join
 calls supply their meaning at the call site. A Boolean method used as a helper is not automatically added once more as
 an independent condition. Neither source order, visibility, nor the number of methods creates separate Admission
 judgments. The resulting meaning is one complete Boolean continuation judgment, under ADR-0065 Sections 5.2 and 11.
+Independent conditions and helpers are distinguished by exact resolved declarations, not method names.
 The frontend must bind each contributing Input-facing parameter or constituent by its exact declared Input name,
 under the same coordinate-naming approach already used for Canonicalization. Identical names in the same applicable
 Input scope identify the same requested coordinate; a matching name does not waive shape or presentation-law checks.
@@ -178,7 +179,7 @@ calls it. Helpers must satisfy exact-target closure, and semantic cycles and hid
 forbidden
 under ADR-0065 Sections 7–8. An otherwise unused helper is not, solely for being unused, assigned an independent
 Boolean condition or rejected under an invented call-graph reachability rule. No unique call-graph entry point is
-required. The existing prohibition on duplicate method names, including overloads, remains intact.
+required.
 
 **Remaining declaration API details to specify** include the complete language/version-specific signature and
 modifier catalog, full instance/static receiver coverage, and source-only versus binary-only acquisition conditions.
@@ -188,13 +189,13 @@ physical computation remain assigned to the later compiler designs in Section 6.
 
 ### 3.1.1. Reviewed helper and local computation forms — bundle 2
 
-The selected class may contain differently named private Kotlin or Java helper methods with zero or several
+The selected class may contain exactly resolved private Kotlin or Java helper methods with zero or several
 parameters, returning `Boolean` or another qualified closed value. A helper may call another exactly resolved helper
 provided that the resulting computation is closed and has no prohibited semantic cycle. An ordinary instance method is
 a supported authoring form; a Java private static helper is a **conditional** form requiring the same exact-target and
-initialization checks. Kotlin extension receivers, general generic helpers, default-argument lowering, and varargs are
-not approved merely because ordinary helpers are supported. The prohibition on repeated method names, including
-overloads, remains unchanged.
+initialization checks.
+Generic helpers, extension functions, default arguments, and varargs are permitted when their exact source meaning
+is resolved under ADR-0079 and the resulting computation satisfies Admission source qualification.
 
 ```kotlin
 class RangeAdmission {
@@ -317,7 +318,8 @@ constructor/initializer restrictions continue to apply separately.
 
 The later exact API catalog must verify private Boolean and non-Boolean helpers, multi-parameter helper argument
 binding, repeated exact helper use, conditional Java static helpers, closed local function capture, closed constant
-expressions, and finite fresh scalar accumulation. Negative cases include overloads with the same method name,
+expressions, finite fresh scalar accumulation, and exactly resolved overloads, generic helpers, extension functions,
+default arguments, and varargs. Negative cases include ambiguous or incompletely resolved overloads,
 recursive semantic cycles, instance or static mutable state, effectful initialization, escaping captured mutation,
 and a helper that performs external I/O or ambient observation. A legal unused helper is not rejected merely for being
 unused; its authored legality must nevertheless be checked. For a branch proven unreachable, qualification and later

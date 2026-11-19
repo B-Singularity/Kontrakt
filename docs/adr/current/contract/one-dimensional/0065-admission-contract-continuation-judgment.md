@@ -645,36 +645,22 @@ resolve to the same already-defined semantic surface.
 
 ### 7.1. V1 Judgment Coverage Target
 
-V1 should cover ordinary value-oriented judgment code broadly enough that users do not need a second validation
-language. Boolean logic is in scope when its operators have explicit semantics, including finite conditional choice and
-the ordinary closed Boolean algebra. Numeric judgments are also in scope. Integral semantics must fix width and
-signedness, and they must define overflow, narrowing, and shift behavior wherever those distinctions can affect the
-judgment. The selected floating law must define classification and ordering as well as equality and arithmetic. It must
-also preserve raw-bit relations when that law exposes them, so source purity alone does not permit a reassociation that
-changes the result. Decimal operations likewise keep presentation-sensitive equality separate from numeric comparison
-when the chosen semantic profile distinguishes them.
+V1 supports ordinary value-oriented judgment code without requiring a separate validation language. Boolean expressions
+and finite conditional choice are permitted when their exact semantics are resolved. Numeric values and operations
+follow ADR-0078, including its source-specific result, comparison, conversion, and evaluation laws.
 
-Admission may judge finite alternatives such as enums, presence or absence, nullability, closed product members, and
-`Closed Tagged Choice` payloads when Input exposes those distinctions. Character, text, and binary values may be
-inspected through exact finite relations; containment and slicing are representative examples. Range and positional
-operations are legal only when the required position or order is itself observable.
+Admission may judge enums, presence or absence, nullability, closed product members, and `Closed Tagged Choice` payloads
+when Input exposes those distinctions. Character and text calculations follow ADR-0080, and temporal calculations follow
+ADR-0082. Binary, range, and positional operations require exact qualified semantics and legal observations.
 
-Finite arrays and the Input `Sequence`, `Membership`, and `Association` forms are also within the intended V1 surface.
-Admission may derive collection size from the complete finite Input Presentation. Input does not define a separate size
-operation; form-defining cardinality constraints, when present, remain Input-owned.
+Finite arrays and Input `Sequence`, `Membership`, and `Association` forms are eligible judgment domains. Their
+presentation, cardinality, membership, key, and ordering laws remain Input-owned under ADR-0064.
 
-Keyed lookup may be accepted when its complete meaning can be derived from the Association's exact key/value relations
-and
-Key Presentation Sameness. Quantification and reduction, such as `all` and `count`, may likewise be accepted over exact
-finite presented domains under Section 7.4.
+Admission may use qualified collection operations, including lookup, transformation, quantification, reduction, and
+judgment-local pipelines, under ADR-0081 and Section 7.4. Source operations retain their exact comparison and selection
+semantics; they neither replace Input Presentation Sameness nor establish missing Input-owned order.
 
-Judgment-local pipelines follow the same rule. An unordered `Membership` does not acquire encounter order merely because
-a host API offers `first` or `last`; Admission may derive a
-temporary order only under its own exact supported ordering law.
-
-When an exact Source operation instead permits selecting any member or leaves its traversal order unspecified, Admission
-may use a qualified deterministic selection within the Source-permitted outcomes under Section 10. Such a selection
-does not establish Input-owned encounter order; Source-guaranteed order remains binding.
+Lawful deterministic refinement follows ADR-0081 and Section 10.
 
 ### 7.2. Ordinary Expressions and Temporary Computation
 
