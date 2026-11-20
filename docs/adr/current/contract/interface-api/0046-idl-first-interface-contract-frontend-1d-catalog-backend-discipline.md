@@ -394,9 +394,6 @@ interface CalculateContract {
                 output      CalculateOutput
         }
 
-        lowering CalculateLowering {
-            value -> command.value
-        }
     }
 }
 ```
@@ -789,9 +786,6 @@ interface CalculateContract {
                 retention         DefaultDiagnosticRetention
         }
 
-        lowering CalculateLowering {
-            value -> command.value
-        }
     }
 }
 ```
@@ -860,16 +854,16 @@ The v1 parser covers only the IDL interface contract subset.
 
 It reads Interface, Interaction, and Operation declarations and signatures; role selections, including absent Input
 and Output; selected shared `Policy`, `Governance`, `Budget`, and `Capacity` references; selected interface-scoped
-`Facts` and `Invariants` references; selected axis entries; IDL-owned 1D declarations such as the current Lowering
-relation form; slot occupancy; and source references and locations.
+`Facts` and `Invariants` references; selected axis entries; slot occupancy; and source references and locations.
 
 Resolution preserves complete role selection at each owning scope: exact selected Binding Candidate relations or
 Explicit Absence. It cannot infer absence from failed lookup, incomplete resolution, or a missing Binding Candidate.
 ADR-0071 owns the resulting HIR observation protocol.
 
 The parser does not absorb the source grammar owned by another frontend merely because the Contract is selected from the
-IDL. Restricted host declarations used by current one-dimensional ADRs remain source evidence acquired by their own
-frontend path and resolved into the same Contract world.
+IDL. The Lowering DSL frontend parses the definition selected by the operation manifest. Restricted host declarations
+used by current one-dimensional ADRs remain source evidence acquired by their own frontend path and resolved into the
+same Contract world.
 
 The parser stops before deeper languages that their owning ADRs have not ratified. The frontend remains a contract
 interface notation, not a general programming language.

@@ -244,9 +244,8 @@ The Lowering Contract contains no user implementation callback and no business a
 
 The enclosing interface declares `facts` and `invariants`.
 
-The Operation manifest selects one Lowering handle.
-
-One sibling `lowering` declaration inside that Operation states the exact relation.
+The Operation manifest selects a Lowering Definition by name from the definitions declared in the Lowering DSL. Each
+relation in that definition uses `source -> target : method`.
 
 ```text
 interface DepositContract {
@@ -266,15 +265,20 @@ interface DepositContract {
                 lowering          DepositLowering
         }
 
-        lowering DepositLowering {
-            accountIdText -> command.accountId
-            amountText    -> command.amountMinor
-        }
     }
 }
 ```
 
-`manifest` and `lowering` are sibling declarations.
+The selected Lowering Definition is written separately in the Lowering DSL:
+
+```text
+lowering DepositLowering {
+    accountIdText -> command.accountId    : MethodA
+    amountText    -> command.amountMinor  : MethodB
+}
+```
+
+`MethodA` and `MethodB` are placeholders for mapping methods whose semantics remain to be defined.
 
 The relation body does not repeat Input carriers, Operation parameter declarations, Fact declarations, or Invariant
 declarations.
@@ -501,7 +505,7 @@ There is no missing-Lowering-implementation link failure because the user does n
 A backend that cannot realize a semantically complete Lowering Contract with the required guarantees must reject that
 backend realization. Backend inability does not change the Contract.
 
-The accepted IDL declaration is lowered into one flat, immutable, adapter-erased Lowering Contract material.
+The established Lowering Definition is represented as one flat, immutable, adapter-erased Lowering Contract material.
 
 Lowering identity includes the source-presentation schema identity, optional Canonicalization law identity, selected
 Operation identity, target parameter slots and Fact-kind identities, the canonicalized explicit one-to-one binding set,
@@ -786,11 +790,11 @@ The exact carrier materialization and allocation strategy are open.
 
 The exact encoding of declared Lowering refusal is open.
 
-The exact authoring surface for a nontrivial one-to-one representation refinement that cannot be expressed by the
-current relation and existing Contract-owned sort law is open.
+The Lowering DSL expresses each binding as `source -> target : method`.
 
-That open syntax question does not reopen a user implementation callback. Any future form must state the missing
-Contract meaning explicitly enough for Kontrakt to realize it.
+The supported mapping methods and the authoring details for nontrivial one-to-one representation refinement remain
+open. Each method must supply enough Contract meaning for Kontrakt to realize it. User implementation callbacks remain
+prohibited.
 
 Those decisions must not weaken the fixed Lowering law: one operation-local immutable relation, exact one-to-one
 coordinate bindings, no runtime implementation discovery, no user-supplied Lowering implementation, no implicit
@@ -828,17 +832,3 @@ V1 deliberately rejects `1:N`, `N:1`, same-name inference, raw type-pair convert
 because those mechanisms would obscure Contract meaning.
 
 ---
-
-## 20. Migration History
-
-This ADR was extracted mechanically from the Lowering-owned material of ADR-0048.
-
-The extraction preserved the then-accepted Lowering Contract semantics.
-
-The later amendment in this ADR removes the retained generated Lowering port and user-supplied Lowering realization
-model. The explicit source-to-target relation, V1 cardinality law, target independence, candidate boundary, Fact
-establishment handoff, and refusal ownership remain in force.
-
-The current inbound-airlock ownership is split across ADR-0064 Input, ADR-0065 Admission, ADR-0066 Canonicalization,
-this ADR for Lowering, ADR-0068 Fact, ADR-0069 Invariant, and the common selection and realization boundary in ADR-0047.
-ADR-0048 remains the historical migration source rather than the current owner of those split one-dimensional laws.
