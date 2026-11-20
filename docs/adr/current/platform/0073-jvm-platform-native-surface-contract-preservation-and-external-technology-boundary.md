@@ -19,6 +19,9 @@ Accepted
 - ADR-0070: Realization Axis, Core Realization Closure, and JVM-Ahead Optimization
 - ADR-0071: Resolved Contract HIR Semantic Boundary, Deterministic Visibility, Lifecycle, and Reuse
 - ADR-0072: JVM Collection Contract Preservation, Aggregate Semantics, and Deterministic Equality
+- ADR-0079: Contract Types and Host Type Binding
+- ADR-0084: One-Dimensional Standard-Library Semantic Acquisition and Interpretation Boundary
+- ADR-0085: Compiler Type Architecture and Information Lifecycle (*Draft*)
 - Kontrakt Compiler Total Architecture Map
 - Kontrakt Compiler Material and IR Architecture Review Checklist
 - *Modern Compiler Architecture 01–15*
@@ -58,8 +61,9 @@ A third problem appears when Kontrakt itself consumes versioned platform data wh
 or retaining compiler-produced meaning. Time-zone rules, Unicode data, locale data, or other platform tables may differ
 across release, vendor, machine, deployment, or execution time. A broad JDK version is not a sufficient semantic
 identity
-for every compiler dependency. The same platform data need not become a Kontrakt dependency when the corresponding
-admitted operation is left unchanged and its execution remains governed by the applicable platform specification.
+for every compiler dependency. An unchanged platform call does not by itself make the compiler host's runtime data a
+semantic dependency. However, when a 1D candidate uses that operation, the frontend must first obtain its qualified
+meaning under the applicable basis. Keeping the call for execution does not replace that interpretation.
 
 A fourth problem is that physical JVM observability is broader than the meaning that a Contract boundary needs. Object
 identity is one example. Platform execution can expose other distinctions whose meaning is already owned by Java,
@@ -373,12 +377,14 @@ Descriptor possession therefore does not imply resolution authority.
 
 # 7. Closed Versioned Platform Data
 
-Some Kontrakt compiler work may consume released platform semantic data instead of leaving the corresponding operation
-to unchanged JVM execution. This occurs when Kontrakt computes or retains a result whose meaning depends on a released
-platform dataset.
+Interpreting a library operation during compilation and choosing how to execute it are separate decisions.
+One-dimensional
+candidate formation obtains the operation's qualified meaning through the responsible semantic interpretation subsystem
+under ADR-0084, even if later realization preserves the platform call.
 
-Only in that situation does ADR-0073 model the consumed data as a **Platform Semantic Basis** for the Kontrakt-owned
-judgment or product.
+A **Platform Semantic Basis** is recorded for a Kontrakt-owned judgment or product when that work actually consumes
+released platform semantic data. Preserving a platform call does not remove a basis obligation already used to form its
+Contract candidate.
 
 ## 7.1. Platform Semantic Basis and Closed Data
 
@@ -422,7 +428,8 @@ boundary determines how long the basis obligation survives.
 A Platform Semantic Basis becomes a compiler dependency only when a judgment, transformation, specialization,
 validation, or retained result actually consumes semantic information from it. Platform data that the compiler does not
 consult is not made a dependency merely because the host JVM contains it. Leaving an operation unchanged for JVM
-execution therefore does not bind the compiled result to the compiler host's corresponding platform data.
+execution therefore does not bind the compiled result to the compiler host's corresponding platform data. A qualified
+operation interpretation remains subject to the semantic basis on which its meaning was established.
 
 ## 7.4. Compilation, Execution, and Basis Drift
 
@@ -510,7 +517,10 @@ ratified catalog. The gate performs the context-sensitive checks that cannot be 
 requested Kontrakt role, constituent closure, the owning boundary, and any compiler-side Platform Semantic Basis
 requirement established under Section 7.
 
-This gate produces the use-legality result consumed by later compilation work.
+This gate produces the use-legality result consumed by later compilation work. It does not by itself supply the complete
+calculation meaning required by a 1D candidate. That meaning is obtained from qualified compiler-owned library knowledge
+under ADR-0084. Neither a successful boundary classification nor an executable library call fills a missing
+interpretation.
 
 ## 8.5. External Technology Isolation Gate
 
@@ -640,16 +650,30 @@ belong there for the same reason rather than becoming Platform Profile meaning.
 
 The exact profile vocabulary and physical schema are Design work.
 
+A Semantic Operation Profile need not contain the full calculation law required by a 1D source expression. For such a
+use, the Declaration/Binding Resolver identifies the exact callable, and the Type Engine completes its type application.
+The library interpretation subsystem supplies previously qualified operation meaning for the applicable semantic basis.
+The owning 1D then decides whether that meaning is lawful for its candidate. ADR-0079, ADR-0084, and ADR-0085 govern
+those producer responsibilities; this ratification profile does not replace them.
+
+Normal compilation consumes qualified semantic knowledge. It does not discover a callable's meaning by executing it at
+compile time, reading an implementation body on demand, or assuming that a recognized library name is sufficient. Where
+an invoked dependency or callback remains open and its required meaning cannot be closed, a complete 1D candidate cannot
+be formed.
+
 ## 9.6. Unchanged Platform Execution
 
 The catalog is not a reimplementation of the Java or Kotlin API.
 
-For a platform use that has already passed Core admissibility and realization closure, Kontrakt may preserve the
-resolved source-semantic call without substituting an internal semantic model for its execution. The applicable platform
-specification then continues to define that execution.
+For an admitted use in governed user realization, Kontrakt may preserve the resolved platform call after realization
+closure. The applicable platform specification continues to define its execution.
 
-This is an explicit ratified compilation path rather than a fallback inferred from missing catalog knowledge. Section
-5.7 applies only if Kontrakt later substitutes for the behavior.
+When a 1D Contract selects a library operation, the frontend must first obtain the qualified meaning needed to form its
+candidate under ADR-0084. After the owning 1D establishes that meaning, the backend may retain an eligible platform call
+or use a realization that preserves the established meaning. Neither choice establishes the meaning retroactively.
+
+Unchanged execution is an explicit realization choice, not a fallback for an unresolved 1D interpretation. Section 5.7
+governs Kontrakt-owned substitutions.
 
 ## 9.7. Platform Use Verification
 
@@ -660,8 +684,9 @@ It combines constituent closure, external-authority isolation, the requested rol
 already established under Section 7. When a Kontrakt-owned transformation or outward host projection depends on a
 platform distinction, Sections 5.8 through 5.12 supply the relevant observation information.
 
-The result is one of the boundary classifications in Section 10. The exact compiler product name, query shape, and
-storage representation remain Design work.
+The result is one of the boundary classifications in Section 10. This result does not decide the owning 1D's
+Contract-law eligibility or replace its required library interpretation. The exact compiler product name, query shape,
+and storage representation remain Design work.
 
 ## 9.8. Dispatch Closure and Non-Elevation
 
@@ -772,10 +797,14 @@ Unknown external technology fails closed.
 # 13. Frontend, HIR, Establishment, and Realization Boundary
 
 Frontend resolution identifies the exact Java or Kotlin source-semantic surface selected by the host language and the
-JVM realization mapping needed by later compiler work. Neither result becomes Contract authority.
+JVM realization mapping needed by later compiler work. The Resolver and Type Engine complete the selected callable and
+its type application. Library semantic interpretation supplies the qualified meaning needed by a 1D candidate. None of
+these compiler results becomes Contract authority.
 
-HIR does not reproduce Java, Kotlin, or JVM execution semantics. It carries the resolved platform identity and only the
-boundary or preservation facts that downstream Kontrakt work still requires.
+Resolved Contract HIR carries the completed candidate meaning required by the owning 1D, including interpreted library
+calculation where that 1D uses it. It need not reproduce library bodies, Java/Kotlin compiler IR, or JVM implementation
+details. Platform identity and boundary or preservation facts remain available where the consumer requires them, under
+ADR-0071 and ADR-0084.
 
 Platform ratification is not Contract Establishment. This ADR creates no parallel `Established Platform Material`
 authority. When platform-derived material reaches a Contract-facing boundary, the owning Contract receives the candidate
@@ -824,6 +853,10 @@ remain Design work.
 
 Unsupported or ambiguous direct platform use is rejected before it becomes governed Contract processing.
 
+A 1D source use whose required library meaning cannot be qualified is a compiler-side unsuccessful interpretation. It
+cannot be completed by executing the unresolved callable. This is not a Contract-owned runtime refusal; only a complete
+candidate that violates its owning 1D law follows that Contract's refusal rules.
+
 A use is refused when its required boundary classification cannot be established, when an Adapter-required surface is
 used without its boundary, when the closure or authority-isolation laws of Section 5 fail, when realization closure
 under Section 9 fails, or when a compiler-owned basis obligation under Section 7 cannot be satisfied.
@@ -838,10 +871,9 @@ Diagnostics explain the violated boundary. They do not decide Native status or e
 
 Platform ratification and Kontrakt's compilation-time boundary judgments are deterministic compiler products.
 
-For the same explicit compiler inputs, ratified platform knowledge, and any Platform Semantic Basis that Kontrakt
-actually consumed, unrelated scheduling, cache state, or host discovery order cannot change the compiler's
-classification
-or Contract result. A fast cached path and a clean uncached path must agree.
+For the same explicit compiler inputs, ratified platform knowledge, qualified library interpretations, and any Platform
+Semantic Basis that Kontrakt actually consumed, unrelated scheduling, cache state, or host discovery order cannot change
+the compiler's classification or Contract result. A fast cached path and a clean uncached path must agree.
 
 This compiler determinism does not require Kontrakt to strengthen admitted platform execution that intentionally permits
 more than one behavior. When Kontrakt leaves that execution unchanged, the platform contract continues to define the
@@ -896,6 +928,7 @@ section preserves the rejected design history without restating that law.
 | Catalog Entry per Generic Instantiation        | §9.3              |
 | One Independent Semantic Model per Callable    | §§9.4–9.5         |
 | Unchanged JVM Execution by Catalog Absence     | §§8.3, 9.6        |
+| Unqualified Library Execution as 1D Meaning    | §§9.5–9.6, 13     |
 | Platform Optimization by Default Replacement   | §§5.7, 14         |
 | Legal Observation by Type                      | §5.8              |
 | Physical Observability as Admission            | §5.9              |
@@ -913,7 +946,8 @@ Ordinary Java and Kotlin value surfaces can remain natural user-facing material 
 ecosystem into Contract authority.
 
 Platform support becomes explicit compiler-maintenance work. New or changed surfaces require ratification evidence,
-while normal compilations reuse that knowledge and perform only context-specific legality checks.
+while normal compilations reuse that knowledge and perform only context-specific legality checks. One-dimensional
+candidate formation also consumes qualified library meaning instead of discovering it through compilation-time calls.
 
 V1 may handle uncertain aliasing or mutable carriers conservatively. Stronger future analysis can remove copies or admit
 additional closed realizations without changing the Contract law established here.

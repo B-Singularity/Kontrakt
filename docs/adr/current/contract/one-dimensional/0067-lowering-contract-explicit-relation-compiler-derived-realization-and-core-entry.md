@@ -238,7 +238,7 @@ Contract obligation, that elimination is a physical optimization only.
 
 ---
 
-## 7. Immutable Operation-Local Relation
+## 7. Lowering Definition and Operation Selection
 
 The Lowering Contract contains no user implementation callback and no business algorithm.
 
@@ -269,16 +269,36 @@ interface DepositContract {
 }
 ```
 
-The selected Lowering Definition is written separately in the Lowering DSL:
+The selected Lowering Definition is written separately in the Lowering DSL. A mapping method uses an explicit callable
+application. For example, Java static methods can be referenced through an import:
 
 ```text
+import java.lang.Long
+
 lowering DepositLowering {
-    accountIdText -> command.accountId    : MethodA
-    amountText    -> command.amountMinor  : MethodB
+    accountIdText -> command.accountId   : Long.parseLong(accountIdText)
+    amountText    -> command.amountMinor : Long.parseLong(amountText, 10)
 }
 ```
 
-`MethodA` and `MethodB` are placeholders for mapping methods whose semantics remain to be defined.
+A Kotlin extension function uses its source coordinate as the receiver:
+
+```text
+import kotlin.text.toInt
+
+lowering QuantityLowering {
+    quantityText -> command.quantity : quantityText.toInt(10)
+}
+```
+
+Each application names its selected source coordinate exactly once, either as an explicit argument or as the receiver.
+Other arguments must be literals or statically resolved constants whose values and meanings are complete before
+Establishment. The DSL does not insert a source argument, infer an argument position, or use implicit default values.
+
+The right-hand side is one callable application, not a general expression body. Nested calls, another runtime source
+coordinate, runtime-computed arguments, open dispatch, and user callbacks are not permitted. Imports shorten names;
+resolution still must select one exact callable. Ambiguous or unresolved applications are rejected. The Resolver,
+Type Engine, and library semantic interpretation own that resolution and its meaning, not Lowering.
 
 The relation body does not repeat Input carriers, Operation parameter declarations, Fact declarations, or Invariant
 declarations.
@@ -291,9 +311,9 @@ Equal spelling does not create a relation.
 
 Different spelling does not prevent a relation.
 
-If a source and target require a representation refinement whose meaning is not already fixed by the declared Lowering
-material and applicable Contract-owned sort law, the declaration is incomplete. A user-written converter is not an
-implicit extension of the Contract.
+If the selected callable's qualified meaning and the applicable Contract meaning do not determine the required
+source-to-target formation, the declaration is incomplete. A user-written converter is not an implicit extension of the
+Contract.
 
 ---
 
@@ -334,7 +354,18 @@ Source and target host types may also differ.
 
 A raw type difference does not ask the user to provide an implementation.
 
-The relation and applicable Contract-owned representation law must together determine what the difference means.
+The declared relation identifies the source and target. Their sorts need not be directly structurally compatible when
+a qualified conversion can form the target from the source.
+
+The Resolver selects the exact callable. The Type Engine judges its argument and result type applicability. Library
+semantic interpretation supplies the qualified conversion meaning under the applicable semantic basis. Together, those
+subsystems determine whether the conversion is valid for the declared source and target meanings and applicable
+Contract-owned representation law. Lowering consumes the completed judgment to establish the explicit coordinate
+relation. It does not rejudge the conversion.
+
+Supported methods may use qualified Java/Kotlin standard-library operations or Kontrakt-supported formation-library
+operations, including parsing and decoding. An open or dynamically selected callable cannot complete Lowering meaning.
+The same applies when any required callable dependency remains unresolved or its behavior cannot be interpreted.
 
 The compiler does not select meaning from the raw host-type pair.
 
@@ -348,11 +379,11 @@ Classpath contents do not provide authority.
 
 Backend support does not create missing Contract meaning.
 
-When the established Lowering Contract completely determines one permitted representation refinement, the compiler may
-lower that meaning to any supported backend operation, library primitive, generated helper, table, parser, copier,
-constructor path, or direct machine representation that preserves it.
+When the established Lowering Contract and qualified callable interpretation completely determine one permitted
+representation refinement, the compiler may lower that meaning to any supported backend operation, library primitive,
+generated helper, table, parser, copier, constructor path, or direct machine representation that preserves it.
 
-When the declaration does not determine the refinement, compilation must fail rather than requesting a user mapper.
+When that meaning remains incomplete, compilation must fail rather than requesting a user mapper.
 
 The backend realization must not perform repository lookup, environmental resolution, business computation, Invariant
 judgment, State movement, Publication, or undeclared capability access as part of Lowering.
@@ -362,6 +393,8 @@ judgment, State movement, Publication, or undeclared capability access as part o
 ## 10. Representation Refinement, Not Core Computation
 
 Lowering changes representation and authority domain without deriving new cross-coordinate business meaning.
+
+Each selected mapping method determines how the source's declared meaning is formed in its target representation.
 
 At the Contract-visible boundary, V1 forms each Operation-parameter Fact coordinate from exactly one explicitly bound
 Input coordinate.
@@ -463,7 +496,7 @@ core state belongs elsewhere and must not be disguised as formation.
 
 ## 11. Definition-Time Completeness and Identity
 
-The ratified Lowering material must close at least:
+The Lowering Definition and its separate, operation-local selection Binding must together close at least:
 
 ```text
 the flow-selected Input schema
@@ -474,7 +507,9 @@ the resolved Fact kind of every target Operation parameter
 every explicit Input-coordinate to Operation-parameter-Fact-coordinate binding
 one source coordinate and one target address for every binding
 explicit binding even when source and target names or host types are equal
-source-sort and target-sort structural compatibility
+completed conversion applicability for the source and target, as judged by the Type Engine and library semantic interpretation
+the selected mapping method's exact resolved callable and qualified formation meaning under the applicable semantic basis
+the explicit source argument or receiver and every meaning-determining constant argument
 the Contract-owned representation refinement required by each non-identical representation
 target-coordinate completeness and uniqueness
 Input source-coordinate uniqueness across bindings
@@ -495,10 +530,11 @@ structural guessing, package scanning, annotations, assignability, inheritance, 
 are prohibited.
 
 The frontend must reject missing or duplicate target formation, reused source coordinates, unknown source or target
-coordinates, `1:N` or `N:1` relations, structurally incompatible sorts, hidden absence, recursive host-object traversal,
-unbounded collection work, environment-dependent Contract meaning, executable user material inside the relation body, a
-target type absent from the enclosing interface's Fact vocabulary, or a representation refinement whose meaning is not
-closed by the Contract.
+coordinates, `1:N` or `N:1` relations, incomplete or invalid qualified conversion judgments, hidden absence,
+recursive host-object traversal, unbounded collection work, environment-dependent Contract meaning, executable user
+material inside the relation body, a target type absent from the enclosing interface's Fact vocabulary, or a
+representation refinement whose meaning is not closed by the declared Contract and the qualified callable
+interpretation.
 
 There is no missing-Lowering-implementation link failure because the user does not supply a Lowering implementation.
 
@@ -506,10 +542,20 @@ A backend that cannot realize a semantically complete Lowering Contract with the
 backend realization. Backend inability does not change the Contract.
 
 The established Lowering Definition is represented as one flat, immutable, adapter-erased Lowering Contract material.
+Its Definition identity preserves the authored source-to-target relations, the exact selected callable meaning, the
+meaning-determining argument application, and the Contract-owned refinement, bounds, and refusal law. Its exact Version
+and other identity-bearing semantic coordinates remain governed by ADR-0063. Import spelling and source location do not
+change Definition meaning.
 
-Lowering identity includes the source-presentation schema identity, optional Canonicalization law identity, selected
-Operation identity, target parameter slots and Fact-kind identities, the canonicalized explicit one-to-one binding set,
-required representation-refinement law, bounds, refusal law, and relevant flow-world coordinates.
+Selection by an Operation is a separate Binding. It preserves the exact Lowering Definition Reference and the selected
+Operation Reference. The selected Input, optional Canonicalization, target parameter slots, Fact-kind resolutions, and
+applicable flow-world basis must be resolved for that Binding before use. Those contextual resolutions do not become
+Definition identity merely because an Operation selects the Definition. If an exact basis is part of the Definition's
+own declared meaning, ADR-0063 still requires that dependency to remain in Definition identity.
+
+The Binding must not change the Definition's declared relation or qualified callable meaning. A mismatch is rejected,
+not repaired through inference. The Definition's identity and the Binding's identity remain distinct even when one
+Operation is the only current user of that Definition.
 
 Backend helper identity, generated class identity, host object identity, allocation strategy, and machine-code shape are
 not part of Lowering Contract meaning.
@@ -564,7 +610,8 @@ Any chosen realization must preserve the explicit relation and absence of hidden
 
 ## 13. Compiler-Derived Material
 
-From the declared Lowering relation the compiler may derive:
+From the established Lowering Definition and its resolved Operation Binding, including the qualified callable meaning
+supplied by the frontend, the compiler may derive:
 
 ```text
 semantic LoweringPlan
@@ -645,6 +692,18 @@ An incomplete Contract is rejected before executable realization.
 
 A semantically complete Contract may still define an actual-value refusal condition, such as a declared representation
 that cannot be formed for the presented value under the exact Lowering law.
+
+One binding refusal does not suppress another binding that remains independently reachable. All such bindings must
+complete their required judgments, regardless of discovery or execution order. If any required binding refuses,
+Lowering cannot form complete candidate material and the overall Lowering outcome is refused.
+
+The refusal preserves the exact attribution of each failed binding. These attributions do not automatically establish
+separate Failures. ADR-0057 governs Failure cardinality according to the exact authoritative unsuccessful judgments;
+no first-failure priority or aggregate Failure identity is introduced here.
+
+A backend or library exception is not itself a Lowering refusal. Only a failure defined by the qualified mapping-method
+meaning may be attributed to Lowering. Failure of required realization and Crash retain their separate meanings under
+ADR-0057.
 
 Lowering refusal does not mean Input refusal, Admission rejection, Canonicalization refusal, Invariant refusal, or a
 Budget or Capacity result.
@@ -792,13 +851,13 @@ The exact encoding of declared Lowering refusal is open.
 
 The Lowering DSL expresses each binding as `source -> target : method`.
 
-The supported mapping methods and the authoring details for nontrivial one-to-one representation refinement remain
-open. Each method must supply enough Contract meaning for Kontrakt to realize it. User implementation callbacks remain
-prohibited.
+Mapping-method references and arguments use the explicit callable applications defined in Section 7. The supported
+mapping-method inventory and any additional authoring needed for nontrivial one-to-one representation refinement remain
+open. User implementation callbacks remain prohibited.
 
-Those decisions must not weaken the fixed Lowering law: one operation-local immutable relation, exact one-to-one
-coordinate bindings, no runtime implementation discovery, no user-supplied Lowering implementation, no implicit
-conversion authority, and a generated judgment and establishment handoff.
+Those decisions must not weaken the fixed Lowering law: one immutable Lowering Definition selected through an
+operation-local Binding, exact one-to-one coordinate bindings, no runtime implementation discovery, no user-supplied
+Lowering implementation, no implicit conversion authority, and a generated judgment and establishment handoff.
 
 The complete authoring surface for additional Fact participation, Operation Result Material, result-side change
 formation, Publication, and Output Presentation remains outside this ADR.
