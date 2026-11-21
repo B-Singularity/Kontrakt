@@ -676,27 +676,20 @@ referenced object graphs.
 
 ## 8.6. Contract Structure and Compiler Partition
 
-HIR does not invent a new semantic ownership hierarchy when the Contract structure already provides the relevant
-Definition and Binding relations.
+HIR does not create a semantic ownership hierarchy beyond the Contract's Definition and Binding relations. Definition
+Candidate meaning remains governed by its owning 1D law, while each IDL selection retains a distinct Binding Candidate.
 
-Reusable Definition Candidate meaning remains defined by its 1D law. An IDL use is represented by a distinct Binding
-Candidate. Source nesting and compiler storage grouping do not change either relation.
+The compiler may partition HIR to manage formation, visibility, reuse, and storage. Partitions may contain one or
+multiple semantic units, but do not determine Contract ownership, Definition identity, or Binding meaning.
 
-The compiler may still partition HIR for formation, visibility, reuse, lifetime, or locality. A partition is compiler
-organization. It may group several semantic units or isolate one unit when that is profitable. It does not create
-Contract ownership, Definition identity, or Binding meaning.
-
-This separation lets physical partitions evolve with measured compiler needs without forcing semantic consumers to
-adopt the same topology.
-
-The exact physical partition catalog remains implementation and product-design work.
+Partition topology is a physical design choice and must not alter consumer-visible semantics.
 
 ## 8.7. Exact Semantic Reference and Generation-Local Dense Handle
 
-Exact HIR reference meaning and fast in-generation addressing are different requirements.
+HIR semantic references and physical access handles serve different purposes.
 
-A Definition Candidate Reference or Binding Candidate Reference denotes one exact current semantic target. A physical
-realization may map that reference to a compact generation-local dense handle for hot access.
+A Definition Candidate Reference or Binding Candidate Reference identifies an exact current semantic target. The
+compiler may map it to a compact generation-local dense handle for efficient access.
 
 ```text
 exact current HIR reference
@@ -706,37 +699,32 @@ dense primitive handle
 typed slab / table / segment
 ```
 
-The dense handle is not semantic identity. Its numeric value is not observable HIR meaning and it is valid only in the
-generation that assigned it. A later generation may assign another handle to a reference that resolves to equivalent
-current meaning.
+A dense handle is not semantic identity. Its numeric value is not observable HIR meaning and is valid only within its
+assigned generation. Equivalent meaning in another generation may use a different handle.
 
-HID, fingerprint, hash, or persistent product keys may accelerate lookup, comparison, or remapping. They are neither the
-semantic reference nor the dense handle. A slab offset, page number, segment address, or memory address is a still lower
-physical coordinate.
+Identifiers used for lookup or persistence, including HID and fingerprints, do not replace semantic references. Physical
+storage coordinates are likewise distinct from both semantic references and dense handles.
 
-A persistent product must not serialize a raw dense handle as though it were a semantic reference. Restoration resolves
-or validates current semantic reference material and then obtains a current-generation handle.
+Persistent products must not treat serialized dense handles as semantic references. Restoration requires current
+semantic reference resolution or validation before obtaining a current-generation handle.
 
-No cross-generation lineage identity is introduced by this mapping.
+This mapping does not establish cross-generation identity or lineage.
 
 ## 8.8. Consumer Access Discipline
 
-Ordinary consumers read HIR through typed semantic subjects, exact references, and semantic projections. They do not
-gain
-semantic authority by traversing backing objects, parent pointers, table adjacency, or mutable producer state.
+Consumers observe HIR through typed semantic subjects, exact references, and legal projections. Physical containment or
+mutable producer state cannot grant semantic authority.
 
-The implementation may expose specialized internal access for the HIR producer, verifier, serializer, or representation
-preparation. That access is not the stable consumer contract.
+Specialized internal access may exist for compiler implementation purposes, but it is not the stable consumer contract.
 
-Derived reverse indexes, lookup accelerators, and cached navigation tables may be built when useful. They remain
-recomputable compiler products unless an owning semantic law explicitly says otherwise.
+Derived indexes and cached lookup structures remain recomputable compiler products unless an owning semantic law
+explicitly assigns them another status.
 
-This access boundary allows a later implementation to introduce lazy materialization or dependency observation without
-forcing consumers to learn how HIR is physically stored.
+Consumers must remain independent of physical storage and materialization strategies.
 
 ## 8.9. HIR Semantic Access Boundary and Resolved HIR Candidate Protocol
 
-Visible Resolved HIR must expose a stable semantic access boundary between HIR meaning and its physical realization.
+Visible Resolved HIR exposes a stable semantic access boundary independent of physical representation.
 
 ```text
 HIR Semantic Contract
@@ -747,8 +735,8 @@ Physical HIR Representation
 ```
 
 For Authority-Owned Establishment, this boundary realizes the **Resolved HIR Candidate Protocol**. The Protocol defines
-the legal observation of resolved candidate meaning. It does not create another IR, another semantic stage, another
-Contract authority, or a mandatory physical copy of HIR material.
+legal observation of candidate meaning without creating another IR, semantic stage, Contract authority, or mandatory
+material copy.
 
 ```text
 Resolved HIR Candidate Protocol
@@ -758,103 +746,83 @@ Resolved HIR Candidate Protocol
     └── Fine-Grained Semantic Projection
 ```
 
-The Typed HIR Semantic Reference Domain exposes exact current references for the Primary HIR subjects that the legal
-consumer must identify. For the current frontend model, those subjects include Contract Interface, Interaction,
-Operation, Definition Candidate, and IDL Binding Candidate. Operation-local parameter coordinates and the
-Operation-scoped result coordinate remain part of the Operation semantic surface. Each legal reference preserves its
-semantic reference kind and denotes one exact resolved current target. The Protocol does not infer these references from
-source containment, declaration traversal position, backing layout, generated host signatures, or another compiler
-implementation path.
+The four Protocol components have distinct responsibilities:
 
-A Definition Candidate Projection exposes one exact Definition Candidate Reference and the complete producer-owned
-Definition Candidate meaning defined by the owning 1D law. It is not weakened according to the needs of one consumer. A
-consumer that needs only part of that meaning uses a legal Fine-Grained Semantic Projection rather than redefining the
-Definition Candidate Projection.
+| Component                           | Required observation                                                                                                  |
+|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| Typed HIR Semantic Reference Domain | Exact, kind-preserving references to current Primary HIR subjects (§8.2), including Operation-local coordinates       |
+| Definition Candidate Projection     | Complete resolved Definition Candidate meaning under its owning 1D law                                                |
+| IDL Binding Candidate Projection    | Exact selection occurrence, selected role or slot, target Definition Candidate, and independently required qualifiers |
+| Fine-Grained Semantic Projection    | Producer-defined legal observations of existing Primary HIR meaning (§8.4)                                            |
 
-The owning 1D law decides the candidate vocabulary. Exact authority or semantic role, an authority-scoped resolved
-Version candidate coordinate, direct semantic references, Basis Requirement Law, Applicability Law, declared semantic
-inputs, or another retained semantic obligation appear in the Definition Candidate Projection only when the owning 1D
-law
-makes them part of Definition Candidate meaning. A typed projection may carry a distinction structurally. This ADR does
-not require one redundant scalar field for every distinction, one generic determinant list, or one universal candidate
-record.
+### Definition Candidate Projection
 
-A Definition Candidate Projection may expose exact direct semantic references to separately owned Primary HIR subjects.
-Those references preserve the referenced subject's ownership and must already be exact. They must not require a consumer
-to reopen source, traverse implementation containment, or follow an arbitrary internal chain to discover Candidate
-meaning that the frontend failed to resolve.
+The owning 1D law determines the candidate's semantic components and required context. The Projection must expose its
+complete meaning, including exact direct references to separately owned subjects when required.
 
-An IDL Binding Candidate Projection exposes one exact Binding Candidate Reference, the exact selecting HIR semantic
-subject or context required to identify that selection occurrence, the exact selected slot or role coordinate, the exact
-target Definition Candidate Reference, and only additional qualifiers that the binding law independently owns. It does
-not expose the surrounding IDL semantic context merely because that context is reachable from the selection.
+A consumer cannot weaken the complete Definition Candidate Projection for convenience. It must use a legal Fine-Grained
+Semantic Projection when less information is needed.
 
-The Binding Candidate Projection does not copy the Definition Candidate payload. If the same semantic coordinate appears
-in both Candidate and Binding projections, it must independently participate in both meanings. Physical duplication or
-lookup convenience is not sufficient. A legal visible Binding Candidate Projection exists only when its target
-Definition
-Candidate relation is complete and legally referenceable under the HIR seal and visibility laws. An IDL Binding
-Candidate
-remains pre-authority frontend material. It is not `Version Binding`, `Basis Binding`, Governance Binding, or another
-authority-bearing relation established later.
+All meaning required by Establishment must already be resolved. Direct references preserve the referenced subjects'
+ownership and cannot substitute for missing candidate meaning.
 
-A Fine-Grained Semantic Projection is a producer-defined legal view admitted under Section 8.4. It exposes only
-observations reducible to existing Primary HIR meaning, may narrow that meaning only according to its declared legal
-observation, and must remain complete for that observation. It does not establish a new semantic or compiler judgment,
-reopen authored source, repeat 1D authoring refinement, or read hidden mutable state to recover missing candidate
-meaning. Its semantic equality remains producer-owned under Sections 8.4 and 9. A fine-grained projection is not a
-second source of HIR meaning and does not require one compiler-wide query architecture.
+This ADR does not impose a universal candidate record or redundant fields for distinctions already represented
+structurally.
 
-The existing Fine-Grained Semantic Projection must completely expose each applicable 1D role's selection from its
-owning HIR subject and exact role coordinate: either the selected IDL Binding Candidate Reference or Explicit Absence.
-A missing Binding Candidate, failed lookup, or unresolved selection does not establish absence. This observation neither
-judges whether omission is legal nor establishes Contract material.
+### IDL Binding Candidate Projection
 
-A legal Establishment-facing Protocol view is available only over material that already satisfies the HIR seal,
-recovery, visibility, and snapshot-coherence laws in Sections 4.8, 6, 11, and 13. Ordinary Establishment observation is
-read-only. Establishment must not bypass the Protocol to recover missing semantic meaning from authored source, host
-objects, mutable producer state, backing containment, or physical indexes. Protocol observation itself creates no
-Contract authority.
+A Binding Candidate identifies the exact IDL selection independently of Definition Candidate meaning.
 
-Source provenance is not a default field of a Definition Candidate Projection or IDL Binding Candidate Projection. It
-remains a separate relation surface under Sections 8.10 and 10. If an owning Contract law makes an exact source
-coordinate part of candidate meaning, that coordinate appears in the candidate meaning under that law rather than
-entering through generic provenance.
+It exposes only the selecting subject or context needed to identify that occurrence, the selected role or slot, the
+exact target Definition Candidate Reference, and qualifiers owned by the binding law.
 
-The Protocol does not expose a slab address, page identity, backing-array position, allocator choice, object topology,
-storage-engine layout, cache state, query graph, worker identity, construction schedule, optimizer hint, or backend
-layout as candidate meaning. HID, fingerprint, dense handle, table row, and storage address may support physical lookup
-or validation but do not become semantic references or semantic equality authority. Recovery, poison, and unresolved
-semantic placeholders are not legal Resolved HIR Candidate Protocol material.
+The Projection must not copy the Definition payload or absorb surrounding IDL context merely because it is accessible. A
+coordinate belongs to both projections only when it independently determines both meanings.
 
-The Protocol also does not pre-establish later authority-owned material. An authoritative `Version Binding`, actual
-`Basis Binding`, Applicable Basis, Complete Basis, Applicability result, Established Definition Reference, or
-Established
-Occurrence result appears only at the later semantic boundary that owns it.
+A Binding Candidate becomes legally visible only when its target relation is complete and referenceable under HIR seal
+and visibility laws.
 
-This boundary is logical. It does not require an object-oriented interface, virtual dispatch, wrapper allocation, one
-accessor call per field, or a physical materialization step. A physical realization may provide inlined primitive
-access,
-typed bulk reads, contiguous ranges, or another compiler-native access path when those paths preserve the same legal
-observation. The same immutable backing may support both candidate observation and later compiler products without
-merging their semantic kinds or creating authority.
+It remains pre-authority material, not an Established Binding of any kind.
 
-The first implementation may use primitive slabs. A later implementation may use segmented persistent slabs,
-memory-mapped pages, content-addressed chunks, compressed columns, or another representation without changing downstream
-HIR meaning. A consumer that requires such a change to rewrite its semantic logic is depending on physical
-representation rather than Visible Resolved HIR.
+### Fine-Grained Semantic Projection
 
-This ADR fixes the logical Establishment-facing Protocol families above and the Primary HIR subject categories in
-Section 8.2. It does not fix a concrete object or method API, one class hierarchy, per-1D payload schema, the exact
-component set of each 1D Candidate Reference, the complete concrete projection catalog, bulk-access form, handle
-encoding, or storage-specific fast path. Those remain owning-1D or compiler design work within the semantic boundary
-fixed here.
+Fine-Grained Semantic Projections follow §8.4. They expose complete, producer-defined observations of existing Primary
+HIR meaning without introducing new judgments or reconstructing missing meaning.
+
+Their equality remains producer-owned. They do not create another source of HIR meaning or require a particular Query
+architecture.
+
+Each applicable 1D role's selection must be observable from its owning HIR subject and exact role coordinate as either:
+
+- The selected IDL Binding Candidate Reference.
+- **Explicit Absence.**
+
+Missing or unresolved selection is not Explicit Absence. This observation does not determine whether omission is legal
+or establish Contract material.
+
+### Protocol Visibility and Authority
+
+Establishment may observe only material satisfying the HIR seal, recovery, visibility, and snapshot-coherence laws
+(§§4.8, 6, 11, 13).
+
+Ordinary Establishment observation is read-only. Consumers cannot bypass the Protocol to reconstruct meaning from source
+or internal compiler representation.
+
+Source provenance remains a separate relation (§§8.10, 10), unless an owning Contract law explicitly makes a source
+coordinate part of candidate meaning.
+
+Physical implementation metadata and recovery material are not candidate meaning. The Protocol also cannot pre-establish
+later authority-owned results.
+
+The access boundary is logical rather than a required physical layer. Implementations may use specialized access paths
+and shared backing storage when they preserve the same legal observations without merging semantic kinds.
+
+This ADR fixes the Protocol families and Primary HIR subject categories, not their concrete APIs, payload schemas,
+reference encodings, or storage strategies.
 
 ### 8.9.1. Protocol Evolution and Compatibility
 
-HIR Protocol evolution has independent stability domains. Contract Version, authority-specific HIR semantic-surface
-evolution, common Resolved HIR Candidate Protocol evolution, persistent-product format evolution, and compiler
-generation are distinct. No one revision coordinate owns or implicitly advances the others.
+HIR Protocol evolution has independent stability domains:
 
 ```text
 Contract Version
@@ -868,14 +836,11 @@ persistent-product format evolution
 compiler generation
 ```
 
-A change in compiler representation, access API shape, persistent encoding, projection implementation, or storage
-layout does not create a new Contract Version. A new Contract Version does not require a common HIR Protocol revision
-when the current Protocol can already represent every required observation. An authority-specific HIR surface may evolve
-without forcing unrelated authority surfaces to evolve.
+Changing compiler representation or storage does not change Contract Version. A new Contract Version does not require a
+Protocol revision if the existing Protocol supports its required observations. Authority-specific semantic surfaces may
+also evolve independently.
 
-Protocol compatibility is determined by legal semantic observation, not by revision-number equality. A producer and a
-consumer are compatible only when every semantic observation required by that consumer can be supplied with the meaning
-required by the current Protocol law, either directly or through an explicit validated migration or projection.
+**Protocol compatibility depends on preserved legal semantic observation, not matching revision identifiers.**
 
 ```text
 revision equality
@@ -886,29 +851,29 @@ decode success
 Protocol compatibility by themselves
 ```
 
-Revision, capability, schema, or similar metadata may route compatibility checks cheaply. A revision mismatch may
-require narrower compatibility validation, migration, or rejection. A revision match does not by itself prove that the
-required semantic observation is supported. Compatibility evidence remains compiler evidence and does not become HIR
-semantic identity or Contract authority.
+A producer and consumer are compatible only when every required observation can be supplied under the current Protocol
+law, directly or through validated migration or projection.
 
-Migration is a compiler compatibility operation. It may establish that older material can provide the current required
-observation. It does not establish Contract identity, Contract Version equality, Definition equality, or HIR semantic
-equality merely because the migration succeeded. A migration must preserve every semantic observation required by its
-target Protocol surface and must not invent meaning that the source material did not contain.
+Revision and capability metadata may assist compatibility checks but cannot prove compatibility by themselves or become
+Contract authority.
 
-This ADR fixes these logical evolution domains and compatibility laws. It does not require one integer Protocol version,
-one semantic-versioning scheme, one capability bitmap, one extension registry, or one negotiation encoding. Such
-mechanisms are compiler design choices when a physical boundary needs explicit evolution metadata.
+Migration must preserve every required semantic observation without inventing missing meaning. Successful migration
+alone does not establish Contract identity, Version equality, Definition equality, or HIR semantic equality.
+
+The logical compatibility rules are fixed here. Specific version encodings and negotiation mechanisms remain compiler
+design decisions.
 
 ### 8.9.2. Unknown Extensions, Unsupported Surfaces, and Downgrade
 
-Protocol handling distinguishes unknown material from unsupported material. Unknown material has an interpretation the
-consumer does not understand. Unsupported material has a recognized requirement that the consumer cannot completely
-provide under its current supported surface. Neither case may be converted silently into older or simpler semantic
-meaning.
+Protocol handling distinguishes:
 
-An extension is handled according to a Protocol rule already understood by the consumer. The unknown payload does not
-get to declare its own safe handling semantics to a consumer that cannot interpret those semantics.
+- **Unknown material:** Its interpretation is not understood by the consumer.
+- **Unsupported material:** Its requirement is recognized but cannot be completely provided by the consumer.
+
+Neither may be silently interpreted as older or simpler semantic meaning.
+
+Extension handling follows a Protocol rule already understood by the consumer. Unknown material cannot define its own
+safe handling rules.
 
 ```text
 required semantic extension
@@ -925,20 +890,17 @@ preservation-required unknown material
         -> retain opaquely without interpretation
 ```
 
-Unknown material may be skipped only when a Protocol rule already understood by the consumer establishes that the
-material is not required for that consumer's legal semantic observation. Material may therefore be semantic in HIR while
-remaining hidden from one consumer. Hidden does not mean non-semantic, and ignored does not mean erased.
+Unknown material may be skipped only when an already-understood Protocol rule establishes that it is unnecessary for the
+consumer's legal observation.
 
-A preservation-required unknown extension may survive a boundary as opaque retained material when its interpretation is
-not needed by the current consumer but a later legal consumer or persistent round trip may require it. The current
-consumer must not expose that opaque payload as interpreted candidate meaning. Retaining such material does not
-automatically make it part of the producer-owned semantic equality law; the owning semantic surface decides whether the
-extension participates in equality.
+Material may remain semantic in HIR while hidden from a particular consumer. Hidden does not mean non-semantic, and
+ignored does not mean erased.
 
-An unsupported Protocol revision or authority-specific surface does not authorize automatic downgrade. Kontrakt may use
-an explicit compatible projection or a validated migration only when every semantic observation required by the target
-consumer is preserved. A smaller legal observation set is a projection, not a semantic downgrade. Dropping a required
-new distinction and pretending that older meaning applies is a semantic downgrade and is forbidden.
+Preservation-required unknown material may be retained opaquely for later legal consumption or persistence. It must not
+be exposed as interpreted meaning. Its participation in semantic equality remains determined by the owning semantic law.
+
+Unsupported material does not authorize automatic downgrade. A smaller legal observation set is permitted when it
+preserves everything required by that consumer.
 
 ```text
 complete legal projection
@@ -957,66 +919,49 @@ fabricated default for missing meaning
     -> forbidden
 ```
 
-Compatibility processing must not manufacture semantic meaning from absence. A missing value may receive a default only
-when the owning semantic law explicitly defines that absence or default as the required meaning.
+Missing meaning cannot be replaced with a default unless the owning semantic law explicitly defines that default or
+absence.
 
-A stable extension coordinate, tag, field number, or equivalent protocol coordinate must not later be repurposed for an
-incompatible semantic interpretation. The exact coordinate representation is design work, but retired coordinates cannot
-silently acquire unrelated meaning in material that older producers or consumers may still encounter.
+Stable extension coordinates must not be reused for incompatible meanings, including after retirement.
 
-Failure caused by one unknown or unsupported authority-specific extension may remain local to the smallest sound
-semantic
-dependency boundary. It does not require whole-compiler invalidation when unaffected products remain independently
-valid.
-When compatibility cannot be established for the affected material, Kontrakt rejects that observation, performs the
-required re-resolution or migration, or follows the deterministic clean formation path.
+Compatibility failures may remain local to the smallest sound semantic dependency boundary. Unaffected products need not
+be invalidated.
+
+When compatibility cannot be established, the affected observation must be rejected or reconstructed through a valid
+migration, re-resolution, or deterministic clean formation path.
 
 ### 8.9.3. Consumer Scope, Reference Lifetime, and Post-Establishment Retention
 
-Visible Resolved HIR has one producer-owned semantic meaning. Different legal consumers may select different
-producer-defined projections of that meaning. Consumer selection does not define projection semantics, completeness, or
-equality and does not create consumer-specific HIR meaning.
+Visible HIR has one producer-owned semantic meaning. Legal consumers may select different producer-defined projections,
+but cannot redefine their semantics, completeness, or equality.
 
-Authority-Owned Establishment observes candidate meaning through the Resolved HIR Candidate Protocol defined above.
-Frontend diagnostics may observe exact sealed HIR semantic subjects or producer-defined legal projections together with
-the separate provenance relation. When a diagnostic explains an unsuccessful HIR-related compiler judgment, the
-unsuccessful meaning comes from the Compiler Result Protocol defined by ADR-0074. A diagnostic that reports another
-compiler condition does not invent a Compiler Result merely to fit this observation pattern.
+Consumer responsibilities remain distinct:
 
-Tooling and IDE features may observe sealed HIR semantic projections and provenance when valid resolved meaning exists.
-Source recovery, poison, incomplete syntax, unresolved placeholders, and other editing-time or recovery products remain
-on separate source, recovery, or tooling surfaces rather than being smuggled into ordinary Visible Resolved HIR.
+| Consumer                      | Legal observation                                                                                            |
+|-------------------------------|--------------------------------------------------------------------------------------------------------------|
+| Authority-Owned Establishment | Resolved candidate meaning through the Candidate Protocol                                                    |
+| Diagnostics                   | Sealed HIR meaning and separate provenance; unsuccessful compiler judgments through ADR-0074 when applicable |
+| Tooling / IDE                 | Valid sealed HIR projections and provenance; recovery material through separate surfaces                     |
+| Reuse infrastructure          | Producer-defined projections and semantic equality with compiler-owned validity evidence                     |
 
-Reuse infrastructure may select a producer-defined semantic projection and use that projection's producer-owned semantic
-equality relation together with compiler-owned current-validity evidence. Reuse does not define a reuse-specific HIR
-projection or equality law. HID, fingerprints, Merkle roots, epochs, cache keys, or dependency records may accelerate
-that validation. They do not become HIR meaning, reference identity, or equality authority.
+Diagnostics must not fabricate unsuccessful Compiler Results. Reuse metadata may assist validity checking but does not
+define HIR identity or equality.
 
-After Contract meaning has been established, an authoritative downstream compiler consumer uses the Canonical Contract
-World or another later established surface that owns the required meaning. It must not return to raw HIR and treat
-pre-authority candidate meaning as an authoritative substitute merely because the backing remains reachable. HIR may
-remain available to frontend diagnostics, tooling, provenance projection, or reuse infrastructure under their own legal
-observation rules.
+After Establishment, authoritative downstream consumers must use the Canonical Contract World or another appropriate
+established surface. Retained HIR cannot substitute for established meaning.
 
-A Protocol view and any generation-local observation handle obtained from it are valid only while the owning HIR
-generation or independently visible projection remains visible and valid for that observation. A stale handle or stale
-Protocol view must not be silently reinterpreted against another generation. Cross-generation use requires an explicit
-current-reference resolution, remapping, or validation step that establishes the current target or projection. A stable
-semantic coordinate may help perform that remapping when the owning semantic law provides one; it does not transfer
-current-generation membership by inheritance.
+HIR may remain available for other legal consumers, subject to their observation rules.
 
-Creating the Canonical Contract World neither requires HIR to be retained forever nor authorizes immediate destruction
-of
-HIR that a legal compiler consumer still needs. A HIR generation or projection may retire and its physical storage may
-be
-reclaimed only after no legal consumer requires that HIR observation and any independently required provenance,
-diagnostic, persistence, or reuse material is available through the product that owns that later obligation. Retention
-or physical reachability does not extend HIR semantic authority.
+**A Protocol view or generation-local handle is valid only while its owning generation or independently visible
+projection remains valid.** Cross-generation use requires explicit current-reference resolution, remapping, or
+validation. Stable coordinates may assist but cannot transfer generation membership implicitly.
 
-The common HIR Protocol therefore has an evolution domain even when no numeric revision is stored. An implementation may
-represent compatibility through revision numbers, capability sets, schemas, direct producer-consumer knowledge, or
-another compiler-owned mechanism. The normative requirement is preservation of the declared legal observation, not the
-presence of one version field.
+HIR storage may be reclaimed when no legal consumer requires its observation and any independently required retained
+material is available through the product responsible for it.
+
+Retention and physical reachability do not extend HIR authority.
+
+Protocol compatibility remains governed by legal observation even when no explicit numeric Protocol revision is stored.
 
 ## 8.10. Visible HIR Representation Preservation
 
