@@ -965,11 +965,10 @@ Protocol compatibility remains governed by legal observation even when no explic
 
 ## 8.10. Visible HIR Representation Preservation
 
-The HIR Semantic Access Boundary defines semantic observation, but semantic accessor equality alone is not
-the complete visibility-preservation law.
+The HIR Semantic Access Boundary defines semantic observation, but accessor equality alone does not guarantee valid
+Visible HIR representation.
 
-A physical HIR realization is a valid representation of one Visible Resolved HIR product only when it preserves all
-applicable visible-product obligations:
+A physical HIR representation must preserve all applicable visible-product obligations:
 
 ```text
 Primary HIR Semantic Surface
@@ -978,113 +977,87 @@ Primary HIR Semantic Surface
 + Persistence Protocol, when persistence applies
 ```
 
-Two physical representations may differ in storage, encoding, layout, segmentation, compression, interning, physical
-sharing, addressing, or private physical order. Those differences are legal when the visible-product obligations above
-remain
-unchanged.
+Physical representations may differ as long as these obligations remain unchanged. Such changes must not alter or
+establish Contract-visible meaning and do not authorize Contract Canonicalization.
 
-Representation preservation does not authorize Contract Canonicalization. A compiler-owned representation change must
-not remove, merge, introduce, reinterpret, or establish a Contract-visible distinction.
+Semantic order is governed by the owning Contract law. Where no semantic order exists, the compiler may define
+deterministic observation order. Physical storage order may differ from both.
 
-Semantic order, deterministic observation order, and physical storage order are separate. An owning Contract law
-controls
-semantic order. The compiler may define a deterministic observation order where semantic order is absent. Physical
-layout
-may use another order when ordinary consumers cannot observe that layout as meaning.
+Private implementation state may be nondeterministic only when it cannot affect any declared observation or
+deterministic boundary. Deterministic private handle assignment remains a valid implementation choice, not HIR meaning.
 
-Private ephemeral state may be nondeterministic when that nondeterminism cannot cross semantic observation, provenance,
-visibility, persistence, diagnostics evidence, or another declared deterministic boundary. Deterministic private handle
-assignment is still a valid implementation choice, but it is not HIR meaning.
-
-Resource use, memory layout cost, and physical failure strategy are implementation admissibility concerns rather than
-HIR semantic equality. An implementation remains subject to compiler-wide determinism, capacity, corruption, and failure
-requirements even when it preserves the same HIR semantic result.
+Resource use, memory cost, and physical failure strategies concern implementation admissibility rather than HIR semantic
+equality. Compiler-wide determinism, capacity, corruption, and failure requirements still apply.
 
 ---
 
 # 9. HIR Identity and Equality
 
-HIR keeps exact current reference, candidate meaning, and semantic equality separate.
+HIR distinguishes **exact current references** from **semantic equality**.
 
-A Definition Candidate Reference or Binding Candidate Reference tells the compiler which current semantic target is
-being addressed. Reference equality answers only whether two legal references in the same applicable semantic reference
-domain designate the same exact current HIR subject. It does not by itself prove equality of the complete candidate
-meaning, and equality of candidate payload projections does not merge distinct semantic subjects. Semantic equality is
-defined by the resolved candidate meaning exposed by the relevant HIR surface.
+A reference identifies one exact current HIR subject. Reference equality means that two legal references within the same
+applicable semantic reference domain identify that same subject. It does not establish equality of complete candidate
+meaning.
 
-HIR candidate reference is not the authoritative Contract `Definition Reference` or `Occurrence Reference`. Those
-meanings remain owned by Establishment and the relevant Contract law.
+HIR candidate references are not authoritative Contract Definition or Occurrence References. Those belong to their
+owning Establishment and Contract laws.
 
-HIR semantic equality is also not compiler generation identity, source location, source revision, table position, dense
-ordinal, JVM object identity, HID, or fingerprint.
+The distinctions are:
 
-A new HIR generation may carry semantic projections equal to a previous projection. That fact is established by current
-resolution and equality validation, not by inherited identity. A source move may change provenance while leaving a HIR
-semantic projection equal. A different physical layout may carry the same HIR meaning.
+| Concept                    | Rule                                                                                        |
+|----------------------------|---------------------------------------------------------------------------------------------|
+| Reference equality         | Identifies the same exact current semantic subject within its reference domain              |
+| Semantic equality          | Compares the meaning of the relevant HIR product or projection under its producer-owned law |
+| Physical equality evidence | May accelerate comparison but cannot define or weaken semantic equality                     |
 
-Fingerprints and HID may provide efficient equality evidence. They remain implementation mechanisms. A collision or
-cache lookup must never be allowed to establish a false semantic equality.
+Equal payload projections do not merge distinct semantic subjects or Definitions. Conversely, inequality of complete HIR
+generations does not imply inequality of every contained semantic unit.
 
-The exact collision-safe comparison strategy remains outside this ADR.
+Current HIR identity is established from current explicit inputs, never inherited from previous generations. Equal
+semantic projections may recur across generations despite changes in provenance or physical representation. HIR has no
+lineage identity.
 
-Equality is defined by the semantic product or projection being consumed. The producer-side HIR or projection law owns
-that equality definition; a consumer, cache, query engine, or serialized format does not invent a weaker equality for
-its
-own convenience.
+Semantic equality is independent of source and physical identity. Generic object equality or serialized-byte equality
+cannot replace the producer-owned semantic law.
 
-Whole-generation inequality does not imply that every Contract Interface, Interaction, Operation, Definition Candidate,
-Binding Candidate, or projection is unequal. A projection family must therefore define equality strong enough to decide
-whether its own consumer-visible meaning changed. Two distinct semantic subjects may expose equal payload projections
-without becoming one subject or one Definition.
+HID and fingerprints may support efficient equality checks, but collisions or cache hits must never establish false
+equality. The exact collision-safe comparison strategy is outside this ADR.
 
-Generic object equality or serialized-byte equality is not the semantic law. A persisted compiler format may define a
-canonical encoding for reproducibility or storage, but that encoding remains separate from HIR semantic equality.
-
-HIR carries no lineage identity. Previous-product comparison is optional compiler reuse material and does not
-participate
-in current semantic identity.
+Persistent formats may use canonical encoding for storage or reproducibility without making that encoding HIR semantic
+equality.
 
 ---
 
 # 10. Provenance
 
-Source provenance is related to HIR meaning but is not part of HIR semantic equality unless an owning semantic law
-explicitly requires that origin as meaning.
+Source provenance relates HIR meaning to authored material but remains separate from HIR semantic equality unless the
+owning semantic law explicitly makes origin part of that meaning.
 
-A legal HIR consumer may observe provenance only as a relation separate from Primary HIR semantic meaning.
+Consumers may observe provenance only through a legal, separate relation:
 
 ```text
 HIR semantic subject or legal projection
     ── provenance relation ──> source material
 ```
 
-The common HIR Protocol does not require provenance to be stored as an inline source field and does not impose a
-one-subject-to-one-span model. One semantic subject may have more than one relevant authored origin, and one source
-occurrence may contribute to more than one HIR semantic subject. The exact provenance vocabulary and physical
-representation remain producer and compiler design concerns.
+Provenance does not require inline source fields or one-to-one source spans. Its relation may be many-to-many. The exact
+provenance vocabulary and physical representation remain producer and compiler design concerns.
 
-Semantic and provenance validity may change independently. A comment edit or line movement may require a new provenance
-projection while leaving semantic HIR unchanged. A semantic edit may invalidate the HIR projection even when an authored
-coordinate happens to remain unchanged.
+Semantic and provenance validity may change independently. Source movement may change provenance without changing HIR
+meaning, while unchanged source coordinates do not guarantee unchanged semantic meaning.
 
-When a consumer observes HIR semantic material together with provenance, the provenance must be valid for that exact
-semantic observation. Path, span, generation, HID, physical storage, or another coincidental implementation match must
-not be used to attach provenance belonging to different semantic material. A consumer does not create provenance merely
-by joining separately reachable compiler records.
+**Provenance must correspond to the exact semantic observation it accompanies.** Coincidental identifier matches or
+independently joined compiler records cannot establish that relationship.
 
-Synthetic compiler material that has no direct authored token must remain distinguishable from unavailable or missing
-provenance. The common Protocol does not require one universal synthetic-origin flag or provenance-kind enumeration.
+Synthetic compiler material without a direct authored origin must remain distinguishable from missing or unavailable
+provenance. No universal synthetic-origin representation is required.
 
-Provenance must not be used to reconstruct semantic meaning that Visible HIR failed to retain. Conversely, formatted
-diagnostic text, transformation history, query history, pass history, or another explanatory record does not become HIR
-provenance merely because it can help investigate how material was produced. Rich diagnostic or forensic provenance may
-exist as a separate compiler product.
+Provenance cannot reconstruct meaning missing from Visible HIR. Explanatory compiler history and formatted diagnostics
+are not automatically HIR provenance; they may exist as separate compiler products. Formatted diagnostic text must not
+become HIR meaning.
 
-The compiler must not store formatted diagnostic text as HIR meaning. Provenance remains a legal observation relation;
-it does not create Contract authority or HIR semantic identity.
-
-The exact source-reference encoding, revision tracking, snapshot mechanism, provenance indexing, retention policy,
-refresh algorithm, or storage layout remains compiler design work.
+Provenance creates neither Contract authority nor HIR semantic identity. Its encoding, revision tracking, retention, and
+refresh mechanisms remain compiler design decisions.
 
 ---
 
