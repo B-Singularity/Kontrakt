@@ -1253,24 +1253,18 @@ validity and observation law.
 
 HIR supports semantic early cutoff.
 
-A previous product may be considered for reuse only after the current computation has resolved the current 1D role, the
-complete current semantic determinant set required for the product, and the exact current semantic references on which
-that product depends. Compiler-owned reuse-validity inputs must also permit comparison with the previous product.
+Before considering a previous product for reuse, Kontrakt must resolve the current 1D role, complete semantic
+determinants, and exact semantic references required by that product. Compiler-owned reuse-validity inputs must also
+permit comparison.
 
-Current reuse validity does not require re-executing every computation that originally produced or verified the previous
-product. It requires sufficient current-validity evidence. Kontrakt may establish that evidence through retained
-dependency evidence, producer-owned semantic equality, validated summaries, explicit compatibility judgments, selective
-revalidation, or another sound mechanism. The exact routing and validation mechanism is compiler design.
+Reuse validity requires sufficient current evidence, not necessarily re-execution of every previous computation.
 
-Validation may proceed from cheaper evidence toward narrower semantic work. When coarse evidence is sufficient to prove
-that the relevant semantic projection remains valid, deeper validation is unnecessary. When coarse evidence changes or
-is insufficient, Kontrakt may descend only into the affected dependency region or semantic projection. A mismatch in a
-fingerprint, HID, Merkle root, epoch, or other routing summary means that deeper validation may be required; it does not
-by itself prove that Contract or HIR meaning changed.
+Validation may start with cheaper evidence and proceed into affected dependencies or projections only when necessary.
+Routing summaries can guide validation, but neither their equality nor inequality alone proves semantic equality or
+change.
 
-If the current semantic projection is equivalent to the previous projection under that projection's producer-owned
-semantic equality law, downstream products whose exact semantic inputs are limited to that projection need not be
-invalidated further.
+If the current projection is equivalent to the previous one under its producer-owned semantic equality law, downstream
+products depending only on that projection need not be invalidated.
 
 ```text
 current explicit inputs
@@ -1292,45 +1286,39 @@ meaning unchanged
 semantic propagation may stop
 ```
 
-Early cutoff is based on consumer-visible semantic equality, not on the fact that a cache entry exists, a fingerprint
-matches, or the aggregate HIR generation changed. A fingerprint or another compact summary may route validation or
-reject
-a mismatch quickly. It does not prove HIR or Contract equality by itself.
+Early cutoff depends on consumer-visible semantic equality, not cache availability or aggregate generation changes.
+Selecting a previous product for comparison does not establish cross-generation identity.
 
-Selecting a previous product for comparison is compiler reuse work and does not create a cross-generation identity
-relation.
+A provenance-only change may require updated provenance and diagnostics without invalidating unchanged semantic
+downstream products.
 
-A provenance-only change may therefore refresh source projection and diagnostics while allowing semantic downstream
-products to remain reusable.
+Early cutoff is optional optimization. When sufficient current validity cannot be established, Kontrakt must revalidate
+or use deterministic clean recomputation. An unsound cutoff is a correctness failure.
 
-Early cutoff is an optimization. Failing to take the cutoff may cost time. Taking an unsound cutoff is a correctness
-failure. When reuse validity cannot be established with sufficient current evidence, Kontrakt performs the required
-revalidation or follows the deterministic clean recomputation path.
+---
 
 # 18. Incremental Architecture Boundary
 
-V1 uses query-oriented compiler orchestration and may use generation-bound in-memory reuse, explicit dependency
-recording, and local early cutoff.
+V1 uses query-oriented compiler orchestration. It may reuse generation-bound in-memory results and record explicit
+dependencies to support local early cutoff. The final V2 incremental engine is not required.
 
-V1 does not need to implement the final V2 incremental engine.
+V2 may persist dependency state and reuse HIR across compilation sessions. Its frontend may track change frontiers and
+update affected results incrementally. Delta maintenance and lazy repair are permitted where appropriate.
 
-V2 may add persistent dependency state, cross-session HIR reuse, incremental parsing and resolution, change-frontier
-propagation, delta maintenance for suitable domains, lazy repair, or other algorithms.
-
-No one repair strategy is required across the whole frontend.
+No single incremental strategy is required across the frontend.
 
 A small semantic projection may use memoized validation while another domain recomputes from scratch. A relational
-analysis may later justify delta maintenance. A cheap frontend product may simply rerun because dependency bookkeeping
-would cost more than recomputation.
+analysis may justify delta maintenance, while a cheap frontend product may simply rerun when dependency bookkeeping
+costs more than recomputation.
 
-Every strategy is constrained by the same HIR result law.
+Every strategy must preserve the same HIR semantic result:
 
 ```text
 incremental result
     == HIR semantic result required by clean computation
 ```
 
-If that equivalence cannot be established, Kontrakt uses the deterministic clean path.
+If equivalence cannot be established, Kontrakt uses the deterministic clean path.
 
 ---
 
@@ -1338,40 +1326,40 @@ If that equivalence cannot be established, Kontrakt uses the deterministic clean
 
 HIR correctness must not depend on persistent incremental state.
 
-Kontrakt must retain a conceptually complete path that can rebuild HIR from the explicit frontend inputs without using
-previous HIR products.
+Kontrakt must retain a conceptually complete path that reconstructs HIR from explicit frontend inputs without previous
+HIR products.
 
-This path is required for corruption recovery, differential validation, cache-off testing, and incremental-equivalence
-testing.
+This path is required for:
 
-A future persistent compiler may optimize how often this path runs. It may not make old incremental state the only
-source from which correct HIR meaning can be recovered.
+- Corruption recovery.
+- Differential and incremental-equivalence validation.
+- Cache-off testing.
+
+Persistent compilation may reduce how often the clean path runs, but previous incremental state cannot become the sole
+source of correct HIR meaning.
 
 ## 19.1. HIR Protocol Conformance and Independent Verification Seam
 
-Every product exposed as Visible Resolved HIR must remain checkable against the common HIR Protocol and the applicable
-authority-specific HIR surface. Common HIR conformance checks own Protocol and well-formedness invariants. They do not
-reimplement the owning 1D Contract semantics or become a second Contract authority.
+Every Visible Resolved HIR product must remain checkable against the common HIR Protocol and its applicable
+authority-specific semantic surface.
 
-The deterministic clean formation path is the reference correctness realization for comparing optimized compiler paths.
-Cached, parallel, restored, persistent, or incremental formation must preserve the same producer-defined legal HIR
-observations as valid clean formation. Conformance is therefore defined over legal semantic observations rather than
-physical bytes, table layout, dense handles, allocation order, cache identity, or storage representation.
+Common HIR conformance checks own Protocol and well-formedness invariants. They do not reinterpret owning 1D semantics
+or establish Contract authority.
 
-Clean-versus-optimized differential comparison is necessary but is not assumed to detect a semantic bug shared by both
-paths. The architecture must permit independently derived conformance checks against the legal HIR observation surface.
-Reference judgments, golden vectors, differential execution, metamorphic relations, property-based generation, or
-translation-validation-like checks may realize that seam. No one oracle technology or test harness is part of HIR
-semantics.
+The deterministic clean formation path provides the reference for comparing alternative formation paths. All such paths
+must preserve the same producer-defined legal semantic observations. Conformance is determined by those observations,
+not physical representation.
 
-A conformance checker observes already-defined HIR law. Its success does not establish HIR or Contract meaning. A
-product
-that fails a required HIR Protocol conformance check cannot be exposed as valid Visible Resolved HIR. Compiler-side
-unsuccessful-result handling remains governed by ADR-0074.
+Clean-versus-optimized differential comparison is necessary but cannot detect errors shared by both paths. Therefore,
+the architecture must permit **independently derived conformance checks** against the legal HIR observation surface. No
+particular oracle or testing mechanism is mandated.
 
-The exact checker implementation, oracle mix, execution schedule, fuzzing strategy, and QA harness remain compiler
-design
-and verification work.
+A conformance checker verifies existing HIR law. Its success does not establish HIR or Contract meaning.
+
+A product failing a required conformance check cannot become valid Visible Resolved HIR. ADR-0074 governs unsuccessful
+compiler results.
+
+The specific checker implementation and verification strategy remain compiler design responsibilities.
 
 ---
 
