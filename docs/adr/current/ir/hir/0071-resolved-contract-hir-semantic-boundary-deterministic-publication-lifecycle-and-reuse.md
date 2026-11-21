@@ -69,29 +69,19 @@ its scope.
 
 ## 2. Problem
 
-A frontend can fail in two opposite directions.
+Two opposite failures undermine the frontend boundary:
 
-The first failure is to stop too early. Parsed or partially resolved material is handed downstream and every consumer
-finishes the interpretation for itself. Establishment repeats name lookup. Diagnostics infer ownership from syntax.
-Tooling and generated products learn different meanings from the same source. Incremental reuse then tracks whichever
-physical path happened to perform the missing work.
+1. **Incomplete HIR.** Downstream consumers must independently resolve source meaning, potentially producing
+   inconsistent interpretations.
+2. **Overloaded HIR.** Unrelated compiler state becomes part of HIR, allowing its physical representation to govern
+   invalidation, lifetime, or authority.
 
-The second failure is to make HIR absorb the whole compiler. Analysis results, query edges, cache fingerprints,
-diagnostics, lifecycle flags, backend coordinates, and optimizer knowledge are attached to one representation because a
-consumer may need them later. HIR then becomes a mutable universal object whose physical layout controls invalidation,
-lifetime, and authority.
+HIR must provide complete candidate meaning without claiming Contract authority. It must also support precise reuse
+through stable semantic units and coherent generations, independently of physical storage or any particular query or
+database architecture.
 
-Both designs destroy the boundary that Kontrakt needs.
-
-Resolved Contract HIR must be semantically complete for its role, but that role ends before Contract authority.
-
-It must also remain usable by a production compiler. A whole-generation product alone is too coarse for precise reuse,
-while field-level dependency tracking would make physical storage part of incremental architecture. Visible HIR
-therefore needs stable semantic units and coherent generations without committing Kontrakt to one query or database
-system.
-
-Finally, incremental and parallel execution cannot weaken determinism. A warm cache, a different worker schedule, or an
-incremental repair path must not change the resolved meaning presented to Establishment.
+Cache reuse, parallel scheduling, and incremental repair must preserve the same resolved meaning as clean deterministic
+computation.
 
 ---
 
