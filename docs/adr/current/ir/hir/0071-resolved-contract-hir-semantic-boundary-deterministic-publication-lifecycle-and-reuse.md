@@ -478,12 +478,10 @@ likewise preserve high-level Contract distinctions required by subsequent semant
 
 # 6. Recovery and Invalid Source
 
-Parser recovery and poisoned source material are not Resolved Contract HIR.
+Parser recovery and invalid source material remain outside Resolved Contract HIR. The frontend may retain such material
+for diagnostics or tooling, but only fully resolved and valid candidates may become Visible HIR.
 
-The frontend may keep recovery material so that it can report more than one error, support an editor, or continue
-parsing nearby definitions. That material remains in the source or recovery domain.
-
-```text
+```text id="ef72hh"
 Source / Recovery Material
         ↓
 resolution judgment
@@ -498,32 +496,25 @@ resolved  rejected
       diagnostic / recovery / availability
 ```
 
-A rejected resolution result is established by the exact frontend judgment that owns the failed compiler requirement. A
-diagnostic does not create that rejection. Recovery does not rewrite it. A later HIR stage that was never entered does
-not
-receive a synthetic unsuccessful result merely because the earlier resolution result prevented entry.
+A rejected resolution result belongs to the exact frontend judgment that determined the failure. Diagnostics cannot
+create that rejection, and recovery cannot rewrite it. A later HIR judgment that was never entered must not receive a
+synthetic unsuccessful result. ADR-0074 governs these compiler results.
 
-A missing token is not explicit Contract absence. An unresolved symbol is not an empty semantic reference. A recovery
-node is not a partially authoritative Contract definition.
+Missing or unresolved source material cannot be treated as explicit Contract absence or an empty semantic reference.
+Recovery nodes carry no Contract authority.
 
-Tooling may expose a separate incomplete frontend view when necessary. Such a view must not be accepted as Resolved
-Contract HIR by Establishment.
+Tooling may expose a separate incomplete frontend view, but Establishment must not consume it as Resolved Contract HIR.
 
-Invalid source must not poison unrelated resolved semantic units.
+**Invalid source must not invalidate unrelated resolved semantic units.** An invalid candidate and units whose meaning
+depends on it cannot become Visible HIR. Independent candidates may still be formed and verified when their determinant
+closure is complete.
 
-If one candidate cannot satisfy the HIR resolution invariant, that candidate and any semantic unit whose exact meaning
-depends on it are not made visible as valid HIR. An independent candidate may still be formed and verified when its own
-determinant closure is complete. The producer preserves the exact unsuccessful compiler result under ADR-0074, while
-diagnostics, tooling, and recovery consume legal projections of that result. The compiler does not insert a fabricated
-HIR
-placeholder merely to keep later HIR processing alive.
+The compiler must not fabricate HIR placeholders to continue processing. The unsuccessful result remains owned by its
+producer and is available to consumers through legal Protocol projections.
 
-Compilation success is separate from this failure-isolation rule. A batch build may still fail because any required
-source unit is invalid, while diagnostics or tooling continue to consume already-valid HIR units. The exact
-availability,
-boundary-completion, and orchestration representation remains owned by the common compiler-result architecture rather
-than
-by HIR semantic meaning.
+Local HIR availability does not imply compilation success. A batch build may fail because a required source unit is
+invalid, even when other valid HIR units remain available to diagnostics or tooling. The common compiler-result
+architecture, not HIR semantics, owns availability, boundary-completion, and orchestration representation.
 
 ---
 
