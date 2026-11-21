@@ -271,71 +271,62 @@ visibility, and HIR-specific result boundary.
 
 ## 4.9. Authoring Refinement and Semantic Convergence
 
-Resolved HIR is source-independent enough that different authoring forms may converge on the same consumer-visible
-candidate meaning when the owning frontend and 1D laws say that their resolved meaning is the same.
+Different authoring forms may produce the same consumer-visible HIR candidate meaning when their resolved meanings are
+equivalent under the applicable frontend and 1D laws.
 
-Frontend refinement may remove alias spelling, import spelling, source-only nesting, authoring sugar, host-carrier
-structure, or another distinction whose semantic interpretation has already been resolved. The original form may remain
-available through provenance or source material.
+Frontend refinement may remove authoring-only distinctions after resolving them. The original forms may remain available
+through provenance or source material.
 
-Frontend refinement must not collapse a distinction owned by a Contract law. It must not perform value
-Canonicalization, Admission judgment, Fact Establishment, Applicability judgment, or another authority-owned decision in
-order to obtain a convenient HIR form.
+Refinement must preserve all Contract-owned distinctions and must not perform authority-owned judgments. It is not the
+`Canonicalization Contract` and does not require a single byte-level HIR representation.
 
-If two authored forms lead to different candidate meaning under an owning 1D ADR, HIR preserves that difference. If
-two authoring forms resolve to the same exact candidate reference and the same candidate meaning, the authoring route
-does not create a different HIR meaning. Equal payload alone does not merge distinct candidate references or
+Two authored forms with the same exact candidate reference and meaning do not acquire different HIR meaning merely
+because of their authoring routes. Equal payload alone, however, cannot merge distinct candidate references or
 Definitions.
 
-This is compiler frontend refinement. It is not the `Canonicalization Contract`, and it does not require one byte-level
-canonical HIR storage format.
-
-If order is not semantic, physical construction order must not become observable meaning. If order is semantic, its
-source must be explicit in the owning law or frontend language.
+Semantic ordering must follow the owning law or frontend language. Otherwise, physical construction order must not
+affect observable meaning.
 
 ## 4.10. HIR Semantic Determinants and Frontend Confluence
 
-The observable meaning of one HIR semantic unit must be determined by explicit semantic inputs.
+Each HIR semantic unit's observable meaning is determined by its explicit role-qualified material and exact resolution
+environment.
 
-Those inputs include the role-qualified declared material and the exact resolution environment required to interpret
-that material. Binding context contributes to Definition Candidate meaning only when the owning 1D law declares that
-context to be Definition-determining. A frontend language or semantic profile version participates only where its owning
-law makes it relevant to candidate meaning.
+Additional context contributes to candidate meaning only under the applicable owning law:
 
-Worker scheduling, cache state, allocation order, current memory layout, compiler traversal order, and the route by
-which a query happened to be computed are not semantic determinants.
+- **Binding context:** Only when the owning 1D law makes it Definition-determining.
+- **Frontend language or semantic profile version:** Only when its owning law makes it relevant.
 
-Semantic determinants are not the same thing as compiler reuse-validity inputs. A compiler schema version, frontend
-implementation revision, persistent-product encoding, or another compiler-owned input may invalidate a cached physical
-product without becoming part of Contract candidate meaning.
+How a result is computed, scheduled, cached, or stored must not affect HIR meaning. Compiler reuse-validity inputs may
+invalidate a stored product without becoming semantic determinants.
 
-Different supported authoring forms may converge on the same HIR meaning. When `.kontrakt` source and a selected 1D
-carrier express the same role-qualified resolved candidate meaning under the same applicable frontend law, the authoring
-route does not create a second HIR meaning. Their source origin may remain different provenance.
+The convergence rule in §4.9 also applies across `.kontrakt` source and selected 1D carriers. Under the same applicable
+frontend law, equivalent role-qualified resolved candidate meaning must not differ because of its authoring route.
+Source origin may remain distinct provenance.
 
-This confluence rule prevents frontend implementation choice from leaking into Establishment, equality, or reuse.
+Authoring-route differences must not affect Establishment, equality, or reuse.
 
 ## 4.11. Typed Extension Boundary
 
-HIR has shared compiler infrastructure, but each Contract authority keeps its own candidate vocabulary.
+HIR provides shared compiler infrastructure, but each Contract authority owns its candidate semantics.
 
 Adding a new 1D Contract family must not require existing candidate meanings to be rewritten into a weaker universal
-property model. The shared HIR substrate may provide references, visibility, provenance relations, Binding
-representation, physical partitioning, and projection access. The new authority provides the semantic payload that its
-own ADR defines.
+property model.
 
-A generic tag or property bag may exist as physical encoding. It is not the semantic contract of HIR.
+Shared HIR infrastructure may provide reference, visibility, Binding representation, provenance, storage, and projection
+mechanisms. The semantic payload remains defined by the owning 1D ADR.
+
+Generic tags or property bags may serve as physical encoding, but cannot define HIR semantics.
 
 ## 4.12. Authored Contract Material and 1D Role Grant
 
-A user API declaration is an authoring carrier. Its class shape, host type, or declaration object does not by itself
-make
-that material a 1D Contract.
+A user API declaration is an authoring carrier, not inherently a 1D Contract. Its host-language representation does not
+grant Contract meaning.
 
-The explicit IDL binding grants the 1D role used for frontend refinement. The frontend then interprets the selected
-material under that 1D law and forms resolved candidate meaning.
+An explicit IDL binding assigns the 1D role. The frontend interprets the selected material under that role's law to
+produce resolved candidate meaning.
 
-```text
+```text id="sqw05f"
 user-authored carrier
     ↓ explicit IDL binding
 role-qualified declared material
@@ -346,8 +337,8 @@ Resolved HIR candidate material
 An unselected carrier does not become a 1D HIR candidate merely because it has a supported user API shape. It may remain
 ordinary source material.
 
-This rule keeps the authoring representation replaceable. A future frontend may express the same role-qualified meaning
-without using the current host-language carrier shape.
+The authoring representation remains replaceable. A future frontend may express the same role-qualified meaning without
+using the current host-language carrier shape.
 
 ## 4.13. Definition Candidate and Binding Candidate
 
