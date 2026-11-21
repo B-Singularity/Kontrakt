@@ -455,32 +455,24 @@ Definition, Binding, and Occurrence remain distinct. Definition formation does n
 
 ## 5.1. What HIR May Erase
 
-HIR may erase authored distinctions that no longer affect resolved candidate meaning.
+HIR may erase authored distinctions that no longer affect resolved candidate meaning under the owning Contract law.
 
-Whitespace and comments are not HIR semantics. Import spelling and alias spelling need not survive after they have been
-resolved to the same semantic target. Parentheses or authoring sugar may disappear when their meaning is already
-represented explicitly. Host object identity, constructor path, getter behavior, carrier nesting, builder shape, and
-runtime allocation are not preserved merely because the frontend used them to acquire source evidence.
+Whitespace and comments are not HIR semantics. Resolved syntactic differences and incidental host-carrier acquisition
+details need not be preserved.
 
-Source nesting also does not become implicit Contract ancestry.
-
-Erasing an authored distinction is legal only when the owning Contract law does not make that distinction meaningful.
+Source nesting does not establish implicit Contract ancestry.
 
 ---
 
 ## 5.2. What HIR Must Retain
 
-HIR retains every distinction needed to interpret the candidate under the owning Contract law.
+HIR must preserve every distinction required to interpret the candidate under its owning Contract law.
 
-It also retains enough exact semantic anchoring to connect later diagnostics and compiler products to the candidate
-without recovering meaning from storage topology.
+It must also retain sufficient exact semantic anchoring for later diagnostics and compiler products, independently of
+physical storage.
 
-A distinction required later for Establishment cannot be reconstructed from source after HIR becomes visible. If later
-Establishment needs to reread a symbol name, rediscover a carrier member, or infer a role from source position, the HIR
-boundary is incomplete.
-
-The same principle applies to later lowering. High-level Contract distinctions that remain necessary for a later
-semantic boundary must not be discarded simply because a lower representation would be easier to store.
+Once HIR becomes visible, Establishment must not reconstruct candidate meaning from source material. Later lowering must
+likewise preserve high-level Contract distinctions required by subsequent semantic boundaries.
 
 ---
 
