@@ -178,9 +178,8 @@ HIR must not include fields solely for downstream convenience.
 
 ## 4.5. Exact Candidate References Before Authority
 
-HIR references are exact compiler-semantic references to current resolved candidate targets.
-
-They are not automatically the authoritative `Definition Reference` defined by ADR-0063.
+HIR references denote exact resolved candidate targets in the current semantic world. They do not carry Contract
+authority.
 
 ```text
 authored Contract material
@@ -190,122 +189,85 @@ exact HIR candidate target
 possible authoritative relation
 ```
 
-An HIR candidate reference denotes the resolved semantic target. It is not the source AST node, file position, host
-class object, content hash, generation-local ordinal, or physical address used while producing that target. Source
-material remains available through provenance when required.
+A candidate reference denotes semantic meaning, not source location or physical storage identity. Provenance remains
+available when required. References do not inherit identity or lineage from previous HIR generations; each generation
+resolves its own references from explicit inputs.
 
-The reference is current-world material. It does not inherit identity from a previous HIR generation and it does not
-carry a lineage relation. A later generation resolves its own exact candidate references from its own explicit inputs.
+Every Visible HIR reference must denote one valid, exact target within its semantic reference domain. Shared physical
+encoding does not permit reinterpretation between reference kinds, nor does it require a universal runtime kind field.
+Invalid references cannot become semantic absence; absence must be explicitly defined by the owning law.
 
-A legal HIR semantic reference belongs to an exact semantic reference domain. A physical encoding that can carry more
-than one reference kind does not permit one semantic reference kind to be reinterpreted as another. The distinction may
-be carried structurally by the typed reference surface and does not require one universal runtime kind field.
+HIR references have no universal semantic ordering. Order is meaningful only when defined by the owning law. The
+compiler may provide deterministic observation order without making physical ordering semantic.
 
-A legal Visible HIR reference denotes one exact resolved current target. An unresolved, ambiguous, dangling, stale, or
-otherwise invalid compiler reference is not an alternate HIR semantic reference. Missing or invalid reference material
-also does not become semantic absence. Absence is observable only where the owning semantic law explicitly defines an
-absent relation or position.
+References may identify other candidates before either has Contract authority. Exact resolution does not establish the
+referenced target or relation. Authority-bearing references and bindings arise only through their owning Establishment
+or Composition law.
 
-HIR semantic references have no universal semantic ordering. An owning semantic law may define order for its own
-subjects or relations, and the compiler may define deterministic observation order where needed, but dense handle,
-HID, hash order, table position, allocation order, or another physical ordering does not become reference meaning.
+### Operation References and Coordinates
 
-This distinction matters when two candidates in the same frontend generation refer to one another before either has
-received Contract authority. The compiler may know exactly which candidate is referenced. That exactness does not
-establish the target or the relation.
+An `OperationRef` identifies one nominal Operation handle within an exact Contract Interface semantic scope,
+independently of source containment or physical representation.
 
-If later Contract law establishes an exact `Definition Reference`, `Version Binding`, `Basis Binding`, or another
-authority-bearing relation, that meaning is created at the boundary that owns it. HIR must not pre-establish it for
-convenience.
+An `OperationParameterRef` identifies one exact, nominal Operation-local coordinate. Renaming a parameter changes that
+coordinate. Declaration order or JVM parameter index does not determine its identity unless the owning Contract law
+explicitly makes order semantic. Lowering may target the coordinate but cannot create it.
 
-Operation references follow the same current-world rule. An `OperationRef` denotes one exact nominal Operation handle
-inside one exact Contract Interface semantic scope. That scope is Contract meaning, not source containment. File path,
-package, host class, generated API symbol, JVM descriptor, declaration ordinal, dense handle, HID, and
-previous-generation
-identity do not establish the Operation reference.
-
-The Operation owns an independent callable coordinate surface. An `OperationParameterRef` denotes one exact declared
-Operation-local nominal semantic coordinate. A parameter rename changes that current semantic coordinate. Declaration
-order or JVM parameter index does not establish coordinate identity unless an owning Contract law explicitly makes order
-semantic. Lowering may target an Operation parameter coordinate, but it does not create that coordinate.
-
-The Operation result position is likewise resolved independently of generated host signature or JVM descriptor. The
-exact payload and type relations carried by Operation parameter and result coordinates remain owned by the applicable
-frontend and Contract laws.
+The Operation result position is also resolved independently of generated host signatures or JVM descriptors. Parameter
+and result payload and type relations remain governed by their applicable frontend and Contract laws.
 
 ---
 
 ## 4.6. Version and Basis Boundary
 
-A Version Claim that participates in candidate meaning must be resolved far enough that Establishment is not left with
-lexical ambiguity.
+A Version Claim that participates in candidate meaning must resolve to an exact, authority-scoped **Version candidate
+coordinate** before HIR becomes visible. Authored spelling may remain in provenance.
 
-Visible HIR therefore preserves the exact authority-scoped **resolved Version candidate coordinate** required to judge
-the candidate. The authored spelling is frontend evidence and may remain in provenance. The resolved coordinate is exact
-compiler-semantic meaning, but it is not yet the authoritative `Version Binding` owned by Establishment.
+This coordinate is not the authoritative `Version Binding`. Contract Version is independent of compiler and storage
+versions. Historical or persistent material may support later validation but cannot create Version meaning.
 
-Contract Version remains separate from compiler generation, artifact revision, persistent schema version, and encoded
-product version. History or persistent storage may validate a Version candidate during Establishment, but storage record
-identity does not create the semantic Version coordinate.
+A Definition Candidate preserves its complete **Basis Requirement Law** without selecting the Established material that
+satisfies it.
 
-Required Basis follows a related but distinct separation.
+Occurrence-owned or higher-scope Required Basis instances are not Definition HIR material. However, Definition HIR
+retains any occurrence-basis law belonging to the Definition. When a Definition-time judgment owns a Required Basis, its
+exact requirement may be formed from the resolved candidate as Establishment input.
 
-A Definition Candidate preserves any **Basis Requirement Law** that belongs to its Definition meaning. That law may
-state
-what semantic kind, coordinate shape, cardinality, completeness rule, or permitted absence a later judgment requires. It
-does not select the Established material that will satisfy the requirement.
-
-An occurrence-owned or higher-scope `Required Basis` instance is not Definition HIR material. The Definition HIR still
-preserves any occurrence-basis law that belongs to the Definition meaning. When a Definition-time judgment itself owns
-the Required Basis, that exact requirement may be formed from the resolved candidate as Establishment input.
-
-`Basis Resolution`, `Basis Binding`, actual source selection, and Complete Basis remain owned by the applicable
-Establishment or composition law over Established Material. A compiler dependency edge or HIR reference does not become
-Basis Binding.
+Actual Basis Resolution, Basis Binding, source selection, and Complete Basis belong to the applicable Establishment or
+Composition law over Established Material. Compiler dependencies and HIR references do not establish Basis Binding.
 
 ---
 
 ## 4.7. Applicability Boundary
 
-HIR preserves an Applicability Law when that law is part of resolved candidate meaning. It may preserve the exact
-semantic coordinate kinds or other declared inputs that the owning law says participate in Applicability.
+HIR preserves the Applicability Law and its declared semantic inputs when they belong to candidate meaning. It does not
+establish future `Applicable` results or future Established context instances.
 
-HIR does not contain an `Applicable` result for a future semantic use and does not contain the future Established
-context
-instance merely because the Definition declares that such context will be required.
+Under ADR-0063, Applicability is a later legality judgment over the exact binding, dependent application, Established
+context, and owning law. It does not perform implicit producer selection or arbitration.
 
-Applicability in ADR-0063 is a later judgment over the exact binding, dependent application, relevant Established
-context, and owning Applicability Law. Applicability is legality, not implicit producer selection or arbitration.
+The Applicability Law, context instance, and judgment result must remain distinct semantic categories.
 
-The compiler must therefore keep Applicability Law, applicable context instance, and Applicability result as different
-semantic categories.
+---
 
 ## 4.8. HIR Seal Verification Boundary
 
-Every Resolved HIR product must satisfy the Resolved Contract HIR boundary before it is sealed and becomes
-visible to an independent consumer.
+Every Resolved HIR product must satisfy the HIR boundary before sealing and publication to independent consumers.
 
-Seal verification may reject material that is incomplete, unresolved, recovery-tainted, structurally inconsistent,
-or otherwise incapable of satisfying the Resolved Contract HIR boundary. It does not run an owning Contract judgment and
-it does not create Established meaning.
+Private construction may contain incomplete material. Seal verification may reject material that fails to satisfy the
+Resolved Contract HIR boundary. Only fully resolved and valid material may be sealed.
 
-Private construction may temporarily contain incomplete structures while frontend computation is in progress. That
-freedom ends when the product is sealed for visibility.
+Seal verification does not perform an owning Contract judgment or establish Contract meaning.
 
-When the HIR seal judgment is actually entered and can state that its owned seal requirement is not satisfied, it
-establishes an explicit HIR-owned unsuccessful compiler result under ADR-0074. That result is compiler correctness or
-frontend validity material. It is not a Contract refusal and not Contract Failure meaning. Its exact rejection
-vocabulary
-belongs to the HIR seal-verifier law rather than to this ADR.
+When an entered seal judgment determines that its requirement is unsatisfied, it produces an **HIR-owned unsuccessful
+compiler result** under ADR-0074, not a Contract refusal or Contract Failure. The exact rejection vocabulary belongs to
+the HIR seal-verifier law.
 
-A seal judgment that is never entered because an earlier required compiler result was unsuccessful does not acquire a
-synthetic HIR Seal Rejection. The earlier result remains owned by its producer, while later availability and completion
-consequences are governed by ADR-0074.
+If an earlier required compiler result fails before the seal judgment is entered, no synthetic HIR Seal Rejection is
+created. The original producer retains failure ownership, and ADR-0074 governs the downstream consequences.
 
-The detailed verifier architecture, authority-specific checks, diagnostic mapping, and realization-verifier behavior are
-owned by separate verifier ADRs and designs. This ADR fixes only the HIR seal, visibility, and HIR-specific result
-boundary
-that those verifiers must respect.
+Other verification responsibilities remain with their respective ADRs and designs. This ADR defines only the HIR seal,
+visibility, and HIR-specific result boundary.
 
 ## 4.9. Authoring Refinement and Semantic Convergence
 
