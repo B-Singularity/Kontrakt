@@ -1165,101 +1165,87 @@ The exact reclamation mechanism remains open.
 
 # 13. Snapshot Coherence
 
-A semantic computation that requires one coherent HIR world observes one visible generation.
+A computation requiring one coherent HIR world must observe a valid, visible generation. Material from different
+generations or incomplete construction must not be presented as one coherent current HIR observation.
 
-It must not combine a new definition, an old resolution index, and a half-built relation merely because those pieces are
-physically reachable at the same time.
+Current-generation membership is established from current explicit semantic inputs, not inherited from previous products
+or reused storage.
 
-Cross-generation reuse is allowed when an equivalent semantic projection has been validated for the new generation. The
-logical consumer still observes that projection as valid input to its current generation. The reuse relation does not
-create identity continuity between generations.
+Cross-generation reuse is permitted when an equivalent semantic projection has been validated for the current
+generation. This does not establish identity continuity between generations.
 
-Current-generation membership is established from current explicit semantic inputs. Reused physical backing, a live old
-page, a matching fingerprint, or a retained previous product does not by itself make that subject a member of the new
-generation. Reuse may preserve storage or computation; it does not preserve membership by inheritance.
+Provenance accompanying a semantic observation must be valid for that exact observation. Semantic material and
+provenance may be refreshed independently, but stale relations cannot be presented as one coherent current view.
 
-The same coherence law applies when a consumer combines semantic HIR with provenance. Provenance presented as belonging
-to an exact semantic observation must be valid for that observation. Semantic material and provenance may be reused or
-refreshed independently, but an invalid or stale relation must not be presented as one coherent current HIR view.
-Tooling may deliberately display older semantic material beside newer source or recovery state, but that mixed state is
-not one coherent current Resolved HIR observation.
+Tooling may display older HIR alongside newer source or recovery material, provided it does not present them as one
+coherent current Resolved HIR observation.
 
-This rule preserves snapshot coherence without requiring the compiler to copy every unchanged definition into every
-new physical generation or to use one particular snapshot, epoch, generation-tag, or provenance-storage mechanism.
+Snapshot coherence does not require physical copying or any particular generation-management mechanism.
 
 ---
 
 # 14. Query, Product, and Manager Compatibility
 
-Resolved HIR is a compiler product. It is not a query object and it is not owned by a Manager.
+Resolved HIR is a compiler product, not a Query object or Manager-owned representation.
 
-A query-oriented compiler may request whole HIR generations or smaller HIR projections. An Analysis Manager may attach
-derived results to an exact HIR subject and validity context. A local Pass Manager may orchestrate HIR-preserving
-representation preparation before sealing or over a private generation.
+Compiler infrastructure may consume or process HIR without defining its meaning:
 
-None of those infrastructures defines HIR meaning.
+- **Query infrastructure:** Requests complete generations or smaller semantic projections.
+- **Analysis Manager:** Associates derived results with exact HIR subjects and validity contexts.
+- **Pass Manager:** Coordinates HIR-preserving representation preparation before sealing or within private generations.
 
-HIR must therefore provide stable semantic subjects, clear generation validity, and an observable read surface without
-requiring one query scheduler, one Analysis Manager API, or one pass pipeline.
+HIR must expose stable semantic subjects, generation validity, and legal observations without depending on a particular
+compiler orchestration architecture.
 
-Derived knowledge remains outside HIR. If several consumers need the same expensive calculation, Kontrakt may expose a
-shared derived product rather than storing the result inside unrelated HIR definitions.
+Derived knowledge remains separate from HIR. Shared computations may produce reusable derived products rather than
+embedding their results in unrelated HIR definitions.
 
-Query and analysis scope should follow explicit Definition, Binding, and projection boundaries when that gives a
-smaller valid dependency boundary. A consumer that needs one Definition projection should not be forced to depend on the
-full frontend generation merely because the first physical implementation stores both in one allocation domain.
+Dependency scope should follow the smallest valid semantic boundary. A consumer requiring one Definition projection must
+not depend on the entire frontend generation solely because of physical storage organization.
 
 ---
 
 # 15. Dependency Observation
 
-Query and incremental infrastructure may record which HIR semantic products or projections a computation consumed.
+Query and incremental infrastructure may record dependencies on consumed HIR semantic products or projections.
 
-Dependency observation must occur at a semantic product boundary rather than at an accidental storage boundary.
+**Dependencies must follow semantic product boundaries, not physical storage boundaries.** Physical reads do not
+establish permanent compiler dependencies.
 
-A read of slab offset `N`, object field `x`, or table row `R` is not by itself a permanent compiler dependency law.
-Physical representation must remain replaceable.
+The following relations remain distinct:
 
-The following graphs remain different:
-
-```text
+```text id="z8xlhi"
 HIR semantic relations
 compiler query dependencies
 build / artifact dependencies
 source provenance relations
 ```
 
-A query edge does not create Required Basis, Basis Binding, Applicability, or another Contract relation.
+Compiler query dependencies do not establish Contract relations, including Required Basis, Basis Binding, or
+Applicability.
 
-Relevant external or ambient inputs to a HIR-producing computation must be explicit. Hidden clock, locale, random state,
-mutable global state, or undeclared environment state cannot silently change the HIR result.
+All inputs that may determine an HIR-producing computation's result must be explicit. Hidden environmental or mutable
+state must not change observable HIR meaning.
 
 ---
 
 # 16. Cache and Reuse Law
 
-Cache is work avoidance.
+Cache avoids computation. It creates neither HIR nor Contract authority.
 
-It is not HIR authority and it is not Contract authority.
+A cached HIR product may be reused only after the compiler establishes compatibility with the requested semantic
+product. An invalid, stale, corrupt, missing, or incompatible cache entry requires valid recomputation, or an explicit
+compiler failure when recomputation is impossible.
 
-A cached HIR product may be reused only after the compiler has established compatibility with the requested semantic
-product. A stale, corrupt, missing, or incompatible entry falls back to valid computation or produces an explicit
-compiler failure when recomputation itself is impossible.
+Deleting or warming the cache must not change observable HIR meaning for identical explicit inputs. This applies to all
+cache and persistence mechanisms; their retention policies do not define HIR semantics.
 
-Deleting the cache must not change HIR meaning.
+**Semantic equality and physical reuse eligibility are independent.** Equal semantic projections may still be ineligible
+for physical reuse when compiler-owned validity or compatibility requirements are unsatisfied. Physical availability
+cannot replace producer-owned semantic equality.
 
-Warm-cache and cold-cache compilation must produce the same observable HIR result for the same explicit inputs.
-
-The same law applies to persistent CAS-like storage, in-memory memoization, generation-local caches, and future remote
-reuse. Their retention policy does not become HIR semantics.
-
-Semantic equality and physical reuse eligibility are separate questions. Two semantic projections may be equal while a
-previous physical product remains ineligible for reuse because compiler-owned compatibility or current-validity
-requirements are not satisfied. Conversely, physical availability never substitutes for producer-owned semantic
-equality when that equality is required.
-
-Reuse of one HIR semantic product does not imply reuse of separately owned provenance, diagnostic, Compiler Result, or
-other compiler products. Each product retains its own validity and observation law.
+Reusing an HIR product does not automatically permit reuse of separately owned compiler products. Each retains its own
+validity and observation law.
 
 ---
 
