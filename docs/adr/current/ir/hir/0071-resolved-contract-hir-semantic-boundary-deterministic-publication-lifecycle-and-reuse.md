@@ -1065,23 +1065,21 @@ refresh mechanisms remain compiler design decisions.
 
 ## 11.1. Frontend Working State
 
-Before Resolved HIR becomes visible, the frontend may keep private working state while it resolves and refines authored
-material. A resolver may use temporary symbol maps, worklists, intern tables, arenas, or another bounded representation
-to perform that work.
+Before HIR becomes visible, the frontend may maintain private, bounded working material for source resolution and
+refinement.
 
-This working state is compiler implementation material. It is not Resolved HIR. Establishment, query consumers, tooling,
-and other independent downstream work must not depend on a half-resolved builder or on the shape of the temporary
-structures used to produce HIR.
+This material is not Resolved HIR. Establishment and other independent consumers must not depend on incomplete working
+state or its physical representation.
 
-The frontend may retain source and working material for diagnostics, tooling, or later frontend work. Retention does not
-make that material part of visible HIR meaning.
+Source and working material may be retained for frontend, diagnostic, or tooling purposes without becoming Visible HIR
+meaning.
 
 ---
 
 ## 11.2. Visible Generation
 
-A HIR generation becomes visible only after the producer has completed resolution, satisfied the HIR resolution
-invariant, and sealed the generation.
+A HIR generation becomes visible only after resolution is complete, the HIR invariant is satisfied, and the generation
+is sealed.
 
 ```text
 private construction
@@ -1097,37 +1095,33 @@ make generation G visible
 read-only consumers
 ```
 
-Visibility is a compiler lifecycle boundary. It adds no Contract authority.
+Visibility is a compiler lifecycle boundary, not Contract authority.
 
-A visible generation is immutable to ordinary consumers. The physical realization may use immutable structures,
-sealed tables, overlays, snapshots, persistent structures, or another mechanism that preserves this rule.
+A visible generation is immutable to ordinary consumers, regardless of its physical implementation.
 
 ## 11.3. Visibility Granularity and Materialization
 
 A coherent HIR generation does not require one monolithic physical visibility barrier.
 
-The compiler may make a generation visible as a stable manifest over independently sealed semantic units or projections.
-A unit becomes observable only after that unit satisfies the HIR invariant and is associated with the same coherent
-generation inputs.
+The compiler may publish a stable manifest of independently sealed semantic units or projections. Each visible unit must
+satisfy the HIR invariant and belong to the same coherent generation inputs.
 
-Semantic formation and physical materialization are different. A visible semantic scope must already have closed
-current membership and validated HIR candidate meaning for the scope it claims to expose. Physical backing for that
-meaning may still be materialized eagerly or on demand.
+**Semantic formation and physical materialization are distinct.** A visible semantic scope must have complete current
+membership and validated candidate meaning. Its physical backing may be materialized eagerly or on demand.
 
-Demand-driven semantic formation is permitted only when the compiler exposes the smaller semantic scope that has
-actually been formed and validated. It must not advertise an unresolved larger generation as complete. When a consumer
-receives a visible unit, the same HIR resolution and visibility laws apply as they do to eagerly materialized HIR.
+Demand-driven semantic formation may expose only the smaller scope that has actually been formed and validated. It must
+not present an unresolved larger scope as complete.
 
-This allows V1 to use a simple eager implementation while preserving a path to fine-grained queries, IDE demand, and
-V2 incremental materialization without changing HIR meaning.
+Every visible unit follows the same HIR resolution and visibility laws, regardless of how it was formed.
 
-The exact visibility and materialization granularity remains a compiler design decision.
+V1 may use eager formation, while finer-grained implementations remain possible without changing HIR meaning. The exact
+granularity remains a compiler design decision.
 
 ---
 
 # 12. HIR Lifecycle and Transition Model
 
-HIR lifecycle is compiler operational meaning. It is not the Contract State / Transition authority defined elsewhere.
+HIR lifecycle governs compiler operations, not Contract State or Transition authority.
 
 The logical lifecycle is:
 
@@ -1147,29 +1141,23 @@ retired generation
 reclaimed storage
 ```
 
-A failed or cancelled construction candidate is discarded. It does not become a partially visible HIR. If an older
-generation is already visible, that failed transition does not invalidate the older generation merely because a
-replacement attempt began.
+A failed or cancelled construction candidate is discarded without becoming partially visible. If an older generation is
+visible, a failed replacement attempt does not invalidate it.
 
-Only a successfully completed visibility transition may supersede the previous current generation. Making the newer
-generation visible does not mutate the semantic meaning of the older generation. It creates a new visible result for a
-new
-explicit input set.
+Only a successful visibility transition may supersede the current generation. The new generation represents new explicit
+inputs without changing the older generation's semantic meaning.
 
-Supersession and reclamation are separate transitions. An older generation may remain readable while a newer generation
-is already current.
+**Supersession and reclamation are separate transitions.** An older generation may remain readable after a newer
+generation becomes current.
 
-The compiler must not require one mutable lifecycle enum on every HIR node. Lifecycle may be represented by generation
-ownership, product metadata, generation handles, or another mechanism.
+Lifecycle does not require a mutable state field on every HIR node. It may be managed through generation ownership or
+compiler product metadata.
 
-HIR architecture must permit lifecycle management at a finer semantic granularity than the whole frontend world when
-that is useful. Fine-grained lifecycle units are stable semantic products or projections, not arbitrary physical fields.
+Lifecycle management may operate on finer-grained stable semantic units or projections, but not arbitrary physical
+fields.
 
-A visible semantic product may outlive its construction scratch state while cold derived indexes or source-oriented
-material are discarded earlier. The HIR contract does not require every projection, index, provenance expansion, or
-decoded body to
-remain simultaneously materialized. Selective retention must not make a consumer-visible semantic unit unavailable
-while that unit is still visible, valid, and required.
+A visible semantic product may outlive its construction state. Auxiliary material may be discarded independently,
+provided every still-visible, valid, and required semantic unit remains available to its legal consumers.
 
 The exact reclamation mechanism remains open.
 
