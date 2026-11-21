@@ -342,94 +342,69 @@ using the current host-language carrier shape.
 
 ## 4.13. Definition Candidate and Binding Candidate
 
-HIR separates reusable Definition Candidate meaning from the exact IDL use that selects it.
+HIR distinguishes two candidate meanings:
 
-A **Definition Candidate** is the resolved 1D definition meaning determined by the owning 1D law.
+- **Definition Candidate:** Complete resolved 1D Definition meaning determined by its owning 1D law.
+- **Binding Candidate:** The exact IDL-use relation selecting a Definition Candidate for a specific slot or role. It is
+  not an authority-bearing Binding established later.
 
-A **Binding Candidate** is the exact current frontend relation by which one IDL context selects a Definition Candidate
-for one 1D slot or role. In this ADR, `Binding Candidate` names that IDL-use relation. It is not `Basis Binding`,
-`Version Binding`, Governance Binding, or another authority-bearing Binding established later.
-
-```text
+```text id="3k8bym"
 IDL A ── Binding Candidate A ──┐
                                ├──> Definition Candidate D
 IDL B ── Binding Candidate B ──┘
 ```
 
-Several IDL contexts may select the same authored declaration. When the owning 1D law says that the differing context
-does not change Definition meaning, those uses may resolve to one reusable Definition Candidate while retaining distinct
-Binding Candidates.
+Multiple IDL contexts may select the same authored declaration. They may share a Definition Candidate only when the
+owning 1D law determines that their contextual differences do not affect Definition meaning. Each selection retains its
+distinct Binding Candidate.
 
-The binding does not copy or inherit Definition identity. It preserves an exact relation to its target candidate.
+A Binding Candidate preserves only the exact selection occurrence, selected slot or role, target Definition Candidate
+Reference, and any qualifier required by the binding law. It neither copies nor inherits Definition identity.
+Surrounding context does not become Binding meaning merely because it is accessible.
 
-Definition Candidate meaning is complete independently of one particular consumer observation. A later consumer may
-request
-a narrower legal projection, but that request does not weaken or redefine the Candidate itself.
+Definition Candidate meaning remains complete independently of consumer-specific projections.
 
-A Binding Candidate owns the selection relation, not the surrounding IDL context as a whole. It preserves only the
-semantic context required to identify that exact selection occurrence, the selected slot or role, the exact target
-Definition Candidate Reference, and any additional qualifier that the binding law independently makes part of the
-selection relation. Other Interface, Interaction, Operation, Version, Policy, Governance, or source context does not
-become
-Binding meaning merely because it is nearby or reachable.
-
-A semantic coordinate may participate in both Definition Candidate meaning and Binding Candidate meaning only when it
-independently serves both meanings. Physical duplication or implementation convenience does not make one coordinate part
-of both semantic relations.
+A semantic coordinate belongs to both Definition Candidate and Binding Candidate meaning only when it independently
+determines each. Physical duplication does not establish semantic membership.
 
 ## 4.14. 1D-Owned Definition Determinants
 
-HIR does not impose one universal coordinate tuple on every 1D Definition Candidate.
+The owning 1D law determines which declared and contextual material defines its Definition Candidate meaning. HIR must
+not introduce unrelated context merely to form a universal coordinate tuple or global key.
 
-The owning 1D law decides which declared material and which contextual material determine Definition meaning. Context
-that does not determine Definition meaning remains Binding, Required Basis, Applicability, attribution, provenance, or
-other separately owned material.
+Context that does not determine Definition meaning remains under its separately owned relation.
 
-If one 1D law makes an Operation, Machine, Interface, resolved Version candidate coordinate, or another context part of
-Definition meaning, that context participates in the Definition Candidate for that 1D. If the law does not make it
-Definition-determining, HIR must not add it merely to obtain a convenient global key.
+The shared HIR reference protocol therefore imposes no universal field set. Authority kind may be represented
+structurally, while Version and authority-local coordinates appear only when required by the owning law.
 
-The shared HIR reference protocol therefore does not require every candidate to contain the same stored fields. Typed
-reference domains may carry authority kind structurally. Version material and authority-local coordinates appear only
-where the owning semantic law requires them.
-
-Any context that determines Definition meaning must already be projected into the Definition Candidate before that
-Candidate becomes Visible HIR. Definition Establishment must not recover Definition-determining meaning from an IDL
-Binding Candidate, surrounding source, host structure, or implementation topology. Context that owns only the selection
-relation remains Binding meaning and does not enter the Definition Candidate.
+Before a Definition Candidate becomes Visible HIR, all Definition-determining material must be available through its
+legal Definition Candidate Projection. Establishment must not reconstruct that meaning from a Binding Candidate or
+surrounding source and implementation structures. Selection-only context remains Binding meaning.
 
 A Definition Candidate may contain exact direct semantic references to separately owned Primary HIR subjects when those
-references are part of the Candidate meaning. Such a reference preserves the other subject's ownership. It must not be a
-placeholder for unresolved Candidate meaning that a later consumer has to reconstruct through arbitrary reference
-chasing.
+references are part of its meaning. Such references preserve the other subjects' ownership and cannot substitute for
+unresolved meaning that downstream consumers would have to reconstruct.
 
-ADR-0071 owns the common completeness obligation: every semantic component that the owning 1D law makes part of
-Definition Candidate meaning must be legally observable through that authority's Definition Candidate Projection. The
-exact candidate vocabulary, determinant set, and exact component set for each 1D Definition Candidate Reference remain
-with the owning 1D ADR.
+ADR-0071 defines this common completeness requirement. Each owning 1D ADR defines its exact candidate vocabulary,
+determinants, and semantic components.
 
 ## 4.15. Current Identity and History Boundary
 
-HIR current meaning does not depend on predecessor identity.
+Current HIR identity is determined from current explicit inputs, never inherited from a previous HIR generation.
 
-Identity is not inherited, transferred, or continued from an earlier HIR generation. A current candidate reference is
-resolved from current explicit inputs. The previous compiler generation is not an identity source.
+Earlier compiler products may be compared for reuse or change analysis, but cannot establish current identity or
+semantic lineage.
 
-Compiler infrastructure may compare a previous product with a current product for reuse, diagnostics, or change
-analysis. That comparison does not create semantic lineage and it does not establish current identity.
+When historical or succession meaning is Contract-semantic, its owning Contract establishes an explicit relation between
+independently identified material.
 
-When historical, replacement, succession, or transition meaning is itself part of Contract semantics, the Contract that
-owns that meaning establishes an explicit relation between independently identified material. Governance Replacement,
-State Transition, or Version-owned history does not create HIR identity continuity.
-
-A missing previous product may reduce reuse. It must not reduce the semantic completeness of current HIR.
+Missing previous products may reduce reuse efficiency, but must not affect the semantic completeness of current HIR.
 
 ## 4.16. Logical HIR Formation Order
 
-HIR formation has an ordered logical dependency even when one physical implementation fuses several steps into one
-tight loop.
+HIR formation follows a logical dependency order, even when physical implementation combines stages.
 
-```text
+```text id="19ggdy"
 Authored Contract Material
         ↓
 Exact Source / Symbol Resolution
@@ -457,30 +432,23 @@ HIR Seal Verification
 Visible Resolved Contract HIR
 ```
 
-Contract Interface, Interaction, and Operation are resolved semantic subjects, not generated host API artifacts. Their
-formation does not create a source-containment identity hierarchy. Exact semantic relations connect them; nesting,
-parent pointers, declaration order, and physical adjacency do not define their identity.
+Contract Interface, Interaction, and Operation are semantic subjects, not generated host API artifacts. Their identities
+are established through their own semantic laws, not source containment or physical arrangement.
 
-Operation formation includes its independent nominal callable coordinate surface. Operation parameter coordinates exist
-before a Lowering Definition can target them. Lowering resolves an exact relation to those coordinates; it does not form
-or own their semantic identity.
+Operation formation establishes its independent nominal callable and parameter coordinates before Lowering. Lowering may
+reference these coordinates but cannot create their identities.
 
-Role selection precedes 1D interpretation. The frontend does not infer a role from carrier shape and then treat the
-inference as IDL meaning.
+Explicit IDL role selection precedes 1D interpretation. Carrier shape cannot assign a role. Definition determinants are
+then projected according to the owning 1D law, while selection-only context remains outside Definition Candidate
+meaning.
 
-Definition determinant projection follows role selection because only the owning 1D law can decide which surrounding
-context changes Definition meaning. Context that is not Definition-determining remains outside the Definition Candidate.
+A Binding Candidate becomes complete only after its exact Definition Candidate target exists. Earlier internal selection
+material may support formation but cannot be published as a partial Binding Candidate.
 
-A complete Binding Candidate is formed only after its exact Definition Candidate target exists. Before that point the
-frontend may hold a resolved slot selection and the minimum role-qualified formation input, but that working relation is
-not a partially visible Binding Candidate.
+This order defines logical invariants, not mandatory physical stages or separate materializations. Fused, lazy, or
+incremental implementations must preserve these invariants.
 
-The logical stages do not require one heap object, one IR level, or one materialized table per stage. They state the
-invariants that a fused, lazy, direct-to-slab, or future incremental realization must preserve.
-
-Definition, Binding, and Occurrence remain different semantic categories. Definition Formation does not establish an
-Occurrence. Occurrence meaning, when an owning Contract has one, is created only after the later basis, applicability,
-and occurrence judgment required by that law.
+Definition, Binding, and Occurrence remain distinct. Definition formation does not establish an Occurrence; when applicable, Occurrence meaning arises only through its owning later Basis, Applicability, and Occurrence judgments.
 ---
 
 # 5. Information Retention and Loss
