@@ -43,16 +43,12 @@ Accepted
 
 ## 1. Context
 
-Kontrakt has more than one authoring form and more than one later compiler consumer.
+Kontrakt accepts `.kontrakt` source and selected immutable 1D carrier source as frontend inputs. Downstream consumers
+must not reinterpret these sources independently.
 
-`.kontrakt` source and selected immutable 1D carrier source begin as frontend material. They still contain source
-spelling,
-syntax structure, host-carrier structure, and unresolved references that later compiler work must not reinterpret for
-itself.
+ADR-0063 defines the boundary following Resolved Contract HIR:
 
-At the other side of the frontend, ADR-0063 already defines a different boundary.
-
-```text
+```text id="9s8z8w"
 Resolved Contract HIR
     ↓
 Authority-Owned Establishment
@@ -62,19 +58,12 @@ Established Definition Material
 Canonical Contract World
 ```
 
-The missing architecture law is the left side of that boundary.
+This ADR defines the preceding boundary. **Resolved Contract HIR** must provide exact candidate meaning without frontend
+ambiguity, allowing Establishment to apply the owning Contract law without reinterpreting source material. HIR itself
+does not hold Contract authority.
 
-Kontrakt needs one resolved compiler-semantic representation that removes frontend ambiguity without claiming Contract
-authority. Establishment must receive enough exact candidate meaning to apply the owning Contract law without reopening
-source syntax, rediscovering host structure, or repeating lexical lookup.
-
-That representation also becomes an important compiler product. Query orchestration, diagnostics, tooling, reuse, and
-future incremental work may consume its resolved meaning. Those consumers must not force query state, cache state,
-manager topology, or incremental metadata into HIR semantics.
-
-This ADR defines the semantic, visibility, and lifecycle contract of **Resolved Contract HIR**.
-
-It does not define a Kotlin class hierarchy, table schema, query engine, persistent format, or incremental algorithm.
+This ADR defines HIR's semantics, visibility, and lifecycle. Compiler implementation and reuse mechanisms are outside
+its scope.
 
 ---
 
