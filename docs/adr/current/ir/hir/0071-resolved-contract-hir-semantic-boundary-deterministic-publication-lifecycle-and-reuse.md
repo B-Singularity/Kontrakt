@@ -109,8 +109,8 @@ computation.
 
 ## 4.1. Resolved Contract HIR Role
 
-Resolved Contract HIR is the high-level compiler-semantic representation produced after Contract frontend resolution
-and before Contract Establishment.
+Resolved Contract HIR is the Contract-side high-level compiler-semantic representation produced after frontend
+resolution and before Authority-Owned Establishment.
 
 ```text
 Contract Authoring Material
@@ -124,84 +124,55 @@ Resolved Contract HIR
 Authority-Owned Establishment
 ```
 
-HIR owns **resolved candidate meaning**.
+"High-Level" refers to the semantic level of Contract meaning, which constrains downstream realization compilation. It
+does not refer to proximity to user implementation source.
 
-It does not own Contract authority.
+HIR owns **fully resolved candidate meaning**, not Contract authority. Resolution makes a candidate exactly
+interpretable, but its owning Contract law may still reject it.
 
-`High-Level` denotes semantic altitude in the Kontrakt compiler. Contract meaning is the highest semantic premise that
-constrains later realization compilation, machine formation, optimization, and target lowering. HIR is not named by
-proximity to user realization source.
+User realization processing belongs to separate compiler products and does not extend Contract HIR.
 
-Resolved Contract HIR is therefore the Contract-side HIR. User realization lexing, parsing, semantic analysis,
-verification, optimization, and target lowering belong to later compiler domains and products. They may consume
-established Contract meaning, but they do not extend Resolved Contract HIR.
-
-Resolution success means that the compiler can state the candidate exactly in compiler-semantic form. It does not mean
-that the owning Contract law has accepted that candidate.
-
-HIR is a real IR level because its vocabulary, invariant, and information-loss boundary differ from source and syntax
-material. It is not a new level merely because the compiler freezes or caches it.
+HIR is a distinct IR level because it establishes semantic invariants and an information-loss boundary absent from
+source material, not merely because its representation is frozen or cached.
 
 ---
 
 ## 4.2. Determinism-First Law
 
-For the same explicit valid frontend inputs, Kontrakt must produce the same observable Resolved HIR meaning.
+Identical explicit valid frontend inputs must produce identical observable Resolved HIR meaning, regardless of execution
+order, scheduling, or reuse.
 
-Worker order cannot select a meaning. Cache state cannot select a meaning. Filesystem enumeration order cannot select a
-meaning. Allocation order, hash-table iteration, query scheduling, and incremental repair order cannot select a meaning.
+Any semantically observable ordering must follow the owning law or an explicit deterministic compiler observation rule
+that does not invent Contract meaning. Unobservable physical layout may differ.
 
-If an ordering is semantically observable, the owning law must provide the ordering or the compiler must use an
-explicit deterministic observation rule that does not invent Contract meaning.
-
-Physical layout may differ when that difference is outside the HIR observable surface.
-
-The same rule applies to optimization of the compiler itself. Kontrakt may prefer lower compile time, lower memory use,
-more cache hits, more parallelism, or more incremental reuse only after deterministic equivalence is preserved.
-
-A clean computation with reuse disabled remains the reference path for HIR semantic correctness.
+Compiler optimizations and incremental mechanisms are permitted only when they preserve this equivalence. Clean
+computation with reuse disabled remains the reference for HIR semantic correctness.
 
 ---
 
 ## 4.3. HIR Resolution Invariant
 
-Material is visible as Resolved Contract HIR only after the frontend can interpret its semantic references exactly.
+HIR becomes visible only when every semantic reference required to interpret a candidate has been resolved exactly.
+Ambiguous or unresolved references prevent the affected semantic unit from satisfying this invariant.
 
-The required resolution boundary includes the source-language ambiguity that would otherwise force later semantic work
-to search or guess. Names required by the candidate are no longer unresolved spellings. The Contract role of the
-candidate is known. Module or import qualification needed for exact interpretation has been resolved. A reference that
-remains ambiguous prevents that semantic unit from satisfying the HIR invariant.
+Downstream consumers must receive exact resolved targets without repeating source lookup. The physical representation of
+those references is not prescribed.
 
-The exact reference form is a compiler concern. The invariant is semantic: later consumers receive one exact resolved
-target rather than a lexical search problem.
-
-A 1D role is not inferred from the shape of a user API declaration. The explicit IDL binding selects the declared
-material for one exact 1D role. The HIR resolution invariant is satisfied only after that role-qualified material can be
-interpreted under the
-owning 1D frontend law.
-
-Satisfying the HIR resolution invariant does not require Establishment success.
-
-A candidate may be fully resolved and still be rejected by its owning Contract law.
+An explicit IDL binding determines the selected material's 1D role, not the shape of a host API declaration. The
+material must be interpretable under its owning 1D frontend law.
 
 ---
 
 ## 4.4. Resolved Semantic Surface
 
-HIR preserves the complete resolved candidate meaning owned by the relevant frontend and 1D Contract vocabulary.
+HIR must preserve the complete resolved candidate meaning required by Establishment. The owning 1D ADR determines which
+distinctions are Contract-semantic; HIR neither redefines them nor merges separate Contract authorities into a generic
+node schema.
 
-The owning 1D ADR decides which distinctions are Contract distinctions. HIR does not redefine Input, Admission,
-Canonicalization, Lowering, Fact, Invariant, State, Version, Policy, Governance, Failure, Publication, Output, or
-another
-Contract authority into one generic node schema.
+Every distinction required for Establishment, including explicitly declared absence and Required Basis, must remain
+available without reinterpreting authored syntax.
 
-HIR instead preserves those distinctions in a resolved compiler form.
-
-When one 1D Definition declares semantic coordinates, explicit alternatives, required absence, Required Basis meaning,
-or another distinction that Establishment must inspect, HIR must retain it exactly enough for Establishment to decide
-without returning to authored syntax.
-
-A downstream convenience field is not added merely because a later subsystem could use it.
+HIR must not include fields solely for downstream convenience.
 
 ---
 
