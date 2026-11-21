@@ -1365,95 +1365,47 @@ The specific checker implementation and verification strategy remain compiler de
 
 # 20. HIR Formation, Transformation, and Optimization Law
 
-HIR formation has a semantic plane and a physical realization plane.
+Semantic formation and authoring refinement follow §§4.9 and 4.12–4.16. Physical transformations must preserve the
+Visible HIR obligations defined in §8.10.
 
-The semantic plane is fixed by Sections 4.12 through 4.16. It resolves the explicit IDL role, projects the owning 1D
-Definition determinants, refines authored material under that 1D law, forms exact candidate references and meaning,
-completes the IDL Binding Candidate, verifies the result, and makes Resolved HIR visible.
+This section defines the additional rules for formation optimization and reuse.
 
-The physical realization may fuse those logical stages. Fusion does not remove their invariants.
+## 20.1. Physical Formation Optimization
 
-## 20.1. Authority-Specific Authoring Refinement
+The compiler may fuse logical formation stages and optimize their physical realization without changing Visible HIR
+meaning.
 
-Frontend refinement may erase syntax-only or host-only structure after its meaning is known. It may resolve aliases,
-replace lexical references with exact candidate references, remove authoring sugar, and form the explicit absence or
-relation material already required by the owning 1D law.
+Exact pre-counting and sizing are optional. Bounded or segmented formation is equally permitted when it preserves
+deterministic visibility.
 
-Frontend refinement must not invent a new semantic equivalence. It must not collapse a distinction merely because the
-compiler can store the result more compactly. The `Canonicalization Contract`, Admission judgment, Fact Establishment,
-Applicability judgment, Policy selection, Governance judgment, and other Contract authorities remain at their owning
-boundaries.
+Formation computation and immutable payload storage may be shared when the relevant current inputs are equivalent. Such
+sharing must not merge distinct Definition Candidates or their semantic references and provenance.
 
-## 20.2. Compiler Representation Preparation
+Producer scratch may be released only after all required observations and evidence have been preserved and no remaining
+reader depends on it.
 
-Compiler-owned representation preparation may change how resolved HIR material is encoded or stored only when the
-visible HIR obligations in Section 8.10 remain preserved.
+## 20.2. Formation-Time Reuse
 
-Legal representation work may include columnar layout, primitive-width packing with exact value preservation, range
-compaction, hot/cold column separation, segmentation, paging, lossless compression, out-of-line storage, deterministic
-encoding, dictionary encoding with exact recovery, immutable payload interning, and physical payload deduplication.
+Formation-time reuse may occur before a current Visible HIR projection exists. It is compiler machinery, not a new
+semantic projection or equality law.
 
-Physical sharing does not merge semantic entities. Two Definition Candidates may share immutable payload bytes, interned
-material, or a compressed backing block while remaining distinct Definition Candidates with distinct references and
-provenance relations.
+A previous product may be reused only when current semantic determinants, exact references, membership, and
+compiler-owned validity evidence establish its eligibility (§§16–17).
 
-A compiler representation rule must not perform value case folding, Unicode normalization, floating-point distinction
-collapse, implicit default insertion, semantic relation inference, semantic declaration elimination, duplicate semantic
-edge elimination, Definition Candidate merging, or another transformation that requires an owning Contract law to decide
-that a distinction is irrelevant.
+Reuse must not supply missing current meaning or inherit identity from an earlier generation. Otherwise, Kontrakt
+follows the valid clean formation path.
 
-The term `Canonicalization` remains reserved for the Contract authority when semantic equivalence is involved. Compiler
-storage may use canonical encoding or deterministic observation rules without claiming Contract canonical meaning.
+## 20.3. Optimization Boundary
 
-## 20.3. Physical Formation Optimization
-
-Compiler-owned formation optimization may reduce work or improve locality without changing HIR meaning.
-
-Legal techniques include direct-to-slab formation, role-partitioned work ranges, dense current-generation handles,
-primitive columnar storage, compact relation ranges, collision-safe interning, parallel fill behind deterministic
-visibility, and early release of producer scratch that has no remaining semantic, provenance, diagnostic-evidence, or
-reader obligation.
-
-Exact pre-count and exact sizing are permitted when profitable. They are not HIR semantic requirements. A realization
-may instead use bounded sizing, deterministic segmented slabs, deterministic chunked formation, or another
-representation
-that preserves the same visible result.
-
-The compiler may share formation computation or physical payload storage across uses when the relevant current inputs
-are equivalent. That sharing does not merge two distinct Definition Candidates. Semantic entity identity remains owned
-by the applicable 1D law.
-
-## 20.4. Formation Reuse
-
-Formation reuse is work avoidance. It does not change the logical formation law.
-
-Formation-time reuse is compiler formation machinery rather than a consumer-defined HIR observation surface. It may use
-current explicit semantic determinants, exact current references, and separately compiler-owned validity evidence before
-a current Visible HIR projection exists. That machinery does not define a new HIR projection or semantic equality law.
-
-The compiler may reuse a previous Definition or projection only after current semantic determinants, exact references,
-current semantic membership, and compiler-owned validity inputs establish that the previous product is a valid
-comparison candidate. Reuse never supplies a missing current determinant, establishes current identity, or carries
-membership forward from the previous generation.
-
-When those conditions cannot be proven, Kontrakt follows the valid clean formation path.
-
-## 20.5. Visible HIR Boundary
-
-Visible Resolved HIR is read-only to ordinary consumers. A compiler optimization does not mutate visible candidate
+All work producing a Visible HIR product must complete before sealing. Later optimization cannot mutate its candidate
 meaning in place.
 
-Authoring refinement, representation preparation, compaction, interning, verification, or other work used to produce one
-visible HIR product occurs before sealing. Later compiler work that needs a different optimized semantic product
-exposes a derived compiler product or a later IR instead of silently changing already-visible HIR meaning.
+An optimization requiring a different semantic product must publish a separate compiler product or later IR.
 
-Visible HIR is not required to have one semantic normal form that collapses equivalent Contract material. It is a
-verified deterministic semantic baseline that preserves every distinction owned by the applicable Contract laws.
+Visible HIR does not require a single semantic normal form that collapses Contract-owned distinctions. Compiler encoding
+remains separate from Contract Canonicalization.
 
-When persistence or reproducible persistence requires canonical compiler bytes, that encoding is a separate compiler
-persistence law. Optional compression or storage packaging occurs outside the semantic identity and equality law.
-
-The legal optimization relation is therefore:
+The legal optimization relation is:
 
 ```text
 same explicit semantic inputs
@@ -1463,82 +1415,73 @@ clean / cached / incremental / parallel formation
 same Visible Resolved HIR obligations
 ```
 
-A physical optimization that cannot preserve that relation is not a legal HIR optimization.
+A physical optimization that cannot preserve this relation is not legal.
 
 # 21. Concurrency
 
-Parallel frontend work is allowed only behind deterministic visibility.
+Parallel frontend work is permitted only when Visible HIR remains deterministic.
 
-Workers may build independent private candidate material. Their completion order must not determine semantic identity,
-exact candidate references, visible semantic relations, provenance assignment, deterministic observation order,
-persistent product content, or another declared observable result.
+Workers may construct private candidate material, but execution order must not affect semantic identity or any declared
+observable result, including provenance and persistent output.
 
-Private dense handles, scratch-table positions, worker-local interner IDs, and other ephemeral physical coordinates may
-differ across legal executions when those differences remain private. They must not leak into semantic references,
-persistent keys, fingerprints that claim stable meaning, diagnostic evidence ordering, serialized products, or another
-deterministic boundary.
+Private physical coordinates may differ between executions. They must not escape into stable semantic references,
+fingerprints, diagnostic evidence, or persisted products.
 
-A deterministic partition, merge, or equivalent visibility law resolves concurrent candidate work into one coherent HIR
-generation. Concurrent interning or first-writer races must not decide semantic equality, observable ordering, or stable
-persistent output.
+Concurrent work must be resolved through a deterministic merge or equivalent visibility rule. Interning races or
+first-writer order cannot determine semantic equality or observable results.
 
-Cancellation must not expose a partial generation. A stale worker result for an older input or generation must not
-replace a newer valid visible generation.
+Cancellation must not publish a partial generation. A stale worker result cannot replace a newer valid visible
+generation.
 
-The exact lock, epoch, persistent-structure, actor, work-stealing, transaction, or parallel-fill mechanism remains
-implementation.
+The concurrency mechanism remains an implementation decision.
+
+---
 
 # 22. Persistence and Cross-Session Products
 
-A future implementation may persist HIR products across compiler sessions.
+HIR products may be persisted across compiler sessions.
 
-Persistence has its own protocol. Runtime HIR representation equivalence does not by itself establish persistent
-artifact compatibility. A persisted product must define the compiler schema or product version, integrity rules,
-reference remapping law, and any canonical compiler encoding required for reproducibility. Contract Version remains a
-separate semantic concern.
+Persistence requires its own protocol. A persistent product must define its format, integrity rules, reference
+remapping, and any canonical encoding required for reproducibility. These remain separate from Contract Version.
 
-An incompatible persistent product is discarded or migrated by an explicit compiler product rule. It is not silently
-reinterpreted as current HIR meaning. Persistent-format compatibility and HIR Protocol compatibility are separate. A
-format migration may make bytes readable without proving that the restored material can provide every semantic
-observation required by the current Protocol. Conversely, a Protocol-compatible semantic product may be stored in a new
-persistent format without changing Contract Version or HIR meaning.
+Three validation boundaries must be distinguished:
 
-Content-addressed storage may be used to deduplicate immutable products. A CAS address remains a storage identity, not a
-Contract identity or HIR semantic law. Compression or packaging bytes also remain storage realization. If a canonical
-persistent encoding is used as content-addressed input, optional physical compression should not redefine semantic
-identity or HIR equality.
+| Boundary           | Requirement                                                          |
+|--------------------|----------------------------------------------------------------------|
+| Persistent product | Integrity and format compatibility                                   |
+| HIR Protocol       | Ability to provide every required legal semantic observation         |
+| Current reuse      | Validity of the product and its evidence for the current compilation |
 
-A restored persistent HIR product must pass the same semantic resolution boundary as a newly computed product.
-Persistent-product integrity, persistent-format compatibility, and current reuse validity are separate questions.
-Readable bytes, valid checksums, schema compatibility, successful deserialization, a content-address match, or the
-existence of prior verification do not independently establish that a restored product is valid for the current
-compilation.
+Successful decoding or format migration does not establish HIR Protocol compatibility. Conversely, Protocol-compatible
+meaning may use a different persistence format.
 
-Prior verification is reusable compiler evidence. It may replace re-execution of an expensive check only when Kontrakt
-can establish that the semantic determinants, exact semantic references, and compiler-owned reuse-validity inputs on
-which that verification depended remain valid for the current product. Current-validity evidence may come from retained
-dependency evidence, producer-owned semantic equality, validated summaries, explicit compatibility judgments, selective
-revalidation, or another sound mechanism. Reuse does not require re-running every original resolution or verification
-step when sufficient current-validity evidence is available.
+An incompatible persistent product must be rejected or migrated under an explicit compiler product rule. It cannot be
+silently reinterpreted.
 
-Validation should descend only as far as required to establish current validity. A cheap higher-level summary may permit
-direct reuse when it soundly covers the relevant dependency set. If that evidence changes or is insufficient, Kontrakt
-may narrow the affected dependency region and revalidate only the necessary semantic projections. HID, fingerprints,
-Merkle roots, epochs, or similar summaries may accelerate routing and validation. They remain compiler evidence and do
-not become HIR semantic equality, Contract identity, or authority.
+Content-addressed storage may deduplicate immutable products. Its addresses and physical encoding remain storage
+identities, not HIR or Contract identities. Optional compression must not redefine semantic equality.
 
-The current validity set must be complete for the product but need not contain unrelated ambient environment. A
-compiler,
-platform, schema, provider, or environment input participates only when it can affect that product's semantic result,
-reference interpretation, verification validity, or other declared reuse condition. A broad version label does not
-substitute for a more specific meaning-affecting input when that distinction matters.
+A restored product must satisfy the same HIR semantic resolution boundary as a newly computed product. Prior
+verification may be reused only when sufficient current evidence establishes that its semantic determinants, exact
+references, and reuse-validity conditions remain valid.
 
-When current reuse validity cannot be established, Kontrakt performs the required revalidation or follows the
-deterministic clean formation path. Persistent state may make that path unnecessary in the common case. It may not make
-old persistent state the only source of correct HIR meaning.
+**Reuse does not require repeating every original computation when current validity is already established.**
 
-A persistent product must remap or validate current exact HIR references before it exposes generation-local dense
-handles. Raw dense handles, page locations, or physical offsets are not persistent semantic references.
+Validation may begin with a sound summary and descend into affected dependencies only when necessary. If the summary is
+insufficient, the compiler may selectively revalidate the required semantic projections.
+
+Fingerprints and other summaries may accelerate this process, but cannot themselves establish HIR semantic equality or
+Contract authority.
+
+The current validity set must include every input capable of affecting the product's meaning or reuse eligibility.
+Unrelated environment information is not required. Broad version labels cannot replace more precise validity inputs when
+those distinctions matter.
+
+If validity cannot be established, Kontrakt must revalidate or use deterministic clean formation. Persistent state
+cannot become the sole source of correct HIR meaning.
+
+Restored products must also remap or validate current semantic references before exposing generation-local dense
+handles. Physical storage coordinates are not persistent semantic references.
 
 ---
 
