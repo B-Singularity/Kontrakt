@@ -571,131 +571,108 @@ representation pass. The Canonical Contract World is a later representation of a
 
 ## 8.1. Consumer Contract
 
-HIR is producer-independent and consumer-aware.
+HIR is producer-independent and consumer-aware. The frontend must expose sufficient resolved meaning for valid consumers
+without encoding their implementation topology or requiring independent source interpretation.
 
-The frontend does not encode the topology of future consumers. It does, however, expose enough resolved meaning that a
-valid consumer does not need a private semantic frontend.
+Authority-Owned Establishment is the primary semantic consumer. Other compiler consumers may observe HIR through legal
+projections. Later realization stages normally consume established or lowered material, but HIR must not prematurely
+discard meaning they require.
 
-Authority-Owned Establishment is the primary semantic consumer. Frontend diagnostics, tooling, query and reuse
-infrastructure may also consume HIR directly. Later verifier, optimizer, execution, and backend work normally consume
-established or lower material instead. Their needs still matter when deciding whether HIR is discarding information too
-early.
-
-Generated API semantics must not bypass Establishment by treating HIR as authoritative Contract definition material.
-Generated Interaction and Operation APIs are downstream compiler products derived from established Contract meaning.
-HIR preserves the Contract-semantic subjects and relations from which those products are derived; host API shape is not
-HIR meaning.
+Generated Interaction and Operation APIs derive from established Contract meaning, not directly from HIR authority. HIR
+preserves their underlying Contract-semantic subjects and relations, not their generated host API shape.
 
 ---
 
 ## 8.2. Primary HIR Semantic Surface
 
-Visible Resolved HIR has one primary semantic surface. It contains the resolved compiler-semantic material that later
-valid consumers would otherwise have to recover by reopening authored source or re-running 1D frontend interpretation.
+Visible Resolved HIR has one **Primary HIR Semantic Surface** containing HIR-owned semantic subjects and direct
+relations.
 
-The primary surface contains the semantic subjects and direct relations that HIR itself owns. Its primary subject
-categories include:
+Its primary material comprises:
 
-- Contract Interface Subject,
-- Interaction Subject,
-- Operation Subject,
-- typed Definition Candidate and IDL Binding Candidate membership,
-- the complete 1D-owned Definition Candidate meaning,
-- the complete IDL Binding Candidate meaning,
-- exact direct semantic references, and
-- presence, absence, multiplicity, ordering, cardinality, or another distinction only when the owning law makes that
-  distinction semantic.
+| Material              | Required meaning                                                         |
+|-----------------------|--------------------------------------------------------------------------|
+| Contract subjects     | Contract Interface, Interaction, and Operation resolved from IDL meaning |
+| Definition Candidates | Typed membership and complete 1D-owned Definition Candidate meaning      |
+| Binding Candidates    | Typed membership and complete IDL Binding Candidate meaning              |
+| Direct relations      | Exact semantic references and distinctions required by the owning law    |
 
-Contract Interface, Interaction, and Operation are Contract-semantic subjects resolved from IDL meaning. They are not
-the
-generated Interaction API, generated Operation API, host-language declaration, JVM symbol, or another realization
-artifact.
+Contract subjects are not generated host APIs or realization artifacts.
 
-Operation owns an independent nominal callable coordinate surface. Its exact Operation reference, parameter coordinates,
-and result position are Primary HIR meaning. Lowering and later generated APIs consume those coordinates; they do not
-create their semantic identity. Host parameter order, JVM slot number, generated method descriptor, and physical handle
-remain outside that identity law.
+Operation owns independent nominal coordinates. Its exact Operation reference, parameter coordinates, and result
+position are Primary HIR meaning. Lowering and generated APIs consume these coordinates but cannot establish their
+identity. Host signatures and physical addressing do not determine that identity.
 
-This is not one universal record schema. Each 1D authority owns its candidate vocabulary. A typed reference domain or an
-authority-specific slab may carry role structurally; HIR does not require a redundant per-row authority tag when the
-semantic type already provides that information.
+The Primary Surface is not a universal record schema. Each 1D owns its candidate vocabulary, and semantic role may be
+represented structurally without redundant tags.
 
-Definition determinants are formation law, not generic visible HIR metadata. Material that participates in a 1D
-Definition meaning remains in that meaning under its semantic name. The fact that a value was a formation determinant is
-not itself a new HIR semantic field.
+Definition determinants govern HIR formation. They become visible semantic material only as part of the meaning defined
+by the owning law, not as generic determinant metadata.
 
-Each applicable 1D role has one observable selection state at its exact owning scope and role coordinate: the
-selected IDL Binding Candidate Reference or Explicit Absence. This includes Input and Output. Absence records
-non-selection, not the legality of omission, and requires no universal `absent` field.
+Each applicable 1D role, including Input and Output, has exactly one observable selection state at its owning scope and
+role coordinate: a selected IDL Binding Candidate Reference or Explicit Absence. Absence means non-selection, not
+permission to omit the role, and does not require a universal absence field.
 
 ---
 
 ## 8.3. Stable Semantic Units
 
-HIR must expose semantic units that can be addressed independently of physical layout.
+HIR must expose semantic units independently of physical layout.
 
-A whole frontend generation is a coherent visibility unit. It is not required to be the only dependency or reuse unit.
-A Contract Interface Subject, Interaction Subject, Operation Subject, Definition Candidate, Binding Candidate, or
-another
-meaningfully independent semantic unit may be consumed separately when the HIR semantics support that separation.
+A complete frontend generation is a coherent visibility unit, but need not be the only dependency or reuse unit.
+Semantically independent subjects may be addressed and consumed separately.
 
-This ADR fixes Contract Interface, Interaction, Operation, Definition Candidate, and IDL Binding Candidate as primary
-HIR
-semantic subject categories for the current frontend model. It does not freeze the exact payload, reference coordinate,
-projection set, or physical representation of those subjects.
+The primary semantic subject categories are defined in §8.2. This ADR does not fix their exact payloads, reference
+coordinates, projection sets, or physical representations.
 
 ---
 
 ## 8.4. HIR Semantic Projections and Derived Knowledge
 
-A semantic projection is a deterministic legal view over explicit Primary HIR Semantic Surface meaning. It does not
-become a second source of HIR meaning.
+A **Semantic Projection** is a deterministic legal observation of existing Primary HIR meaning, not a separate source of
+meaning.
 
-A Fine-Grained Semantic Projection is admitted only when it re-expresses meaning that already exists in Primary HIR. It
-may select, restrict, re-index, or otherwise present a narrower producer-defined observation of existing HIR subjects,
-values, or direct semantic relations. It must not establish a new semantic or compiler judgment merely because that
-judgment can be computed from HIR.
-
-Every observation exposed by a Fine-Grained Semantic Projection must be reducible to explicit Primary HIR meaning. A
-projection may be narrower than its source subject, but it must remain complete for the exact observation that it
-declares. The producer-side HIR or projection law owns that observation set and its semantic equality. A consumer may
-request or consume a legal projection; it does not define a weaker projection meaning for its own convenience.
-
-A projection must not reopen authored source, repeat 1D authoring refinement, or read hidden mutable compiler state to
-recover meaning missing from HIR. A projection may be formed from Primary HIR or another legal semantic projection only
-when the resulting observation remains reducible to the same explicit Primary HIR meaning and introduces no new
+A Fine-Grained Semantic Projection may narrow or reorganize existing semantic material but must not introduce a new
 judgment.
 
-Examples include reverse lookup over existing direct relations, Definition subsets, or other producer-defined narrowed
-views over exact Primary HIR meaning that a consumer may select. Analysis summaries, transitive closure, reachability,
-cycle judgments, optimization hints, diagnostic explanations, fingerprints, cost models, and similar inferred material
-are derived compiler knowledge rather than Fine-Grained HIR Semantic Projections.
+Every projected observation must be reducible to explicit Primary HIR meaning and remain complete for its declared
+purpose. The producer owns the observation set and semantic equality; consumers cannot weaken them.
 
-Logical projection meaning and physical materialization are separate decisions. A legal projection may be computed on
-demand, cached, indexed, stored as a side product, or persisted when the same legal observation is preserved. Those
-choices do not change projection meaning or create HIR authority.
+Projections must not reconstruct missing meaning from authored source, repeat 1D refinement, or depend on hidden mutable
+compiler state. Projections may derive from other legal projections only when they remain reducible to the same Primary
+HIR meaning without introducing new judgments.
 
-Semantic order, deterministic observation order, and physical order remain separate for projections. A projection
-preserves semantic order when an owning law makes order meaningful. Where semantic order is absent but stable
-enumeration is required, the producer may define deterministic observation order without turning that order into
-Contract or HIR semantic order.
+The distinction is:
 
-The exact projection catalog, access API, indexing strategy, query mapping, cache representation, and physical
-materialization remain compiler design decisions. A projection is not a new Contract authority and is not automatically
-a new IR level.
+| Semantic Projection               | Derived Compiler Knowledge                         |
+|-----------------------------------|----------------------------------------------------|
+| Re-expresses existing HIR meaning | Establishes new information through computation    |
+| May reorganize direct relations   | May compute inferred relations or analysis results |
+| Introduces no new judgment        | Has its own computation and validity requirements  |
+
+For example, a reverse lookup over an existing direct relation may be a projection, while transitive closure is derived
+knowledge.
+
+Logical projection meaning is independent of physical materialization. A projection may be computed on demand or stored
+for reuse without changing its meaning or creating Contract authority.
+
+Semantic ordering follows the owning law. Where semantic order is absent, the producer may define deterministic
+observation order without making that order semantic. Physical ordering has no semantic authority.
+
+Projection catalogs, access mechanisms, and storage strategies remain compiler design decisions. A projection is neither
+a new Contract authority nor automatically a new IR level.
 
 ---
 
 ## 8.5. Reference Direction and Ownership
 
-A resolved HIR reference denotes another semantic subject. It does not physically own that subject merely because the
-source syntax was nested or one declaration mentioned another.
+A resolved HIR reference identifies another semantic subject without implying ownership of that subject.
 
-The compiler may store related subjects next to one another, but consumers must observe an exact reference relation
-rather than infer semantic ownership from containment, parent pointers, object nesting, or table adjacency.
+Source nesting and physical storage arrangement do not determine semantic ownership. Consumers must follow exact
+reference relations rather than infer ownership from physical containment.
 
-This keeps source hierarchy, semantic reference, and physical storage as separate concerns. It also permits one
-definition-level product to be reused without copying every referenced definition into the same physical object graph.
+This separation permits independent storage and reuse of referenced semantic units without copying their entire
+referenced object graphs.
 
 ## 8.6. Contract Structure and Compiler Partition
 
