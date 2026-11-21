@@ -87,26 +87,21 @@ computation.
 
 ## 3. Decision Drivers
 
-Contract meaning remains prior to compiler realization.
+- **Semantic fidelity.** HIR must preserve every resolved candidate-semantic distinction required by Establishment.
+  Authored differences may be discarded only when they no longer affect candidate meaning.
 
-Resolved HIR must preserve every resolved candidate-semantic distinction that Establishment still needs. It may erase
-authored differences once those differences no longer affect resolved candidate meaning.
+- **Single interpretation.** Downstream consumers must not re-examine source or host-carrier structure to recover
+  meaning already resolved by the frontend.
 
-A downstream consumer must not reopen source or inspect host-carrier topology to recover meaning that the frontend has
-already resolved.
+- **Coherent publication.** HIR construction may be mutable, but consumers must observe only fully resolved generations.
 
-Visible HIR must be safe for independent consumers. Construction may be mutable, but a consumer must not observe a
-half-resolved generation.
+- **Independent reuse.** HIR must support fine-grained products without tying semantic identity to physical storage or
+  query structure. V1 requires query-oriented reuse, while V2 must remain extensible to persistent, cross-session, and
+  domain-specific incremental mechanisms without changing HIR semantics.
 
-The architecture must support fine-grained products without turning table rows, object fields, or query nodes into
-semantic identity.
-
-V1 must support query-oriented reuse. V2 must remain free to add persistent dependency state, cross-session reuse, and
-domain-specific incremental repair without rewriting HIR semantics.
-
-Correctness and accepted Contract law are constraints, not engineering trade-offs. After those constraints are
-satisfied, determinism is the first trade-off criterion. A faster or more incremental realization is rejected when it
-cannot preserve the same observable HIR result as clean deterministic computation.
+- **Determinism.** Correctness and accepted Contract law are non-negotiable. Among valid implementations, determinism
+  takes priority over performance and incremental efficiency. Any implementation that changes the observable HIR result
+  compared with clean deterministic computation must be rejected.
 
 ---
 
