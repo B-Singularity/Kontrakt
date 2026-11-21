@@ -520,17 +520,16 @@ architecture, not HIR semantics, owns availability, boundary-completion, and orc
 
 # 7. Establishment Handoff
 
-Resolved HIR must be sufficient for the owning Definition Establishment judgment without reopening authored source.
+Authority-Owned Establishment must receive complete resolved candidate meaning without reopening authored source.
 
-Authority-Owned Establishment observes Resolved HIR candidate meaning through the **Resolved HIR Candidate Protocol**
-realized by the HIR Semantic Access Boundary in Section 8.9. The Protocol is a legal observation contract over Visible
-Resolved HIR. It is not a new IR, compiler stage, Contract authority, or mandatory physical material layer.
+It observes Visible HIR through the **Resolved HIR Candidate Protocol**, realized by the HIR Semantic Access Boundary
+(§8.9). This Protocol defines legal observation, not a separate IR, compiler stage, Contract authority, or mandatory
+physical material layer.
 
-The Definition Candidate carries the resolved 1D meaning that the owning law must judge. The Binding Candidate carries
-the exact current IDL use that selected that candidate. These materials are related but they are not the same semantic
-product.
+The Definition Candidate provides the resolved 1D meaning. The Binding Candidate identifies the exact current IDL
+selection. They remain distinct semantic products.
 
-```text
+```text id="y5e7f9"
 Resolved Definition Candidate
     +
 Definition-time semantic basis allowed by the owning law
@@ -540,15 +539,13 @@ Authority-Owned Definition Establishment
 Established Definition
 ```
 
-Basis Requirement Law and Applicability Law remain in HIR when they belong to Definition Candidate meaning. Actual
-Required Basis instances, Basis Binding, Applicable Context, Applicability results, Complete Basis, and
-occurrence-specific
-judgments remain at the later boundaries that own those meanings. A Binding Candidate does not become an Established
-Occurrence merely because its target Definition is established.
+HIR retains the Basis Requirement Law and Applicability Law when they belong to Definition Candidate meaning. Their
+concrete satisfaction, binding, and judgment results belong to the later owning boundaries. Establishing a Definition
+does not turn its Binding Candidate into an Established Occurrence.
 
-When an owning 1D law gives a concrete application separate semantic meaning, the later path is conceptually:
+When application has separate semantic meaning under the owning 1D law, the later path is:
 
-```text
+```text id="rbjffa"
 Established Definition
     +
 exact application context
@@ -562,16 +559,13 @@ Occurrence judgment
 Established Occurrence
 ```
 
-Not every 1D requires an Established Occurrence. The owning Contract law decides whether application meaning exists as a
-separate semantic product.
+Not every 1D requires an Established Occurrence. The owning Contract law determines whether it exists.
 
-If a 1D law makes some IDL binding context Definition-determining, that context has already participated in Definition
-Candidate formation under Section 4.14. Establishment does not rediscover that rule from IDL topology.
+Any IDL context that determines Definition meaning must already be resolved during Definition Candidate formation
+(§4.14). Establishment neither rediscovers this from IDL topology nor repairs incomplete frontend resolution.
 
-Establishment does not repair missing frontend resolution.
-
-HIR visibility does not establish authority. Establishment does not become a compiler refinement or representation
-pass. Canonical Contract World remains a later compiler representation of already-established Definition meaning.
+HIR visibility grants no Contract authority. Establishment is an owning judgment, not a compiler refinement or
+representation pass. The Canonical Contract World is a later representation of already-established Definition meaning.
 
 # 8. Visible HIR Surfaces
 
