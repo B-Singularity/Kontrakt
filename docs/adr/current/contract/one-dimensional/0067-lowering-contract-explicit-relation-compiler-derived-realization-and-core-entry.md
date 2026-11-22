@@ -608,8 +608,9 @@ source/target sort applicability, and qualified Java/Kotlin library interpretati
 owning compiler subsystems; Lowering consumes their completed meaning without rejudging it. A fixed target Fact kind
 absent from the current enclosing interface's Fact vocabulary is a separate Binding/Composition compatibility defect,
 not a missing or alternate Lowering Definition target. Repeated source coordinates in different explicit mappings are
-not a rejection reason. The precise HIR Seal versus owning Definition refusal boundary remains governed by its later
-protocol refinement and is not determined by this paragraph.
+not a rejection reason. The HIR Seal and owning Definition refusal boundary is specified in Section 11.5. Fully resolved
+target
+multiplicity and coverage defects remain violations of the Lowering Definition law, not missing HIR meaning.
 
 There is no missing-Lowering-implementation link failure because the user does not supply a Lowering implementation.
 
@@ -683,7 +684,8 @@ Definition. Every required Source Coordinate must be exactly selectable within t
 meaning, but no separate primary `SourceRequirementRef` is mandated. Every explicit Mapping occurrence must likewise
 remain exactly observable with its multiplicity, without requiring a new primary Mapping Reference or an independent
 Mapping Authority. Source position, declaration order, array slot, generated helper, and generation-local handle are
-not semantic selection or identity laws. The exact fine-grained selector form remains open.
+not semantic selection or identity laws. Section 11.3 fixes target-qualified Mapping Meaning selection without
+mandating a physical selector representation.
 
 A fixed Target Requirement consumes the exact pre-authority meaning of a separately Core-compiled Fact Kind and its
 Fact-owned factual coordinates. The target reference is owned by the Fact HIR Protocol, not minted or reinterpreted
@@ -757,8 +759,9 @@ Authorities, Versions, Established Definitions, or IDL Binding occurrences.
 Fine-grained Mapping Surface and selected Mapping Meaning observations may expose less than the complete Definition
 Projection, but only as complete observations of their stated extent under ADR-0071. Equal Mapping Surface does not
 prove equal Formation Meaning; equal selected Mapping Meaning does not prove equal complete Mapping Surface or
-Definition Meaning. An unobserved, unavailable, or omitted projection does not prove semantic absence. The exact
-Mapping selector and detailed fine-grained Projection contracts remain for subsequent design and are not fixed here.
+Definition Meaning. An unobserved, unavailable, or omitted projection does not prove semantic absence. Section 11.3
+fixes the Mapping Surface and target-qualified selected Mapping Meaning observation laws without
+requiring separate primary Mapping References or a particular physical selector.
 
 All observations must be coherent within the applicable HIR snapshot and obey ADR-0071 visibility, lifetime, and
 semantic equality rules. The same observations may be computed on demand, share immutable physical backing, or be
@@ -766,6 +769,204 @@ persisted and validated for reuse without creating another IR, Authority, or Con
 observations for local reuse or early cutoff only under current-reference and dependency-validity checks; no such
 comparison substitutes for complete Definition Establishment or the clean recomputation reference path. No Query
 architecture, cache granularity, physical Mapping layout, or incremental update algorithm is mandated.
+
+### 11.3. Mapping Surface and Target-Qualified Mapping Meaning Projections
+
+Lowering specializes the ADR-0071 Fine-Grained Semantic Projection law with two producer-owned observations over
+one exact `LoweringDefinitionCandidateRef`:
+
+```text
+Lowering Mapping Surface Projection
+Lowering Selected Mapping Meaning Projection
+```
+
+The **Lowering Mapping Surface Projection** exposes the complete declared Source Requirement-to-Fact-target relation
+of that Definition. It preserves every declared Mapping occurrence, including source reuse, distinct Fact Kind
+ownership, repeated Source/Target pairs, and their exact multiplicity. Each Target is qualified by the exact fixed
+Fact Kind and its Fact-owned factual coordinate. The Surface may expose occurrence counts or equivalent complete
+multiplicity-preserving meaning; it does not silently reduce a multiset to unique pairs. It observes the Mapping
+relation, not a second copy of the complete Fact-owned factual surface or every selected Formation Meaning.
+
+The **Lowering Selected Mapping Meaning Projection** uses one exact Target selection within the Definition:
+
+```text
+exact LoweringDefinitionCandidateRef
++ exact fixed Core Fact Kind candidate meaning
++ exact Fact-owned target coordinate
+    -> complete multiset of declared Mapping meanings for that target
+```
+
+The Fact Kind and coordinate are identified through the Fact-owned HIR reference and legal observation law of
+Section 11.1, not through an Operation parameter, a host type, an interface vocabulary index, or a generated
+address. One selected observation preserves all Mapping occurrences for that Target and, for each occurrence, its
+exact nominal Source Requirement, Source/Target relation, qualified callable application, receiver and argument
+placement, meaning-determining constants, completed conversion applicability and meaning, Lowering-owned
+partiality/refusal meaning, and exact semantic dependencies. Resolved external meanings remain direct references or
+legal observations of their respective producers; Lowering does not repeat resolver, Type Engine, or library
+semantic interpretation judgments.
+
+A target-qualified selection may lawfully observe zero, one, or several declared Mapping occurrences before the
+Lowering Definition Judgment. Zero is a positive statement about absence only when the exact Target is legally
+referenceable and the complete Mapping observation for that Target is available in the coherent HIR snapshot. An
+unknown Target, incomplete Surface, inaccessible Projection, or failed reference resolution does not establish
+absence. The complete Fact-owned target-coordinate surface remains an independent prerequisite to any assertion
+that every required factual coordinate has exactly one Mapping.
+
+Under the V1 Lowering Definition law, exactly one declared Mapping must form each factual coordinate of every
+fixed target Fact candidate. Two or more declarations for one exact Fact-kind coordinate violate that law whether
+their Source Requirements or Formation Meanings differ or coincide. Two identical declarations are still two
+occurrences. Multiple independent mappings from the same Source Requirement to *different* Target coordinates remain
+permitted. Mapping selection and observation neither establish legality nor repair an invalid declaration by
+merging duplicates, arbitrarily selecting a winner, or inferring a missing mapping. The owning Lowering Definition
+Judgment rejects complete but unlawful duplicate or incomplete target-coverage declarations under Section 11.5.
+
+An exact Source Requirement may also be used as an observation index when a legal consumer needs to discover its
+uses. Such a reverse index merely reorganizes the existing declared relation under ADR-0071; it does not create an
+additional primary Mapping subject, new authority, or Source uniqueness restriction. Individual Mapping occurrences
+do not require persistent or primary Mapping References. The producer must preserve exact multiplicity even when
+two occurrences have equal meanings; a transient observation selector or diagnostic provenance may distinguish
+physical occurrences without giving them Contract identity. Declaration order, source locations, and storage
+indices do not determine Mapping Meaning. Deterministic observation ordering may be selected by the HIR producer
+without becoming semantic precedence.
+
+Equality of the complete Mapping Surface covers the whole declared Source/Target relation and multiplicity, not the
+qualified Formation Meaning of each mapping. Equality of one Selected Mapping Meaning covers exactly that Target's
+complete multiset of Mapping Meanings and multiplicities, not any other Target's mapping, the complete Target Fact
+surface, or the entire Lowering Definition. Neither equality implies Candidate Reference equality, authoritative
+Definition identity, Establishment success, or current physical reuse eligibility. In particular, unchanged
+Mapping projections do not discharge the owning Definition Judgment's complete coverage obligation when a referenced
+Fact Kind's complete surface or other semantic dependencies change.
+
+All such observations obey ADR-0071's current-reference, snapshot-coherence, visibility, completeness, Protocol
+compatibility, and equality laws. V1 may materialize the entire relation and compute it afresh; V2 may reuse
+individual complete observations or valid derived indexes after checking current dependencies. Neither a Query
+Graph, persistent Mapping ID, cache-key design, storage layout, physical enumeration order, nor delta algorithm is
+mandated. A narrow observation does not replace the complete Definition Candidate Projection of Section 11.2.
+
+### 11.4. Lowering IDL Binding Candidate and Role Selection Projections
+
+Under ADR-0071 Sections 4.13 and 8.9, the **Lowering IDL Binding Candidate Projection** exposes an actual,
+exactly resolved operation-local IDL selection occurrence. Its complete selection meaning includes:
+
+```text
+exact LoweringIDLBindingCandidateRef
+exact selecting OperationRef and independently required owning IDL selection context
+exact Lowering role coordinate at the Operation-local selection scope
+exact selected LoweringDefinitionCandidateRef
+only independently meaning-determining Binding-owned selection qualifiers, if any
+```
+
+The selecting Interface or Interaction context is preserved where necessary to identify the exact selection under
+its existing IDL/HIR reference law; it is not duplicated merely because it is structurally reachable from the
+Operation. A Definition may be selected by several Operations, yielding distinct Binding Candidates without
+copying, changing, or merging the selected Definition's Source Requirements, fixed Core Fact targets, Mapping
+relations, or Formation Meanings. Several fixed Fact Kind targets within one Definition do not themselves generate
+separate IDL Binding Candidates.
+
+The **Lowering Role Selection observation** is read from the selection-owning IDL/HIR Operation subject at its
+exact Lowering role coordinate. In valid Visible HIR the complete observation for that role is exactly one of:
+
+```text
+Selected: exact LoweringIDLBindingCandidateRef
+Explicit Absence: no LoweringIDLBindingCandidateRef exists for that selection
+```
+
+This owning-role observation is not a fictitious Binding Candidate Projection for an absent selection. Explicit
+Absence means only non-selection; whether absence is permitted is governed by the applicable separate Contract or
+Composition law. Missing or unresolved selection, competing selections for one role, and inability to observe the
+current Projection are not alternate valid selection states and cannot be silently converted into Explicit Absence.
+An unresolved or conflicting selection cannot be published as a normal completed Role Selection in Visible HIR;
+frontend resolution or HIR Seal retains its own unsuccessful result under the common laws.
+
+An actual Binding Candidate is complete only when its selecting occurrence, role, required qualifiers, and exact
+target Definition Candidate are resolved and referenceable under current HIR visibility and coherence rules. Such
+completeness does not prove that the selected Lowering Definition satisfies its own law, is Established, or is
+lawfully usable in the current Operation context. A fully resolved Binding may reference a complete Definition
+Candidate whose duplicate Mapping will later be refused by the owning Lowering Definition Judgment. Binding
+Establishment and any applicable Interface, Input, Canonicalization, Fact vocabulary, Operation participation,
+Version, Governance, or Contract-World compatibility judgment remain separately owned.
+
+The Binding Projection does not absorb the selecting Operation signature, current Input or Canonicalization
+Definition or occurrence, Interface Fact vocabulary, runtime values, a present World, or the selected Definition's
+payload merely because these may be needed in a later legality judgment. Only an exact qualifier independently
+owned by this IDL selection belongs to its Binding Candidate meaning. Neither World selection nor a current
+Binding may silently substitute another Lowering Definition, Version, Fact target, or qualified Formation Meaning.
+
+Exact Binding Candidate Reference equality, complete Binding selection-meaning equality, complete Lowering
+Definition meaning equality, authoritative Binding identity, and physical reuse eligibility are independent.
+A change in another Operation role or current Interface vocabulary may leave the Lowering IDL selection observation
+unchanged while requiring a separate Composition or application judgment to be reconsidered. V2 may exploit that
+narrow unchanged observation only with current semantic dependencies, correct ownership, and ADR-0071
+snapshot/Protocol-validity checks; it cannot infer successful Establishment or current use legality from local
+Binding equality.
+
+### 11.5. HIR Seal, Early Static Verification, and Legal Establishment Entry
+
+The Lowering Resolved HIR Candidate Protocol of Sections 11.1-11.4 is subject to the common ADR-0071 HIR Seal,
+visibility, lifecycle, and Protocol conformance laws. HIR Seal verifies complete, resolved, coherent pre-authority
+candidate meaning; it is not a Lowering Definition Judgment, Binding Judgment, Fact Judgment, or new Contract
+Authority. The compiler may detect static Contract violations at the earliest lawful point where the required
+resolved meaning and authoritative prerequisites are available. Such early physical execution does not transfer
+the owning law or relax a Judgment's legal entry conditions.
+
+For a Lowering Definition Candidate, Seal requires the exact owning Authority and Version candidate coordinate,
+complete nominal Source Requirements, all exact fixed Fact Kind candidate references and Fact-owned coordinate
+references, complete declared Mapping relation with its multiplicity, completed qualified Formation Meaning,
+exact semantic dependencies, and coherent legal observations of every required Projection. Each direct reference
+must be resolved and referenceable in its own producer's pre-authority HIR domain. Seal does not require a Fact
+Definition to acquire Establishment authority merely because its exact Candidate meaning is referenced. Unknown
+or unsupported required semantic material, incompatible Protocol observation, incomplete or dangling references,
+poison/recovery placeholders, and mixed or invalid HIR snapshots cannot be silently sealed or made Visible.
+
+For a Lowering IDL Binding Candidate, Seal requires the exact operation-local selecting subject, Lowering role,
+complete selection qualifiers where required, and an exact referenceable target Lowering Definition Candidate.
+The selection-owning subject must support the complete `Selected` or `Explicit Absence` observation for its role;
+missing or conflicting selections must not be normalized into a successful Visible HIR selection. Fact vocabulary
+membership and the current Operation's Input/Canonicalization compatibility are not inferred or established by
+HIR Seal; they remain separate lawful use judgments.
+
+A declaration may be completely resolved yet violate the Lowering Definition law. In particular, two distinct
+Formation Meanings assigned to one Target, two identical Mapping declarations assigned to that Target, or an
+otherwise complete declaration that omits formation for a required Fact coordinate may remain exactly represented
+in a sealable pre-authority Candidate. HIR construction, projection, and Seal must not deduplicate mappings,
+insert implicit target defaults, choose a winning Formation, change a Fact target, or invent missing declared
+relations to conceal the violation. The complete but unlawful declaration is rejected by the owning Lowering
+Definition Judgment. This does not make it lawful or permit successful code generation.
+
+Conversely, an unresolved Fact Kind or factual coordinate, nominal Source Requirement, or required qualified
+callable/semantic interpretation cannot supply complete Visible HIR meaning. A compiler producer or entered HIR
+Seal verifier that detects failure of its own resolution or completeness obligation retains its own unsuccessful
+compiler result. A failed required producer before legal Seal entry does not cause a synthetic HIR Seal rejection.
+When a separately owned authoritative prerequisite fails before Lowering Definition Judgment entry, no Lowering
+Definition Refusal is fabricated; that prerequisite's result remains its owner's. An entered Lowering Definition
+Judgment that finds duplicate Mapping formation, missing complete Target coverage, or another violation of
+Lowering-owned Definition law must refuse the Definition rather than silently warn and establish it.
+
+A Lowering Definition Judgment may legally enter only after its complete Resolved Definition Candidate is available
+through the valid Visible HIR Candidate Protocol and every authoritative Definition-time prerequisite **actually
+required by the owning Lowering law** is satisfied. The exact Required Basis set and successful or unsuccessful
+Definition Establishment Material belong to the subsequent Definition Judgment design; this section does not invent
+a universal additional Basis. In particular, the current Lowering IDL Binding, selected Input or Canonicalization
+Occurrence, current Operation parameter surface, and current application World do not automatically become
+Definition-time prerequisites merely because a selection later uses that Definition. The exact Fact Definition
+Establishment prerequisite, where required, remains governed by the Fact-owned meaning and ADR-0063 rather than
+being conferred by an HIR reference.
+
+Early static verification may execute the owning Lowering Definition Judgment during frontend processing as soon as
+its lawful inputs are ready, including an immediate compile-time refusal of fully resolved duplicate or incomplete
+Target formation. This does not require a separate frontend pass, a second duplicate check, or physically distinct
+HIR-builder, Seal, and Judgment execution. Conversely, pass fusion, parallelism, or V2 incremental work may not
+merge the legal meanings of resolution failure, HIR Seal failure, Lowering Definition Refusal, or current Binding/
+Composition incompatibility. Each remains attributed to its owning law; a dependent judgment that never legally
+entered has no invented result.
+
+V1 clean recomputation and V2 incremental, parallel, lazy, or reused observations must satisfy the same Seal and
+Establishment entry obligations. An old Generation's successful Seal or a cached selected Mapping Meaning does not
+certify the current HIR Candidate or current Fact Target Coverage. Every reused observation and prerequisite must be
+current, compatible, complete for its declared extent, and coherent under ADR-0071. Where safe reuse cannot be
+established, the compiler must follow an applicable legal re-resolution or deterministic clean recomputation path;
+implementation schedules, physical HIR storage, frontend validator placement, and incremental algorithm choices
+remain open.
 
 ---
 
@@ -1078,11 +1279,14 @@ fixed Core Fact targets with complete candidate surfaces, all-or-nothing candida
 implementation discovery, no user-supplied Lowering implementation, no implicit conversion authority, and independent
 judgment and establishment handoff.
 
-The exact Fact-qualified target spelling, detailed fine-grained Mapping Surface and Mapping Meaning selectors and
-projections, HIR Seal, Established Definition Material, later Binding/Occurrence Establishment, and Established
-Semantic Protocol refinements remain separate follow-up work. Section 11.1 fixes only Lowering's HIR Candidate
-Reference and Fact-producer dependency obligations; Section 11.2 fixes the complete Definition Candidate Projection.
-They do not establish the deferred Protocol details, the Fact-owned HIR Protocol internals, or any Establishment result.
+The exact Fact-qualified target spelling and physical Mapping selector encoding remain open. Sections 11.1-11.5
+fix Lowering's HIR Candidate References, complete Definition Candidate Projection, complete Mapping Surface and
+target-qualified Selected Mapping Meaning Projections, operation-local Binding Candidate and Role Selection
+observations, and HIR Seal/Definition Judgment entry boundary. They do not establish the Fact-owned HIR Protocol
+internals, a concrete frontend execution architecture, or any successful Contract Establishment result.
+
+Established Lowering Definition Material, its owning Definition Judgment's exact Required Basis and result law,
+later Binding/Occurrence Establishment, and the Established Semantic Protocol remain separate follow-up work.
 
 The exact atomic Fact establishment, rollback, and publication mechanics and the complete authoring surface for
 additional Fact participation, Operation Result Material, result-side change formation, Publication, and Output
