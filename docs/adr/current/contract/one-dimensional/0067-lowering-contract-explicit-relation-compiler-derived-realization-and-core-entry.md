@@ -496,7 +496,38 @@ core state belongs elsewhere and must not be disguised as formation.
 
 ## 11. Definition-Time Completeness and Identity
 
-The Lowering Definition and its separate, operation-local selection Binding must together close at least:
+A Lowering Definition Candidate owns the complete resolved meaning of the declared one-to-one formation relation.
+Its Definition determinants are:
+
+```text
+Source Requirement: each declared nominal source coordinate and its required Input-visible presentation meaning
+Target Requirement: each declared nominal target address and its required Fact and representation meaning
+Mapping Relation: the complete declared source-to-target relation, preserving every mapping occurrence and multiplicity
+Formation Meaning: the exact qualified callable, explicit source receiver or argument placement, meaning-determining
+    arguments, completed conversion meaning and applicability, and Lowering-owned partiality and refusal meaning
+Semantic Dependencies: the exact Contract-owned refinement, bounds, and semantic Law or Basis references that
+    determine the declared formation meaning
+```
+
+These determinants must be resolved before the Candidate becomes Visible HIR. Establishment cannot reconstruct missing
+Definition meaning from the IDL Binding Candidate, a current Operation, source syntax, or backend behavior. Resolved
+mapping occurrences retain their full multiplicity even when a complete declaration violates a Lowering
+law. Frontend resolution must not silently repair or discard mappings; unresolved meaning cannot enter Visible HIR.
+
+A nominal source requirement does not incorporate the current selected Input Definition. A nominal target requirement
+does not incorporate the current Operation Parameter Reference or its resolved Fact Kind merely because it is selected.
+The exact current coordinates must satisfy those declared requirements. A separately owned semantic reference that
+actually determines Definition meaning remains an exact Definition dependency, even when resolution consulted the
+current selection context. Selection cannot give one Definition an unrecorded alternate callable or target meaning.
+
+Lowering consumes the lawful boundary Presentation supplied for its actual application. When Canonicalization is
+selected, selected coordinates use its final representatives and unselected coordinates retain Input-established
+values. Lowering does not select Canonicalization, reconstruct that Presentation, or judge an upstream refusal or
+continuation outcome. The upstream source and entry laws do not become Definition determinants by being prerequisites
+for use.
+
+For a selected Operation, the Definition and its separate operation-local Binding, together with the applicable
+separately owned judgments, must close at least:
 
 ```text
 the flow-selected Input schema
@@ -515,7 +546,7 @@ target-coordinate completeness and uniqueness
 Input source-coordinate uniqueness across bindings
 finite depth, cardinality, intermediate storage, output, and work bounds
 applicable schema, Version, and Governance material
-declared refusal and cross-contract stop attribution
+Lowering-owned refusal meaning and separately owned cross-contract stop attribution
 ```
 
 Every target coordinate formed by this airlock must be formed exactly once under one complete flat Lowering Contract.
@@ -542,16 +573,21 @@ A backend that cannot realize a semantically complete Lowering Contract with the
 backend realization. Backend inability does not change the Contract.
 
 The established Lowering Definition is represented as one flat, immutable, adapter-erased Lowering Contract material.
-Its Definition identity preserves the authored source-to-target relations, the exact selected callable meaning, the
-meaning-determining argument application, and the Contract-owned refinement, bounds, and refusal law. Its exact Version
-and other identity-bearing semantic coordinates remain governed by ADR-0063. Import spelling and source location do not
-change Definition meaning.
+Its complete Definition meaning preserves the nominal source and target requirements, the complete declared mapping
+relation, the qualified callable formation meaning and argument application, and all meaning-determining refinement,
+bounds, refusal, and semantic dependencies. One independently declared Lowering Contract denotes one Lowering Authority;
+that Authority and one exact Contract Version identify one complete Definition under ADR-0063 and ADR-0053. Conflicting
+resolved meanings cannot be established for the same Authority and Version. Equal meanings under different Authorities
+or Versions do not merge their identities. Import spelling and source location do not change Definition meaning.
 
 Selection by an Operation is a separate Binding. It preserves the exact Lowering Definition Reference and the selected
 Operation Reference. The selected Input, optional Canonicalization, target parameter slots, Fact-kind resolutions, and
 applicable flow-world basis must be resolved for that Binding before use. Those contextual resolutions do not become
-Definition identity merely because an Operation selects the Definition. If an exact basis is part of the Definition's
-own declared meaning, ADR-0063 still requires that dependency to remain in Definition identity.
+Definition determinants merely because an Operation selects the Definition. If an exact basis determines the
+Definition's
+own meaning, ADR-0063 still requires that dependency to remain with the Definition. CRI may prepare exact compiler-time
+source and target correspondences from legal producer projections; it does not establish Binding validity, invent a
+mapping, or form runtime source values.
 
 The Binding must not change the Definition's declared relation or qualified callable meaning. A mismatch is rejected,
 not repaired through inference. The Definition's identity and the Binding's identity remain distinct even when one
