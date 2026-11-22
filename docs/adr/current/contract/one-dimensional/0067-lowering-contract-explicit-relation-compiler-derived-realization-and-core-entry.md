@@ -218,9 +218,12 @@ When Canonicalization is absent, the admitted Input values continue unchanged.
 Lowering does not introduce a separate `CoreMaterial`, `OperationStart`, `LoweringTarget`, or user-visible candidate
 schema.
 
-Each Lowering Definition explicitly fixes one or more exact Fact kinds declared through the enclosing interface
-`facts` vocabulary and the exact factual coordinates it forms for each kind. These are Fact-owned targets, not
-Operation-parameter addresses. A successful occurrence forms exactly one complete candidate of each fixed Fact kind.
+Each Lowering Definition explicitly fixes one or more exact Core-owned Fact kinds and the exact factual
+coordinates it forms for each kind. Fact Definition meaning is independently determined in the Core, not produced by
+Input, Lowering, Output, or Publication compilation. These are Fact-owned targets, not Operation-parameter addresses.
+The enclosing interface's `facts` vocabulary is a separate use-qualification relation; it neither creates nor
+reselects the Lowering Definition's target. A successful occurrence forms exactly one complete candidate of each
+fixed Fact kind.
 
 The selected Operation still supplies the IDL Binding context and declares its Fact parameters independently.
 Neither that parameter list nor the current Operation signature determines or silently changes the Lowering targets.
@@ -541,6 +544,10 @@ These determinants must be resolved before the Candidate becomes Visible HIR. Es
 Definition meaning from the IDL Binding Candidate, a current Operation, source syntax, or backend behavior. Resolved
 mapping occurrences retain their full multiplicity even when a complete declaration violates a Lowering
 law. Frontend resolution must not silently repair or discard mappings; unresolved meaning cannot enter Visible HIR.
+The declaration order of independent mappings is not Lowering Definition meaning. Their exact declared multiplicity
+and source-to-target/formation relations remain meaning, including repeated identical mappings. Source provenance
+and physical mapping index do not define Mapping identity or equality. An order explicitly belonging to a Fact
+coordinate, callable argument application, or another separately owned law remains governed by that law.
 
 A nominal source requirement does not incorporate the current selected Input Definition. The target requirement,
 however, fixes each exact Core Fact kind and its required factual coordinates independently of the current Operation
@@ -588,13 +595,21 @@ Silent target defaults, fallback constructors, same-name auto-mapping, same-type
 structural guessing, package scanning, annotations, assignability, inheritance, and discovery from implementation shape
 are prohibited.
 
-The frontend must reject missing or duplicate formation of a target Fact coordinate, unknown source coordinates or
-unknown/falsely attributed target Fact kinds or coordinates, a single mapping with multiple targets, a target coordinate
-requiring combined runtime source coordinates, incomplete or invalid qualified conversion judgments, hidden absence,
-recursive host-object traversal, unbounded collection work, environment-dependent Contract meaning, executable user
-material inside the relation body, a fixed target Fact kind absent from the enclosing interface's Fact vocabulary, or
-a representation refinement whose meaning is not closed by the declared Contract and qualified callable interpretation.
-Repeated source coordinates in different explicit mappings are not a rejection reason.
+A Lowering Definition with missing or duplicate formation of a target Fact coordinate, a single mapping with
+multiple targets, a target coordinate requiring combined runtime source coordinates, hidden absence, recursive
+host-object traversal, unbounded collection work, environment-dependent Contract meaning, executable user material
+inside the relation body, or a representation refinement whose meaning is not closed by the declared Contract and
+qualified callable interpretation cannot be established as a lawful Lowering Definition. Fully resolved duplicate
+mappings remain visible for the owning Lowering judgment rather than being repaired or discarded by the frontend.
+Unresolved authored nominal Source Requirement coordinates, unresolved or falsely attributed target Fact kinds or
+coordinates, and incomplete or
+unsuccessful qualified conversion resolution cannot supply complete Visible HIR meaning. Exact callable resolution,
+source/target sort applicability, and qualified Java/Kotlin library interpretation remain the responsibility of their
+owning compiler subsystems; Lowering consumes their completed meaning without rejudging it. A fixed target Fact kind
+absent from the current enclosing interface's Fact vocabulary is a separate Binding/Composition compatibility defect,
+not a missing or alternate Lowering Definition target. Repeated source coordinates in different explicit mappings are
+not a rejection reason. The precise HIR Seal versus owning Definition refusal boundary remains governed by its later
+protocol refinement and is not determined by this paragraph.
 
 There is no missing-Lowering-implementation link failure because the user does not supply a Lowering implementation.
 
@@ -637,6 +652,120 @@ Invariant and movement handoff, establishment requirements, cache dependencies, 
 legitimately implied by the Contract.
 
 Derived material does not become another authored Lowering Contract.
+
+### 11.1. Resolved Lowering HIR Candidate References and Core Fact Dependency
+
+Lowering specializes the ADR-0071 Typed HIR Semantic Reference Domain with two Lowering-owned primary Candidate
+reference kinds when their exact subjects must be observed:
+
+```text
+LoweringDefinitionCandidateRef
+LoweringIDLBindingCandidateRef
+```
+
+`LoweringDefinitionCandidateRef` identifies one exact, current, resolved Lowering Definition Candidate under its
+owning Lowering Authority and authority-scoped resolved Version candidate coordinate. The independently declared
+Definition and its applicable Version determine the candidate's nominal identity scope. A future need to distinguish
+several independent Definitions under one Authority and Version must follow the owning authority-local coordinate law
+of ADR-0063; source order, a host symbol, an IDL selection, or a physical index cannot supply that distinction.
+This pre-authority Candidate Reference is not an Established Definition Reference.
+
+`LoweringIDLBindingCandidateRef` identifies one exact operation-local IDL selection occurrence. Its selecting
+Contract Interface/Interaction/Operation context, Lowering role coordinate, exact target
+`LoweringDefinitionCandidateRef`, and any independently required Binding qualifier are observed through the
+existing IDL/HIR reference laws. Two distinct Operation selections may target the same Definition Candidate without
+merging their Binding Candidates or changing the Definition's Fact targets. Selection observation at the owning role
+coordinate distinguishes an exact selected Binding Candidate from Explicit Absence under ADR-0071. An unresolved
+selection is not Explicit Absence, and absence does not require a fabricated Lowering Reference.
+
+A nominal Source Requirement belongs to the Lowering Definition Candidate, not to the currently selected Input
+Definition. Every required Source Coordinate must be exactly selectable within the owning Definition's resolved
+meaning, but no separate primary `SourceRequirementRef` is mandated. Every explicit Mapping occurrence must likewise
+remain exactly observable with its multiplicity, without requiring a new primary Mapping Reference or an independent
+Mapping Authority. Source position, declaration order, array slot, generated helper, and generation-local handle are
+not semantic selection or identity laws. The exact fine-grained selector form remains open.
+
+A fixed Target Requirement consumes the exact pre-authority meaning of a separately Core-compiled Fact Kind and its
+Fact-owned factual coordinates. The target reference is owned by the Fact HIR Protocol, not minted or reinterpreted
+by Lowering. The Fact Protocol may identify an exact Fact Kind directly or through an exact Fact Definition Candidate
+and its Fact-owned nominal Kind coordinate; Lowering does not mandate either representation, name, or encoding.
+The exact Fact Kind and its coordinates are not inferred from a current Operation parameter, the Input surface,
+interface vocabulary membership, a host class name, or a physical address. The full Fact-owned surface must be
+legally observable where required for complete target coverage, without recursively embedding or copying its
+separately owned Definition into Lowering HIR.
+
+Fact Definition compilation and its Contract authority are Core-owned and independent of inbound, output, and
+publication contracts. The Fact-to-Lowering reference is a semantic dependency, not a mandatory serial compiler-pass
+schedule. A Fact HIR Candidate reference does not establish that Fact Definition; an Established Fact Definition
+Reference and a runtime Established Fact are distinct from it and from each other. Any required Established Fact
+Definition Basis is governed by ADR-0063 and the later Lowering Establishment judgment, not granted by HIR lookup.
+
+The current Input Coordinate is observed through Input-owned `ResolvedInputCoordinateRef` where needed by a lawful
+Binding or Composition judgment; it is not the Lowering Definition's nominal Source Requirement. Exact qualified
+callable and library meaning is observed from the responsible resolver, Type Engine, and qualified semantic
+interpretation as already required in Sections 7, 9, and 11. Their internal reference forms, resolution algorithms,
+and library interpretation authority are not redefined by Lowering.
+
+HIR Candidate Reference equality, complete Definition Meaning equality, authoritative Definition identity, IDL
+Binding equality, and physical reuse eligibility remain distinct. Candidate References are exact in their current
+reference domain and cannot be inherited from an earlier HIR generation. A dense handle, HID, fingerprint, Query Key,
+serialized position, or reuse artifact does not confer semantic Reference identity or Contract authority.
+
+### 11.2. Resolved Lowering Definition Candidate Projection
+
+The Lowering Definition Candidate Projection is the complete, read-only, producer-owned observation of one exact
+`LoweringDefinitionCandidateRef` and all five Definition determinants in this Section. Its complete observation must
+retain, without loss or implicit reconstruction:
+
+```text
+Source Requirement
+    all nominal source requirements and each required Input-visible presentation meaning
+Target Requirement
+    every explicitly fixed Core Fact Kind, its exact Fact-owned factual coordinates,
+    complete target-surface dependency, meaning/version, and required representation meaning
+Mapping Relation
+    every declared source-to-Fact-coordinate mapping occurrence, source reuse,
+    target-formation multiplicity, and the complete declared relation for every target kind
+Formation Meaning
+    the completed, exact qualified callable application and meaning-determining arguments,
+    conversion applicability and Lowering-owned partiality/refusal meaning
+Semantic Dependencies
+    exact direct Fact and other Contract-owned Law/Basis references and the refinements,
+    bounds, versions, and other dependencies that determine this Lowering Definition
+```
+
+The Projection expresses Lowering-owned meaning and exact direct references to separately owned semantic subjects.
+It does not assume ownership of the referenced Fact, Input, Type Engine, or library meaning. A legal direct reference
+and producer-owned projection may expose the required complete meaning without a redundant copy or recursive
+expansion. No current Operation selection, current Input or Canonicalization occurrence, runtime value, or Basis
+Binding enters Definition meaning merely because it is needed by a later application. Any reusable occurrence-basis
+requirement law independently owned by this Definition must be preserved if it determines its meaning under ADR-0063;
+its precise Lowering-specific requirements remain for subsequent Occurrence design.
+
+Every declared Mapping occurrence is preserved even when an exactly resolved duplicate makes the Definition unlawful.
+Independent Mapping declaration order is not semantic order; Mapping multiplicity and the source, target, and
+qualified Formation relation are semantic. The Projection must not silently deduplicate, overwrite, default, or
+normalize away an invalid but fully resolved mapping. It neither performs the later Lowering Definition Judgment nor
+changes the separately owned resolution and Fact laws.
+
+The complete Definition Projection determines comparison of the entire Definition meaning under the owning Lowering
+law, including the full Fact Target requirements, Mapping relation, qualified Formation meaning, and exact semantic
+dependencies. Source-only import spelling, provenance, physical layout, compiler partition, and generated backend
+helpers do not determine that equality. Equality of Definition meaning does not merge distinct Candidate References,
+Authorities, Versions, Established Definitions, or IDL Binding occurrences.
+
+Fine-grained Mapping Surface and selected Mapping Meaning observations may expose less than the complete Definition
+Projection, but only as complete observations of their stated extent under ADR-0071. Equal Mapping Surface does not
+prove equal Formation Meaning; equal selected Mapping Meaning does not prove equal complete Mapping Surface or
+Definition Meaning. An unobserved, unavailable, or omitted projection does not prove semantic absence. The exact
+Mapping selector and detailed fine-grained Projection contracts remain for subsequent design and are not fixed here.
+
+All observations must be coherent within the applicable HIR snapshot and obey ADR-0071 visibility, lifetime, and
+semantic equality rules. The same observations may be computed on demand, share immutable physical backing, or be
+persisted and validated for reuse without creating another IR, Authority, or Contract Judgment. V2 may compare narrow
+observations for local reuse or early cutoff only under current-reference and dependency-validity checks; no such
+comparison substitutes for complete Definition Establishment or the clean recomputation reference path. No Query
+architecture, cache granularity, physical Mapping layout, or incremental update algorithm is mandated.
 
 ---
 
@@ -949,9 +1078,11 @@ fixed Core Fact targets with complete candidate surfaces, all-or-nothing candida
 implementation discovery, no user-supplied Lowering implementation, no implicit conversion authority, and independent
 judgment and establishment handoff.
 
-The exact Fact-qualified target spelling and the HIR Candidate, Seal, Established Definition, Binding/Occurrence,
-and Established Semantic Protocol refinements remain separate follow-up work. This amendment does not establish those
-protocol details.
+The exact Fact-qualified target spelling, detailed fine-grained Mapping Surface and Mapping Meaning selectors and
+projections, HIR Seal, Established Definition Material, later Binding/Occurrence Establishment, and Established
+Semantic Protocol refinements remain separate follow-up work. Section 11.1 fixes only Lowering's HIR Candidate
+Reference and Fact-producer dependency obligations; Section 11.2 fixes the complete Definition Candidate Projection.
+They do not establish the deferred Protocol details, the Fact-owned HIR Protocol internals, or any Establishment result.
 
 The exact atomic Fact establishment, rollback, and publication mechanics and the complete authoring surface for
 additional Fact participation, Operation Result Material, result-side change formation, Publication, and Output
