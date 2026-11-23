@@ -943,14 +943,11 @@ Judgment that finds duplicate Mapping formation, missing complete Target coverag
 Lowering-owned Definition law must refuse the Definition rather than silently warn and establish it.
 
 A Lowering Definition Judgment may legally enter only after its complete Resolved Definition Candidate is available
-through the valid Visible HIR Candidate Protocol and every authoritative Definition-time prerequisite **actually
-required by the owning Lowering law** is satisfied. The exact Required Basis set and successful or unsuccessful
-Definition Establishment Material belong to the subsequent Definition Judgment design; this section does not invent
-a universal additional Basis. In particular, the current Lowering IDL Binding, selected Input or Canonicalization
+through the valid Visible HIR Candidate Protocol and every authoritative Definition-time Required Basis specified in
+Section 11.6 is complete under ADR-0063. The current Lowering IDL Binding, selected Input or Canonicalization
 Occurrence, current Operation parameter surface, and current application World do not automatically become
-Definition-time prerequisites merely because a selection later uses that Definition. The exact Fact Definition
-Establishment prerequisite, where required, remains governed by the Fact-owned meaning and ADR-0063 rather than
-being conferred by an HIR reference.
+Definition-time prerequisites merely because a selection later uses that Definition. An HIR Candidate Reference does
+not satisfy an Established Fact Definition requirement.
 
 Early static verification may execute the owning Lowering Definition Judgment during frontend processing as soon as
 its lawful inputs are ready, including an immediate compile-time refusal of fully resolved duplicate or incomplete
@@ -967,6 +964,35 @@ current, compatible, complete for its declared extent, and coherent under ADR-00
 established, the compiler must follow an applicable legal re-resolution or deterministic clean recomputation path;
 implementation schedules, physical HIR storage, frontend validator placement, and incremental algorithm choices
 remain open.
+
+### 11.6. Definition-Time Required Basis and Established Definition Direct Relations
+
+Every distinct fixed Core Fact Kind targeted by a Lowering Definition requires its exact Established Fact Definition
+Meaning as a mandatory Definition-time Required Basis. The exact Fact Kind and its applicable Version determine one
+Required Basis coordinate. Multiple Mapping occurrences for that Kind do not create additional Fact Definition
+requirements. No other Fact Kind or Version may satisfy it, even when its factual surface is equal. A Fact HIR
+Candidate Reference does not establish this Basis.
+
+A separately owned Contract Law is an additional Definition-time Required Basis only when its owning law requires
+prior authoritative Establishment for the Lowering Definition. A refinement or bound stated completely within the
+Lowering Definition does not create such an external Basis. Resolved callable, Type Engine, and qualified library
+interpretation remain compiler-owned semantic inputs to complete HIR; they are not Contract Required Basis merely
+because Formation Meaning consumes them. The Lowering Definition's own Version Binding follows ADR-0063 and ADR-0053
+without inventing another universal Basis.
+
+Each Required Basis uses the exact source domain determined by its owning law. The fixed Fact requirement admits
+exactly one Applicable Established Fact Definition and no permitted absence. Its exact Basis Binding, Applicability,
+and Complete Basis follow ADR-0063 Sections 7 and 8. A resolved reference or successful compiler lookup alone cannot
+satisfy it. An incomplete prerequisite prevents lawful Definition Establishment entry; it does not produce a
+Lowering Definition Refusal.
+
+A successfully Established Lowering Definition preserves a direct Established relation to the exact Established
+Fact Definition of each fixed target Kind. Its Mapping targets retain their Fact-owned coordinate meanings. A
+separately Established Contract Law is directly referenced when its meaning determines this Lowering Definition.
+These direct relations preserve the source Authorities without copying or re-establishing their Definitions. They do
+not duplicate Basis Binding or its internal representation, add independent Mapping Authorities, or introduce current
+Operation Binding or compiler realization material into Definition Meaning. The complete immutable Definition Meaning
+and authoritative identity remain as specified in Section 11 and ADR-0063.
 
 ---
 
@@ -1285,8 +1311,9 @@ target-qualified Selected Mapping Meaning Projections, operation-local Binding C
 observations, and HIR Seal/Definition Judgment entry boundary. They do not establish the Fact-owned HIR Protocol
 internals, a concrete frontend execution architecture, or any successful Contract Establishment result.
 
-Established Lowering Definition Material, its owning Definition Judgment's exact Required Basis and result law,
-later Binding/Occurrence Establishment, and the Established Semantic Protocol remain separate follow-up work.
+Sections 11 and 11.6 fix Established Lowering Definition meaning, its direct Established relations, and its
+Definition-time Required Basis. Later Binding/Occurrence Establishment and the Established Semantic Protocol remain
+separate follow-up work.
 
 The exact atomic Fact establishment, rollback, and publication mechanics and the complete authoring surface for
 additional Fact participation, Operation Result Material, result-side change formation, Publication, and Output
