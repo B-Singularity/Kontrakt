@@ -1,4 +1,4 @@
-# ADR-0064: Input Contract, Explicit Boundary Presentation, and External-Authority Boundary
+# ADR-0067: Lowering Contract, Explicit Source-to-Core-Fact Relation, Compiler-Derived Realization, and Core Entry Boundary
 
 ## Status
 
@@ -14,1340 +14,1441 @@ ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
-- ADR-0067: Lowering Contract
-- ADR-0066: Canonicalization Contract
-- ADR-0065: Admission Contract
-- ADR-0073: JVM Platform-Native Contract Ratification and External Contract Infiltration Boundary
-- ADR-0071: Resolved Contract HIR Semantic Boundary, Deterministic Visibility, Lifecycle, and Reuse
-- ADR-0074: Compiler Result, Explicit Unsuccessful Result, Recovery, and Observation Boundary
-- ADR-0063: Contract Establishment, Identity, Applicability, and Composition
-- ADR-0056: Governance Contract, Policy-World Control, Whole-Machine Coordination, and Selection Boundary
-- ADR-0054: Policy Contract, Explicit Operating Policies, Self-Contained Contract Worlds, and Interface Binding Boundary
-- ADR-0053: Version Contract, Sovereign Contract Revision History, and Realization Boundary
-- ADR-0048: Inbound Airlock Composition, Boundary Refinement, and Core Entry
+- `../../../../the-most-important-thing/what-contract-is.md`
+- ADR-0070: Realization Axis, Core Realization Closure, and JVM-Ahead Optimization
+- ADR-0069: Invariant Contract, Fact-Local Standing Integrity Law, Deterministic Judgment, and Establishment Gate
+- ADR-0068: Fact Contract, Explicit Immutable Core Information, Sameness, and Uniqueness
+- ADR-0066: Canonicalization Contract, Stable Representative, Canonical Bytes, and Explicit Omission
+- ADR-0065: Admission Contract, Continuation Judgment
+- ADR-0064: Input Contract, Explicit Boundary Presentation
+- ADR-0063: Contract Establishment, Occurrence, Applicability, and Semantic Dependency
+- ADR-0059: Output Presentation Contract, Explicit Outward Result Shape, and Machine Exit Boundary
+- ADR-0058: Publication Contract, Explicit Outward Exposure Authority, and Core Exit Boundary
+- ADR-0057: Failure Contract
+- ADR-0050: State / Transition Contract
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
-- ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
-- ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
-- ADR-0039: Adapter-Neutral Metamodel Acquisition, Frozen Fact Image, and Backend-Handle Erasure
-- `docs/verification/checklists/kontrakt-1d-hir-establishment-master-checklist.md`
+- ADR-0046: IDL-First Interface Contract Frontend, Generated Host Interface, and Operation Realization Boundary
+
+---
+
+## Amendment
+
+This ADR previously required every selected Lowering declaration to produce one retained generated realization port with
+exactly one user-supplied implementation.
+
+That model is removed.
+
+Lowering is a declarative one-dimensional Contract expression. The user declares the exact source-to-target relation and
+the Contract material required to make that relation complete. Kontrakt resolves and establishes that meaning, derives
+the required Lowering realization knowledge, and the compiler/backend performs the actual value formation.
+
+The user does not implement a Lowering mapper, adapter, converter port, callback, or generated Lowering interface.
+
+The ordinary user-supplied realization boundary is Operation. The backend forms the complete candidate material for the
+Core-owned Fact kinds explicitly targeted by the
+established Lowering Contract. The selected Operation and its fact-parameter participation remain subject to their
+separate IDL Binding and applicable Core judgments; Lowering does not select an Operation parameter as its target.
+
+An internal generated helper, ABI, table, specialized function, or direct bytecode path may exist when useful. Such
+material belongs to compiler/backend realization. It is not a retained user implementation requirement and it does not
+acquire Contract authority.
+
+The V1 relation remains one explicit source coordinate to one Fact coordinate **per mapping**. A source may be
+reused by distinct explicit mappings, and one Definition may target several explicitly fixed Fact kinds, each with one
+complete candidate. This amendment preserves source and target independence, prohibition on same-name or same-type
+inference, prohibition on hidden cross-coordinate business computation, candidate-versus-Fact separation, independent
+standing Invariant and movement judgments, and refusal attribution decided below.
 
 ---
 
 ## 1. Context
 
-Input is the first one-dimensional Contract of the inbound airlock. It defines one complete presentation meaning that
-external material must realize at an Interaction boundary. Input does not own the selecting Interaction or its Binding,
-downstream Operations or Contracts, or the host carrier that supplies evidence.
+Lowering is the final representation boundary of the inbound airlock.
 
-A supported host declaration may already express that presentation completely, so a duplicate Kontrakt-specific DTO is
-not required. Host representation and runtime behavior may affect program observations but cannot become Contract
-authority. Kontrakt must resolve, refine, and ratify the source evidence before it becomes authoritative Input meaning,
-independent of the source language or carrier.
+Input, Admission, and selected Canonicalization operate over the Contract-visible external presentation.
 
-Input admits only finite, closed, directly inspectable presentations. Its established meaning remains available to later
-authorities that may lawfully observe it. Material that cannot meet this law must be formed into a supported
-presentation
-before invocation.
+Admission may permit that presentation to continue. Canonicalization may establish a stable same-shape representative.
 
-Input does not own later judgments, transformations, composition, or ordering. Those remain with the Contracts and
-composition law that own them.
+Neither ends external-presentation authority.
 
-## 2. Decision Drivers
+Lowering declares the complete permitted relation by which selected boundary coordinates may form candidate material for
+one or more explicitly fixed Core-owned Fact kinds, independently of the parameter surface of the selecting Operation.
 
-- Supported host declarations should express Input without requiring duplicate carriers, while Contract authority
-  remains with Kontrakt.
-- Input must support finite, closed, structured values without introducing nested Contract authorities or direct Input
-  coordinates.
-- Input Definition meaning must be complete and deterministic, independent of the Interaction or Policy World that
-  selects it.
-- Invocation must judge already-formed immutable material without making Input responsible for acquisition or snapshot
-  timing.
-- Compiler-side non-entry and Input-owned refusal must remain distinct. Refused Input material cannot proceed to later
-  inbound Contracts.
+The declaration is Contract expression. It is not a request for the user to write representation-formation code.
 
-## 3. Decision
+Kontrakt resolves the Definition's nominal source requirements, exact target Fact kinds and coordinates, and qualified
+formation meaning. The operation-local IDL Binding separately qualifies that Definition against the selected Input,
+optional Canonicalization, enclosing Fact vocabulary, and Operation context. From the lawfully established meaning the
+compiler derives the exact source reads, target writes, required representation refinements, candidate-completion
+obligations, and the later judgment handoff.
 
-### 3.1. Input Meaning
+The backend performs the physical value formation.
 
-Input is the boundary presentation Contract, with the following authority path:
-
-```text
-outside presentation evidence
--> Resolved Input Definition Candidate
--> Input Definition judgment
--> Established Input Definition
--> one fresh Input semantic application over an already-formed immutable presentation
--> Input Occurrence judgment
--> Established Input Occurrence
--> the next selected inbound authority when the occurrence result is Presented
-```
-
-Input declares the complete finite presentation surface that may appear at the Interaction boundary and preserves only
-the distinctions that its law makes observable. Later Contracts may observe those distinctions through their own lawful
-relations, but they do not retroactively add Input meaning. Input does not decide whether presented values may continue,
-canonicalize them, lower them into core Fact meaning, or invoke the user Operation.
-
-### 3.2. Flat V1 Presentation
-
-V1 keeps the directly addressable Input coordinate surface flat, exposing one finite set of direct Input coordinates.
-Each direct coordinate may itself carry a finite,
-closed, acyclic value presentation under Section 6.9.
-
-Nested members, alternatives, elements, keys, and values are constituents of that coordinate's Input meaning. They do
-not become nested Input Definitions, independent Input Occurrences, or additional direct Input coordinates merely
-because the presentation has internal structure.
-
-A host carrier may contain richer topology, but Input does not adopt host runtime structure or
-lifecycle relations as presentation meaning. Section 6.9 owns the legal value topology. Section 6.4
-owns carrier separation.
-
-Material whose complete presentation cannot be resolved under those laws must be formed into a supported declared
-presentation before it reaches the Input boundary.
-
-### 3.3. Source Evidence Is Not Authority
-
-A supported Java or Kotlin declaration may nominate Input evidence under the carrier-and-Contract separation law in
-Section 6.4. Section 6.11 owns the direct-carrier exception for a host form
-that already realizes a legal Input presentation.
-
-A different frontend may resolve to the same Input Definition Meaning. Frontend-specific source
-evidence does not become a determinant of that meaning. Section 4 owns the separate laws for
-Definition identity, semantic equality, and physical reuse.
-
-## 4. Definition Establishment
-
-### 4.1. Resolved Input Definition Candidate
-
-ADR-0071 owns the common HIR boundary. Input specializes it through the Resolved HIR Candidate Protocol rather than
-creating an Input-specific second IR.
-
-```text
-role-qualified authored Input material
-    ↓
-frontend resolution
-    ↓
-Resolved Input Definition Candidate
-    ↓
-Input-owned Definition judgment
-    ↓
-Established Input Definition
-```
-
-A Definition Candidate is pre-authority material, but it is not a partial Contract. Before it becomes Visible HIR, it
-must contain enough resolved Input meaning for Establishment to apply the Input law without reopening source syntax,
-rediscovering host structure, or obtaining missing meaning from an Input IDL Binding Candidate. Under ADR-0071, the same
-legal resolved inputs must produce the same observable Candidate meaning.
-
-The Definition Candidate Projection exposes one exact Input Definition Candidate Reference together with the complete
-producer-owned Input Definition Meaning. A consumer that needs less material uses a legal fine-grained projection under
-ADR-0071; consumer convenience does not weaken or redefine the Candidate. Candidate formation does not create an
-Established Occurrence, which remains a separate ADR-0063 category when the owning law gives one application meaning of
-its own.
-
-### 4.2. Complete Input Candidate Meaning
-
-The Resolved Input Definition Candidate must preserve the complete declared direct coordinate surface and every
-Input-visible distinction of its closed presentation meaning.
-
-Every meaning-determining semantic law or reference must be fully resolved before Visible HIR, through complete resolved
-meaning or an exact legally owned reference. Establishment cannot recover missing meaning through later source
-resolution,
-host behavior, or ambient state.
-
-Common Input rules need not be duplicated as Candidate payload when HIR formation or typed projections already enforce
-them.
-
-### 4.3. Information Retention and Loss
-
-Frontend resolution may erase source or host details after their contribution to Input meaning has been resolved
-completely. Section 6.4 identifies carrier mechanics that do not survive into Contract meaning, and Section 6.11 applies
-that rule to the zero-adapter path.
-
-An Input-visible distinction cannot be erased when Establishment or another legal HIR observer would then need to reopen
-source to recover it. Sections 6.1, 6.6, 6.8, and 6.9 own the semantic distinctions that must survive when applicable.
-
-Visible Input HIR cannot use a recovery placeholder in place of required meaning. It also cannot silently prune an
-undeclared semantic coordinate. If richer external material must be projected into the declared Input surface, that
-transformation happens before Input unless a future Input law explicitly owns it.
-
-Compiler processing of source evidence remains realization unless an owning Input law explicitly
-makes its result observable.
-
-### 4.4. Definition Meaning Determinants
-
-Input Definition Meaning is determined by its exact direct coordinate surface and complete Input-visible presentation
-meaning. Presentation Sameness follows from that meaning. Ordering laws and semantic bases are determinants only when
-they affect an Input-visible distinction.
-
-The selecting Interaction, IDL Binding, Policy World, downstream Contracts, source provenance, and host or compiler
-realization do not determine Input Definition Meaning. Changes to those contexts alter the Definition Meaning only when
-they change the exact resolved Input presentation meaning.
-
-### 4.5. Definition Identity, Version, and Candidate Reference
-
-ADR-0053 governs Contract Version and Authority continuity. ADR-0063 governs authoritative Definition identity and
-Establishment.
-
-One explicitly declared Input Contract denotes one Input Authority. Each exact Input Authority and Contract Version
-identifies one complete Input Definition without an additional Authority-Local Definition Coordinate. Conflicting
-meanings
-cannot be established for the same pair, and equal meanings under different Authorities or Versions remain distinct.
-
-```text
-exact Input Contract Authority
-+
-exact Contract Version
-    ↓
-exact versioned Input Definition
-```
-
-Before Visible HIR, the authored Version Claim must resolve to an exact authority-scoped Resolved Version Candidate
-Coordinate. The `InputDefinitionCandidateRef` designates that coordinate together with the exact resolved Input
-Authority.
-It is distinct from the authoritative Definition Reference and cannot be promoted into one. Establishment creates the
-authoritative Version Binding and Definition Reference; Version selection is never implicit.
-
-A change to Contract-visible Input presentation meaning under the same Authority requires a new Contract Version. Source
-or realization changes do not require a new Version when the complete resolved Input meaning remains unchanged.
-
-### 4.6. Semantic Equality, Presentation Sameness, Merge, and Physical Reuse
-
-Input Definition Meaning is equal only when all Input-owned meaning determinants are equal under their owning laws.
-
-Presentation Sameness, defined in Section 6.9, compares legal values under one exact Input presentation meaning. It
-governs Membership uniqueness and Association key uniqueness without a separate user-selectable equality law.
-
-Presentation Sameness does not determine Candidate Reference equality, Definition or Occurrence identity, Fact sameness,
-or Canonicalization equivalence. Equal Input meanings under different Authorities or Versions remain distinct.
-
-Input does not merge Definitions through structural equality. Multiple legal Binding Candidates may select the same
-already-identified Input Definition, but that selection is not a semantic merge. Physical reuse likewise cannot
-establish
-semantic equality or Contract identity.
-
-### 4.7. Definition Establishment Judgment and Result
-
-An Input Definition judgment may enter only when its complete Candidate is available as valid Visible HIR. It consumes
-the Candidate meaning through the Input HIR Protocol and the exact authoritative Version prerequisite under ADR-0053 and
-ADR-0063. The Input IDL Binding Candidate is not an input to this judgment.
-
-The judgment has two Input-owned semantic results:
-
-```text
-complete resolved Candidate
-+ legal Input Definition meaning
-    -> Established Input Definition
-
-complete resolved Candidate
-+ meaning that violates the Input Definition law
-    -> Input Definition Refusal
-```
-
-The judgment applies the exact presentation laws already resolved in the Candidate. It cannot obtain missing meaning
-from host behavior or ambient state.
-
-A Candidate that fails HIR sealing cannot enter this judgment. Such failure belongs to the responsible compiler
-judgment,
-not to Input Definition Refusal. The common unsuccessful-result representation remains a dependency on Proposed
-ADR-0074.
-
-Successful Establishment preserves the complete Input Definition Meaning and its authoritative identity under ADR-0063.
-Compiler representation does not create another Input authority path.
-
-### 4.8. Resolved Input HIR Candidate Protocol
-
-Input specializes the ADR-0071 Resolved HIR Candidate Protocol without introducing another IR, semantic stage, or
-mandatory physical copy.
-
-The Protocol exposes these typed reference domains when required by a legal observation:
-
-```text
-ContractInterfaceRef
-InteractionRef
-InputDefinitionCandidateRef
-InputIDLBindingCandidateRef
-ResolvedInputCoordinateRef
-```
-
-`ResolvedInputCoordinateRef` identifies one direct Input coordinate through its exact `InputDefinitionCandidateRef` and
-nominal coordinate identity. Source positions, physical storage, and nested presentation constituents do not determine
-that reference.
-
-The Input Protocol catalog is:
-
-```text
-Input Definition Candidate Projection
-    exact InputDefinitionCandidateRef
-    complete Input Definition Candidate meaning
-
-Input IDL Binding Candidate Projection
-    exact InputIDLBindingCandidateRef
-    exact selecting semantic context
-    exact InteractionRef
-    Input role coordinate
-    exact target InputDefinitionCandidateRef
-
-Fine-Grained Semantic Projections
-    Input Candidate Coordinate Surface Projection
-    Input Candidate Presentation Law Projection
-    Input Binding Target Projection
-```
-
-The **Input Candidate Coordinate Surface Projection** exposes the complete direct coordinate surface of one exact
-Candidate, including each nominal coordinate and its resolved presentation meaning.
-
-The **Input Candidate Presentation Law Projection** exposes the complete Candidate-owned presentation topology and its
-applicable laws:
-
-- presence and absence;
-- form-defining cardinality or extent;
-- Presentation Sameness and collection uniqueness;
-- observable collection order;
-- closed Leaf laws; and
-- exact semantic-law references when they determine Input meaning.
-
-The **Input Binding Target Projection** exposes one exact Input selection occurrence and its target Input Definition
-Candidate without copying the Definition payload.
-
-Each projection is complete only for its declared observation. A fine-grained projection compares only that exact
-observation; equal projection payload does not merge Candidate References, Binding Candidate References, or
-authoritative
-Definitions. Omitted material is not semantic absence.
-
-Logical projections do not require separate physical representations. They may share immutable backing or physical reads
-while preserving their distinct semantic observation boundaries.
-
-### 4.9. Input HIR Seal and Establishment Handoff
-
-An Input Definition Candidate may become Visible HIR only when:
-
-- its exact Input Authority and Resolved Version Candidate Coordinate are known;
-- its complete Definition Meaning and direct coordinate surface are closed;
-- every required semantic reference is exact; and
-- its presentation topology is complete under Section 6.9.
-
-The corresponding Input Binding Candidate must resolve the selecting context, Interaction, Input role, and exact target
-Candidate. The same selection occurrence cannot have competing targets.
-
-Recovery or poison material, unresolved references, or incomplete meaning prevent HIR sealing. HIR sealing verifies
-resolution and
-completeness, not whether the Candidate satisfies the Input Definition law. A sealed Candidate may still receive Input
-Definition Refusal under Section 4.7.
-
-Establishment may use only legal Resolved HIR observations, authoritative prerequisites permitted by the Input identity
-law, and its explicit judgment input. It cannot reconstruct missing Candidate meaning from source, host behavior,
-compiler storage, or ambient state.
-
-ADR-0071 governs HIR lifecycle, generation validity, coherence, and Protocol evolution. An unknown required Input
-semantic extension fails closed unless a permitted compatible projection or validated migration preserves the required
-Input observation.
-
-### 4.10. Required Basis and Applicability Boundary
-
-Input owns no ADR-0063 Required Basis Law, Basis Resolution, Basis Binding, Complete Basis, separate Input Applicability
-judgment, Input arbitration, or Input Composition judgment. These categories are `NOT-APPLICABLE` to the current Input
-law.
-
-An exact semantic law or reference may still determine Input presentation meaning. When required, it is part of the
-complete Input Definition Meaning and must be resolved before Visible HIR. It is not a deferred Required Basis to be
-discovered at occurrence time.
-
-Selection of an Established Input Definition for an Interaction belongs to Interface, Policy, and Governance law. Input
-does not reselect the Contract World or incorporate independent governing context into its Definition or Occurrence
-meaning.
-
-Meaning-determining semantic references follow the ADR-0063 prerequisite law. Input provides no fixed-point exception:
-cyclic semantic Establishment dependencies remain illegal. Compiler query or analysis cycles do not themselves
-constitute such dependencies.
-
-### 4.11. Established Input Definition Material
-
-Successful Definition Establishment produces one complete Established Input Definition. Its Input-owned semantic surface
-contains:
-
-```text
-Established Input Definition
-    exact EstablishedInputDefinitionRef
-    exact Owning Input Authority Binding
-    exact Version Binding
-    complete Input Definition Meaning
-    direct established relation to each direct Input coordinate
-```
-
-The complete Definition Meaning is the same source-owned meaning closed by Sections 4 and 6. It
-includes:
-
-- the direct coordinate surface and presentation topology;
-- presence and absence;
-- form-defining cardinality or extent;
-- Presentation Sameness and collection uniqueness;
-- observable collection order when owned;
-- closed Leaf laws; and
-- exact semantic-law references when they determine the presentation.
-
-Each direct coordinate may be observed through an `EstablishedInputCoordinateRef`. Its semantic form
-is the exact `EstablishedInputDefinitionRef` plus the exact nominal direct Input coordinate. The
-compiler may use a replaceable physical encoding for that reference. The encoding is not coordinate
-identity and cannot make nested constituents into direct Input coordinates.
-
-Input establishes no third Input-specific material family beside Definition and Occurrence material. Selection bindings,
-world material, Basis material, and application-context relations remain owned by their respective authorities or are
-not semantic material at all.
-
-## 5. Invocation Boundary
-
-For one applicable Interaction, the established Contract World relation identifies the exact Established Input
-Definition
-that governs that Interaction's Input boundary. Invocation does not query or reinterpret the pre-authority Input IDL
-Binding Candidate.
-
-### 5.1. Occurrence-Time Input Presentation Judgment
-
-Input has independent occurrence meaning. One Input semantic application is one fresh entry of actual boundary material
-into the Input judgment for one exact Established Input Definition at one exact applicable Interaction Input boundary.
-
-```text
-exact Established Input Definition
-+
-exact InteractionRef
-+
-one fresh Input boundary entry
-+
-actual already-formed presentation material
-    ↓
-Input Occurrence judgment
-    ↓
-Presented
-or
-Refused
-```
-
-`Presented` means that the exact complete immutable presentation satisfies the applicable Input law. Input Establishment
-therefore establishes a direct occurrence-specific relation from the exact `EstablishedInputOccurrenceRef` to that
-Established Presentation. A later inbound authority may observe the presentation only through a legal producer-owned
-Established Input projection and only when the selected composition makes that Input material available to it.
-
-`Refused` means that the Input judgment was legally entered but the supplied material did not satisfy the declared Input
-presentation law. Input Establishment establishes `Refused` as the result of that exact Input semantic application, but
-no Input-authoritative presentation relation is established from the malformed or incompatible material, so no later
-inbound authority is reached.
-
-The judgment includes the presentation-level uniqueness and relation obligations owned by Section 6.9 when they apply,
-but it does not decide whether an otherwise correctly presented value may continue. Section 6.8 defines Input's side of
-that boundary, while Admission owns the continuation judgment under its own Contract.
-
-Carrier formation and the separation between carrier mechanics and Contract meaning follow Section 6.4. Immutability
-follows Section 6.3. Input does not repair, snapshot, normalize, or reinterpret material that reaches the boundary in a
-form those laws reject.
-
-Definition-time verification establishes that a declaration can produce a legal Input Definition. It does not authorize
-arbitrary runtime material merely because the host type appears compatible. Occurrence-time judgment uses only the exact
-Established Input Definition reached through the applicable established Contract relation; it does not reconstruct that
-definition from source, HIR Binding material, graph state, cache state, or backend representation.
-
-### 5.2. Input Occurrence Identity and Fresh Re-Entry
-
-Every legally entered Input application has one typed `EstablishedInputOccurrenceRef` identifying
-that exact semantic application. Occurrence identity is nominal application identity owned by Input.
-Neither presentation value equality nor a physical execution or storage coordinate supplies that
-identity.
-
-The same Definition and the same Presentation may therefore participate in several distinct Input Occurrences.
-
-```text
-Occurrence O1 != Occurrence O2
-
-Definition(O1) = Definition(O2)
-Interaction(O1) = Interaction(O2)
-Presentation(O1) PresentationSame Presentation(O2)
-Result(O1) = Result(O2)
-```
-
-Every fresh re-entry into the Input boundary creates a new Input Occurrence. Retry, restart, or redelivery therefore
-creates a new occurrence even when the same Definition, Interaction, determining semantic material, and Presentation
-Sameness lead deterministically to the same Input result. For the result law, the same exact Established Input
-Definition
-and the same Input-owned meaning-determining presentation distinctions produce the same `Presented` or `Refused` result;
-that determinism does not collapse occurrence identity. A duplicate transport event eliminated before the Input boundary
-does not create a second Input Occurrence because no second Input semantic application entered.
-
-Repeated physical evaluation of the same exact occurrence does not create additional occurrence authority. Parallel,
-speculative, retried compiler work may converge on one semantic occurrence when it is evaluating that same exact
-application. This is different from two fresh boundary entries, which remain distinct occurrences even when every
-presentation distinction is equal.
-
-### 5.3. Established Input Occurrence Material
-
-A legally entered Input judgment establishes one complete occurrence-specific semantic result under
-ADR-0063. This material consists of exact Input-owned semantic relations. It does not require a
-dedicated physical object.
-
-For a successful presentation, the established relations are:
-
-```text
-EstablishedInputOccurrenceRef
-    -> exact Input semantic application
-
-Applied Input Definition relation
-    EstablishedInputOccurrenceRef
-        -> exact EstablishedInputDefinitionRef
-
-Interaction attribution relation
-    EstablishedInputOccurrenceRef
-        -> exact InteractionRef whose Input boundary was entered
-
-Input occurrence result relation
-    EstablishedInputOccurrenceRef
-        -> Presented
-
-Established Presentation relation
-    EstablishedInputOccurrenceRef
-        -> exact complete immutable Input presentation
-```
-
-For a refusal, the established relations are:
-
-```text
-EstablishedInputOccurrenceRef
-    -> exact Input semantic application
-
-Applied Input Definition relation
-    EstablishedInputOccurrenceRef
-        -> exact EstablishedInputDefinitionRef
-
-Interaction attribution relation
-    EstablishedInputOccurrenceRef
-        -> exact InteractionRef whose Input boundary was entered
-
-Input occurrence result relation
-    EstablishedInputOccurrenceRef
-        -> Refused
-```
-
-These relations preserve only direct Input-owned attribution that actually determines the application meaning. The
-current Input law has no Required Basis or Input-owned Applicable Context under Section 4.10, so Policy World,
-Governance Binding, State, Budget, Capacity, run state, and the surrounding transitive semantic world do not become
-occurrence-specific Input relations.
-
-The direct relation to `InteractionRef` is required because one Input Definition may be used by several Interactions and
-one Input semantic application occurs at one exact Interaction Input boundary. A separate Input-role semantic relation
-is unnecessary: the reference domain already identifies an Input Occurrence and the Interaction relation identifies the
-boundary to which that application belongs.
-
-A `Refused` application establishes no Input-authoritative relation from its
-`EstablishedInputOccurrenceRef` to rejected material, runtime exceptions, or the runtime carrier.
-Separate Diagnostic or provenance products may preserve permitted evidence under their own laws
-without turning that evidence into Input meaning.
-
-Once established, these occurrence-specific semantic relations are immutable. A later application may
-be affected by:
-
-- a later Version, Policy, Governance, or State;
-- Contract World replacement;
-- retry; or
-- a later compiler generation.
-
-None of these can rewrite the meaning already established for the earlier Input Occurrence Reference.
-
-The producer-owned Established Input Semantic Protocol defined in Sections 9.2 through 9.4 is the legal observation
-boundary for these relations. Consumers do not obtain occurrence meaning by dereferencing an occurrence object or by
-traversing compiler storage topology.
-
-After a Presented occurrence is established, later inbound processing may change physical representation only through
-the declared Contract relations that own those changes. The material eventually supplied to the user Operation must
-preserve the meaning lawfully derived through the complete declared inbound pipeline. Undeclared substitution, mutation,
-reinterpretation, or introduction of different meaning is not a valid realization.
-
-The compiler and runtime must prove or check the required integrity at the boundaries where the
-applicable law cannot be guaranteed otherwise. This obligation does not prescribe a particular
-generated access or recheck strategy. Any realization must preserve the same Contract result, whether
-it proves the obligation statically or checks it at the required boundary.
-
-Policy, Governance, Budget, Capacity, and other independently applicable authorities retain their own results. Their
-negative or stopping results do not become Input Refusal and do not create an Input Occurrence when they prevent the
-Input judgment from legally entering.
-
-## 6. V1 Ratifiability Law
-
-V1 Input ratifies only finite, closed, directly inspectable presentation meaning that is fully resolved before Visible
-HIR. Actual Input material must already be immutable when it enters the Input boundary.
-
-Ratification cannot depend on implicit interpretation, executable host behavior, or live external state. A selected host
-declaration may provide evidence, but selection alone does not establish Input authority.
-
-### 6.1. Coordinate Closure
-
-One exact Input IDL selection occurrence identifies the source material that is refined into its target Input Definition
-Candidate under ADR-0047 and ADR-0071.
-
-Input does not infer, broaden, replace, merge, or arbitrate that selection. One exact selection occurrence must resolve
-to one exact target before the resulting Binding Candidate can become Visible HIR.
-
-Every contract-visible direct Input coordinate must resolve to one complete and closed presentation meaning; no direct
-coordinate may remain semantically open, erased, dynamically unresolved, or dependent on runtime type discovery. A
-frontend-specific source form is admissible only when the frontend can refine it completely into that closed meaning.
-Otherwise the Input definition is not established. Java raw or wildcarded types and Kotlin star-projected forms
-are examples of source forms that require such complete refinement.
-
-The closed Input surface does not silently accept or prune an undeclared semantic coordinate. Material that contains
-additional transport- or application-level structure must be projected into the declared Input presentation before this
-boundary unless a future Input law explicitly owns that projection.
-
-### 6.2. Direct Coordinate Identity and Meaning
-
-Every direct Input coordinate has one exact nominal identity within its Input Definition and resolves
-to one complete and closed presentation meaning. The resolved nominal coordinate identifies that
-direct coordinate. Source declaration positions, traversal order, and physical storage coordinates do
-not. Structural resemblance also does not create coordinate identity.
-
-Changing a direct coordinate's nominal identity changes Input presentation meaning. Reordering the declarations of the
-same nominal coordinates does not change Input meaning unless another explicitly declared Input law independently makes
-an order observable.
-
-Before Establishment, the HIR Protocol may refer to one direct coordinate through
-`ResolvedInputCoordinateRef`. That reference is semantically anchored by the exact
-`InputDefinitionCandidateRef` and the exact nominal direct coordinate. Source or physical coordinates
-cannot define it. Section 4.8 owns its Protocol exposure.
-
-Nested presentation members may have Input-local constituent identity under Section 6.9. They do not thereby become
-direct Input coordinates, cross-authority coordinate references, or Lowering source coordinates.
-
-Because Input authority depends on the resolved coordinate meaning rather than the host type used to
-present it, a frontend may admit a source form only when it preserves every distinction required by
-the declared Input meaning. Host-language type categories are frontend evidence, not Input Contract
-vocabulary by themselves.
-
-### 6.3. Explicit Immutability
-
-The complete Input presentation, including all nested constituents, must already be formed and immutable when it enters
-the Input boundary. Input judges that presentation; it does not make mutable material legal through copying,
-snapshotting,
-freezing, or transformation. Such formation must occur before the boundary.
-
-The presentation must not depend on mutable backing state, external aliases, or lazy materialization. Host immutability
-mechanisms may provide evidence, but they do not define the Contract obligation.
-
-### 6.4. Carrier and Contract Separation
-
-A host carrier may express Input evidence without owning the resulting Input meaning. Its runtime identity and storage
-are realization. The mechanisms that constructed it are also realization,
-even when they are convenient for acquisition.
-
-Executable host behavior cannot create Input coordinates or change their meaning. An accessor may expose
-already-declared evidence, but observing that accessor does not give its implementation Contract authority. Reflection
-or generated access may acquire the same evidence; neither mechanism defines the Contract surface.
-
-A frontend may therefore interpret a supported host form only as evidence for meaning that the Input law already
-defines. Section 6.11 covers the case where the same host declaration also serves as the direct runtime carrier.
-
-### 6.5. Inheritance and Polymorphism Boundary
-
-ADR-0079 governs source-language inheritance and generic type resolution. A frontend may use fully resolved inherited
-member information as evidence for an explicitly declared Input presentation only when the applicable Input carrier and
-closure laws permit it. Host inheritance does not select Input coordinates or add Contract meaning.
-
-The selected Input Definition must contain its complete presentation independently of host inheritance or runtime
-implementation choice. At invocation, runtime subtype discovery or dispatch cannot add, select, or reinterpret Input
-coordinates or alternatives.
-
-### 6.6. Presence, Absence, and Finite Choice
-
-Input may declare presence, absence, and finite alternatives as explicit presentation distinctions, but it must
-preserve every distinction required by the declared presentation meaning and cannot silently collapse distinct
-alternatives.
-
-Presence or absence is Contract meaning only when the Input law declares that distinction. A host-language `null`,
-nullable type, optional wrapper, sentinel value, or another source representation does not acquire Input meaning by
-itself. A frontend may map such a source form to declared Input meaning only when that mapping is complete and
-unambiguous.
-
-Input does not apply defaults. Source-language and construction-time defaults remain pre-boundary
-formation; they do not become Input authority. Input judges the actual presentation supplied at its
-boundary.
-
-If omission is legal, absence must be an explicit declared alternative. If a concrete coordinate is required, the
-supplied presentation must already contain it.
-
-A finite choice must be closed. Every declared alternative must be completely and unambiguously distinguishable under
-the Input law. The actual runtime material may not enlarge, replace, or reinterpret the declared alternative set through
-subtype discovery or implementation-specific behavior.
-
-Frontend or backend representation of those alternatives remains realization.
-
-### 6.7. Opaque Values and External Denotation
-
-Host object-reference identity does not provide Input meaning or semantic identity. An Input coordinate may nevertheless
-carry a declared immutable value that denotes something outside the Input presentation. Input
-owns only the declared presentation of that value. The existence, identity, validity, ownership, or behavior of the
-denoted target is not established by Input.
-
-A reference-valued Input coordinate does not by itself create a Definition Reference, Occurrence Reference, object
-relation, lookup obligation, or dereference authority under ADR-0063.
-
-An opaque value is admissible only when its complete Input-visible presentation distinctions are
-fixed by an exact Input presentation law. Opaque treatment cannot admit an arbitrary user object by
-disregarding its behavior, mutability, identity, or lifecycle.
-
-A frontend may map a supported host type to that already-defined presentation meaning only when the
-mapping is complete. The host type does not define the Input law. Its operations do not become Input
-meaning merely because they are associated with the carrier.
-
-Input does not establish canonical identity or normalized meaning for an opaque value. Those meanings remain with the
-Contract that owns them.
-
-### 6.8. Presentation-Only Authority
-
-Input judges whether boundary material realizes its declared presentation. A structural bound belongs to Input when it
-defines the required presentation form, such as extent or cardinality. Conditions governing whether correctly presented
-values may continue belong to Admission or another owning authority.
-
-Input establishes no authority over a target denoted by a presented value. It also does not establish downstream
-Contract
-meaning, governing selection, or machine movement. Those judgments remain with their respective authorities.
-
-### 6.9. V1 Presentation Algebra
-
-Input uses a small closed value-presentation algebra. These semantic families describe Contract-visible value topology.
-They are not Java or Kotlin classes, and they do not prescribe one generated host API form.
-
-The V1 fundamental families are:
-
-```text
-Leaf
-
-Named Product
-
-Closed Tagged Choice
-
-Sequence
-
-Membership
-
-Association
-```
-
-Their exact authoring tokens and physical HIR encoding remain open under Section 10.
-
-A **Leaf** is a complete presentation meaning that Input does not further decompose into constituent topology. Its
-complete legal domain, Input-visible distinctions, and Presentation Sameness are fixed by the Kontrakt-owned Input law.
-When that meaning genuinely consumes versioned or external semantic data, the exact meaning-determining semantic law
-material must be explicitly ratified and closed rather than supplied by ambient provider state. Section 4.10
-distinguishes
-that Definition determinant from ADR-0063 Required Basis.
-
-A **Named Product** is a finite closed set of nominally identified members. Each member has one complete presentation
-meaning and its own explicit presence law when absence is permitted. Product member declaration order is not semantic
-order.
-
-A **Closed Tagged Choice** has one finite closed domain of nominal alternatives. Exactly one alternative is selected in
-one occurrence. A case may have no payload or one complete constituent presentation. Case declaration order is not
-semantic order. Runtime subtype discovery and untagged structural matching do not select a case.
-
-A **Sequence** contains zero or more occurrences of one constituent presentation. Position is intrinsic semantic
-meaning, multiplicity is retained, and every actual Input occurrence is finite. Fixed or bounded extent is expressed
-through the presentation cardinality law rather than by creating another fundamental family.
-
-A **Membership** contains zero or more occurrences of one constituent presentation. Two members cannot be distinct
-within the same Membership when they are the same under that constituent presentation's exact Presentation Sameness law.
-Membership itself has no intrinsic position. Its order-observation law is independent of uniqueness.
-
-An **Association** contains zero or more key/value associations. Keys are unique under the key presentation's exact
-Presentation Sameness law. Key and value are presentation constituents rather than Input coordinate identities.
-Association itself has no intrinsic entry position.
-
-#### 6.9.1. Presentation Sameness and Input Uniqueness
-
-Every exact Input presentation meaning defines **Presentation Sameness** from the complete set of
-distinctions that Input owns for that presentation. Presentation Sameness asks whether two legal
-values preserve the same Input-visible meaning. It remains distinct from Host equality, Candidate
-semantic equality, Definition and Occurrence identity, Fact sameness, Canonicalization equivalence,
-HID equality, and physical representation equality.
-
-Presentation Sameness is intrinsic to the resolved presentation meaning and is fixed by the
-Kontrakt-owned Input semantic law. V1 provides no user-selectable Input equality, collation,
-normalization, or equivalence strategy. A Leaf obtains its sameness from its exact resolved
-presentation meaning. Named Product, Closed Tagged Choice, and Sequence lift constituent Presentation
-Sameness through their declared structure. Membership and Association preserve the exact presented
-constituent or key representatives and every Input-visible order distinction.
-
-For every legal complete value in one exact presentation domain, Presentation Sameness must be deterministic, reflexive,
-symmetric, and transitive. Missing, unresolved, malformed, unsupported, or otherwise illegal material is outside that
-legal value domain rather than merely unequal. Any meaning-affecting semantic basis required to determine Presentation
-Sameness must already be fixed or established as explicitly compatible under the applicable owning law before Visible
-HIR. An explicitly ratified closed semantic basis may participate when the presentation meaning actually consumes it.
-Runtime-selected provider state, ambient locale, host defaults, service discovery, or another unbound environment source
-cannot complete the relation later.
-
-Membership uniqueness is defined only by the constituent presentation's Presentation Sameness. Association key
-uniqueness is defined only by the key presentation's Presentation Sameness. V1 Input provides no independently
-selectable coarser equality or equivalence law for Membership or Association. Within one occurrence, two members that
-are the same under constituent Presentation Sameness cannot coexist as distinct Membership members, and two keys that
-are the same under key Presentation Sameness cannot coexist as distinct Association keys. Input does not choose
-first-wins, last-wins, silent deduplication, or a representative.
-
-Host operations, ambient environment state, and backend implementation details cannot redefine Input
-Presentation Sameness or collection uniqueness. A host carrier is usable only when the supported
-boundary mapping can preserve every Input distinction required by the Kontrakt-owned presentation
-law. If the carrier has already collapsed values that Input distinguishes, direct binding is not a
-lossless Input presentation and must be rejected or formed through another legal boundary before
-Input. ADR-0073 owns that platform-support and preservation gate.
-
-A later Contract may intentionally establish a different relation without retroactively changing Input. In particular,
-Canonicalization may explicitly declare an equivalence and establish a stable representative that collapses distinctions
-preserved by Input. When Canonicalization is absent, no hidden equality, normalization, or representative law is
-inserted; the Established Input Presentation remains unchanged when observed by the next selected inbound authority.
-Fact sameness, HIR semantic equality, Definition and Occurrence identity, and other later relations remain owned by
-their respective authorities.
-
-#### 6.9.2. Constituent Closure
-
-A direct coordinate may contain these families recursively only as a finite, closed, acyclic presentation graph. Nested
-members, cases, elements, keys, and values belong to the containing Input Definition. They do not create
-independent Contract authorities, independent Input Definitions, or independent Input Occurrences.
-
-The actual value judged at the Input boundary must be complete and finite. A semantic recursive type, mutually recursive
-presentation, runtime cyclic graph used as presentation meaning, lazy constituent source, or live stream is not a V1
-Input presentation.
-
-Host aliasing and shared-reference topology do not change Input meaning. If an external relation must be presented, it
-is carried as an explicitly declared descriptive value under Section 6.7 rather than as pointer identity.
-
-#### 6.9.3. Collection Order Observation
-
-Sequence owns positional order intrinsically, while Membership and Association may own one of the following
-order-observation laws:
-
-```text
-No Observable Order
-
-Encounter Order
-
-Ordered By an Exact Total Ordering Law
-```
-
-`Encounter Order` means that one occurrence preserves an observable linear encounter sequence. It does not imply a
-comparison relation between arbitrary constituent values.
-
-`Ordered By` means that an exact deterministic total ordering law determines the observable constituent order. For
-Association the ordering law applies to keys. The law must have an exact closed domain and every semantic-basis
-distinction required to determine its result. It must be stable for the presented value and free of ambient state and
-executable callback authority.
-
-For V1 Membership and Association, ordering zero-equivalence must coincide exactly with the applicable constituent or
-key Presentation Sameness. An ordering law that groups two Input-distinct values at one ordering position, or separates
-values that Presentation Sameness identifies, is not a legal V1 `Ordered By` relation.
-
-Observable order participates in Presentation Sameness whenever this Input presentation makes that order visible.
-Membership and Association uniqueness still use the applicable constituent or key Presentation Sameness rather than a
-separate host equality operation. A host platform's `equals` operation does not authorize the compiler to erase an
-Input-visible encounter or ordered-by distinction.
-
-Contract-visible order, deterministic compiler observation order, and physical storage order are separate:
-
-```text
-Contract-visible order
-    != deterministic compiler observation order
-    != physical storage order
-```
-
-The compiler may sort an unordered presentation for deterministic compiler processing or
-representation. That realization order does not become Input meaning. Conversely, deterministic
-implementation cannot erase a declared encounter or ordered-by obligation.
-
-An exact JVM collection surface never selects one of these Input order-observation laws. Platform
-collection behavior is platform evidence only. ADR-0073 may admit such a surface for an Input role
-only when it preserves the already-declared Input order, constituent Presentation Sameness,
-uniqueness, and every other required Input distinction without loss. Additional platform observations
-remain platform meaning; they do not enlarge Input meaning.
-
-Host collection ordering behavior is not adopted as Input authority. A platform order may realize
-`Ordered By` only when its zero-equivalence and observable order preserve the exact Input ordering
-law. A carrier that has already collapsed Input-distinct members or keys cannot be repaired at the
-Input boundary. Order compatibility alone does not establish direct-carrier legality; immutability,
-constituent closure, alias safety, capability isolation, and the other applicable Input and ADR-0073
-laws still apply.
-
-Host or generated collection operations are not Input presentation relations and do not create
-additional fundamental presentation families. When a supported platform or generated API exposes such
-operations, its owning API law and ADR-0073 own the separate preservation and use-legality
-obligation. No such operation may silently introduce a broader equality, ordering, or key-equivalence
-relation into Input.
-
-#### 6.9.4. Derived Presentations and Deliberate V1 Exclusions
-
-A semantic shorthand does not require a new fundamental family when the existing algebra preserves every Input-visible
-distinction.
-
-Examples include:
-
-```text
-Enum
-    -> payloadless Closed Tagged Choice
-
-Flags
-    -> Membership over a finite nominal case domain
-
-Option-like value
-    -> two-case Closed Tagged Choice
-
-Fixed-extent sequence
-    -> Sequence + exact presentation cardinality
-```
-
-Coordinate absence remains distinct from an Option-like value, an empty collection, a null-like Leaf value, and
-whole-Input absence. V1 deliberately does not add a generic positional heterogeneous Tuple, Multiset, or generic Result
-family. A future
-revision may add one only after demonstrating a Contract-visible distinction that cannot be represented without semantic
-loss and after passing the same HIR, Establishment, platform-preservation, and API review applied here. Unsupported
-meaning is not approximated through a supported family.
-
-V1 excludes the following Input presentation categories:
-
-- Open structures: open records, extensible tables, open rows, and flexible or unknown alternatives.
-- Dynamically interpreted structures: dynamic `Any` or document values and untagged unions selected by runtime shape.
-- Recursive or reference-based structures: recursive presentations and object/reference topology.
-- Executable or externally controlled material: capabilities, resources, futures, streams, callbacks, and executable
-  values.
-
-#### 6.9.5. Closed Leaf Presentations
-
-A Leaf is ratifiable only when its complete legal presentation domain, every Input-visible distinction, and Presentation
-Sameness are closed by the submitted presentation together with fixed Kontrakt-owned law and, only when that meaning
-actually requires it, an explicitly ratified closed semantic basis. Runtime-selected provider state, ambient
-environment, host defaults, user-selected comparison policy, or executable application behavior cannot complete the Leaf
-meaning.
-
-This section defines V1 Input Leaf presentation profiles and their Presentation Sameness. Shared Numeric, Text, and
-Temporal value meanings remain governed by ADR-0078, ADR-0080, and ADR-0082. ADR-0073 governs the separate legality
-of Java and Kotlin carriers and operations.
-
-The following table defines the baseline V1 Input Leaf profiles and their Presentation Sameness. All meaning-determining
-requirements must be closed before a concrete Leaf can be published. The listed names are semantic labels, not required
-authoring or generated API names.
-
-| Leaf meaning                           | Legal Input presentation                                                                                                        | Presentation Sameness                                                           | Distinctions not supplied by Input                                                                           |
-|----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
-| Boolean                                | one legal truth value                                                                                                           | the truth values are equal                                                      | source spelling or numeric source convention                                                                 |
-| Fixed-width signed or unsigned Integer | one value in the exact declared integer domain                                                                                  | the mathematical integer values are equal within that same presentation domain  | source radix, sign spelling, leading zeroes, or cross-Leaf numeric equality                                  |
-| Bytes                                  | one finite bounded octet sequence                                                                                               | the sequences have the same length and the same octet at every position         | Base64, hexadecimal, transport framing, or source encoding spelling                                          |
-| Text                                   | one finite bounded sequence of Unicode scalar values                                                                            | the sequences contain the same scalar values in the same positions              | UTF-8/UTF-16 storage, source spelling, Unicode normalization, case folding, collation, or locale             |
-| UUID                                   | one exact 128-bit UUID datum                                                                                                    | all 128 bits are equal                                                          | textual case or punctuation spelling, lookup of any denoted entity, or resource authority                    |
-| Decimal                                | one finite decimal coefficient together with its exact scale under the applicable closed bounds                                 | coefficient and scale are both equal                                            | lexical spelling, numerical-cohort equality, trailing-zero collapse, NaN, or infinity                        |
-| Binary32 or Binary64                   | one exact IEEE binary interchange datum admitted by the applicable Leaf law                                                     | the complete admitted bit datum is equal                                        | host numerical equality or ordering, NaN canonicalization, signed-zero collapse, or arithmetic-result policy |
-| ISO Date                               | one date in the fixed proleptic Gregorian presentation domain                                                                   | year, month, and day are equal                                                  | source date spelling or another calendar system                                                              |
-| Local Time                             | one closed local civil time value under the fixed V1 time-of-day domain                                                         | hour, minute, second, and fractional-second value are equal                     | source precision spelling, time zone, offset, or leap-second lexical evidence                                |
-| Local Date-Time                        | one exact local civil date-time under the fixed ISO Date and Local Time laws                                                    | all Input-visible local date-time distinctions are the same                     | offset, zone, instant interpretation, or source timestamp spelling                                           |
-| Numeric UTC Offset                     | one exact numeric offset in the applicable closed offset domain                                                                 | the numeric offsets are equal                                                   | zone identity, zone rules, or source offset spelling                                                         |
-| Offset Date-Time                       | one exact offset date-time whose retained distinctions include local civil date-time and numeric UTC offset                     | the retained local date-time and offset distinctions are the same               | same-instant equivalence, zone identity, or source timestamp spelling                                        |
-| Duration                               | one exact signed duration quantity under the fixed unit and resolution law                                                      | the duration quantities are equal under that law                                | lexical duration spelling or calendar-relative period meaning                                                |
-| Instant                                | one position under the fixed Kontrakt Instant Temporal Reference (origin, time scale, leap-second law, unit, range, resolution) | the complete coordinate is equal under the exact fixed Temporal Reference       | source timestamp spelling, source offset, zone, clock provenance, or leap-second parse evidence              |
-| Zone Descriptor                        | one exact closed zone descriptor, preserving its descriptor kind and payload                                                    | the descriptor kind and exact descriptor payload are the same                   | current zone rules, current offset, provider availability, alias resolution, or resource authority           |
-| Resolved Zoned Date-Time               | one exact resolved zoned date-time whose retained distinctions include local date-time, numeric UTC offset, and Zone Descriptor | all retained temporal and zone-descriptor distinctions are the same             | current time-zone-rule consistency, same-instant equivalence, or future rule interpretation                  |
-| URI Reference                          | one syntactically legal closed URI-reference presentation under the applicable grammar                                          | the retained component presence and character presentation are exactly the same | resource identity, dereference result, scheme-specific resolution, or URI normalization                      |
-
-Input Text follows the Unicode Scalar meaning defined by ADR-0080. A Java or Kotlin `String` is only a possible carrier
-and must preserve the admitted Input Text meaning. Normalization and case folding are not implicit Input operations.
-
-Temporal Input Leaves represent already-formed values under ADR-0082. `Instant` requires its exact fixed Temporal
-Reference. `Zone Descriptor` does not establish zone rules. `Resolved Zoned Date-Time` preserves its declared local
-date-time, offset, and zone descriptor independently of later changes to time-zone rules.
-
-Temporal acquisition, zone-rule resolution, and conversions using versioned temporal data remain separate operations
-under ADR-0082 and ADR-0073. They cannot introduce ambient provider state into Input meaning. Local Date-Time and Zone
-Descriptor do not automatically establish a Resolved Zoned Date-Time.
-
-A host type name or scalar-shaped carrier does not establish an Input Leaf. A separately ratified descriptive value
-must have closed presentation meaning and Presentation Sameness, and cannot import external resource authority. An
-existing Input family may represent that value when it preserves the declared meaning.
-
-### 6.10. V1 User-Facing Authoring Classes
-
-The V1 user-facing policy classifies host forms only to determine whether they can express an already-declared Input
-presentation. The host category does not create Contract meaning.
-
-| Authoring class                                                  | V1 treatment                                                                                                           | Examples                                                                                         | V1 frontend consequence                                                                                                                                              |
-|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Direct closed immutable presentation                             | Refine and ratify directly when every declared distinction is complete, immutable, supported, and legal under ADR-0073 | Losslessly mapped primitive or `String`; closed enum form; flat Kotlin data class or Java record | The selected declaration may supply external Contract evidence without a duplicate carrier declaration; actual invocation material remains subject to Input judgment |
-| Closed structured meaning without a ratified direct host mapping | Require explicit formation into a supported presentation before Input                                                  | Nested DTO; unsupported sealed hierarchy; collection carrier with non-preserved observations     | The semantic presentation may be legal under Section 6.9, but this host carrier does not become authority merely because its shape resembles that presentation       |
-| Implementation-shaped carrier                                    | Require explicit formation or reject the source                                                                        | Mutable JavaBean; proxy; runtime-discovered implementation                                       | Host conventions, mutable observation, lifecycle, and implementation relationships do not become Input meaning                                                       |
-| Behavior, capability, movement, or role leakage                  | Reject from Input                                                                                                      | Callback; service; live resource; stream; core Fact authority; State; backend handle             | The material belongs to another role or is not Input presentation data                                                                                               |
-
-A platform collection category does not by itself determine whether a carrier is accepted or
-rejected. Section 6.9 defines Input semantic meaning. ADR-0073 owns the platform-surface ratification
-and constituent-closure gate that determines whether a particular host surface can realize that
-meaning without loss.
-
-The exact V1 direct-support matrix for nested and collection-shaped Java or Kotlin carriers remains
-compiler/platform-support work. A legal Input presentation does not imply that every familiar host carrier for a similar
-shape is a legal zero-adapter carrier.
-
-### 6.11. Zero-Adapter Direct Carrier
-
-A selected host declaration may serve as both source evidence and runtime carrier when it already realizes a legal
-immutable V1 presentation under this ADR and passes the applicable ADR-0073 gate.
-
-For the current JVM V1 zero-adapter path, a flat Kotlin data class may provide that evidence directly when every
-selected coordinate has a supported presentation meaning. The same is true for a flat final Kotlin class whose selected
-coordinates are primary-constructor `val` properties, and for a flat Java 17+ record whose components satisfy the same
-requirement. These forms describe the current direct-support path, not a restriction on the nested semantic
-presentations permitted by Section 6.9.
-
-Only the resolved Input-visible coordinate surface survives into meaning. Constructor behavior and generated host
-machinery remain outside authority under Section 6.4.
-
-Source declaration order may help the frontend acquire the surface deterministically, but it is not Input semantic order
-and does not identify a direct coordinate. Section 6.2 owns direct coordinate identity. Section 6.9 owns any order that
-is actually observable inside a presentation.
-
-A direct carrier cannot depend on runtime implementation discovery or recursive host traversal that has not been
-ratified as a closed constituent mapping. Material that needs unsupported traversal or external lifecycle behavior must
-be formed into a supported presentation before invocation.
-
-Another frontend may later realize semantically equal Input presentation meaning. Section 4.6 prevents that equality
-from merging independently declared Contract identities.
-
-### 6.12. Behavior and Capability Are Not Opaque Leaves
-
-Labeling an executable capability as opaque does not make it legal Input. Input may instead carry an
-approved closed descriptive value that denotes something outside the machine, under the applicable
-Leaf or structured-presentation law. The execution capability, live resource authority, provider
-state, or resource ownership denoted by that value remains outside Input authority. A bearer or
-capability token is not rescued by scalar-shaped presentation.
+The generated machine realizes relation and candidate completeness, preserves the separate authorities for applicable
+standing judgment, legal movement, and Fact establishment, and preserves refusal routing and the later lawful handoff
+to the user Operation. These obligations do not grant Lowering their owning judgments.
 
 ---
 
-## 7. Authoring Boundary
+## 2. Problem
 
-Each declared Input selection is authored from the complete Contract meaning intended for that selection rather than
-from a reuse target. Several legal selection occurrences may deliberately select one already-identified Input Definition
-under ADR-0047 and ADR-0071. Those occurrences may belong to different Interactions or declared Contract World
-contexts. Similar host shape is insufficient. If two Inputs were declared independently, Section 4.6 prevents later
-structural equality from merging them.
+Lowering can easily collapse into an arbitrary mapper.
 
-A supported host-facing declaration may still remove the need for a second carrier declaration when it completely
-expresses one selected Input Contract. That frontend convenience is separate from sharing one Input Definition across
-several selection occurrences.
+If that happens, implementation code starts deciding which source values matter, which target coordinates participate,
+how Facts are formed, and when the core may trust the result.
 
-Richer application objects remain legal outside Kontrakt, but they must be formed into the applicable Input presentation
-before invocation unless their exact host surface passes the applicable direct-carrier gate. Section 6.9 defines the
-semantic presentation independently of that platform support. The authoring surface therefore does not force the
-application object model into the Contract Core.
+That would return Contract authority to user code.
 
-## 8. Refusal Boundary
+A generated mapper interface does not solve the problem. It merely moves the hidden meaning into a callback selected at
+assembly time.
 
-Input distinguishes compiler-side non-entry from two Input-owned negative results. A source or Candidate that cannot
-satisfy the Resolved HIR seal does not enter the Input Definition judgment. Unresolved
-source, recovery or poison material, an invalid Protocol handoff, or another compiler-owned failure therefore does not
-create `Input Definition Refusal`. The exact unsuccessful compiler result is owned by the applicable compiler judgment;
-its common representation and recovery behavior currently depend on Proposed ADR-0074.
+The opposite extreme is also wrong. The compiler must not infer conversion authority from matching names, equal types, a
+raw host-type pair, classpath discovery, backend support, or framework convention.
 
-`Input Definition Refusal` occurs only after a complete resolved Candidate legally enters the Input Definition judgment
-and fails the Input-owned Definition law. No authoritative Input Definition is established from that Candidate.
+Lowering therefore needs one declarative Contract surface and one replaceable compiler/backend realization boundary.
 
-`Refused` at invocation time occurs only after an exact Established Input Definition and exact Interaction have allowed
-a fresh Input semantic application to enter the occurrence-time judgment. That judgment establishes a fresh
-`EstablishedInputOccurrenceRef` and the exact result relation `Refused`, but it establishes no Input-authoritative
-presentation relation, so no later inbound authority is reached. A supplied boundary value that omits a required
-coordinate or violates the declared presentation law is handled here.
+The Contract surface owns the exact permitted relation and every semantic refinement required to make that relation
+complete.
 
-A transport, acquisition, or orchestration failure that prevents the material from entering the Input semantic
-application creates no Input Occurrence. Likewise, failure to obtain an applicable Established Input Definition or a
-stop
-owned by Policy, Governance, Budget, Capacity, or another authority remains the result of that owner rather than an
-Input Refusal.
+The compiler/backend realizes that established meaning over actual runtime values.
 
-Sections 6.3 through 6.7 define material that Input does not repair into legality after entry. Neither Input Definition
-Refusal nor an Input Occurrence result of `Refused` automatically becomes ADR-0057 Failure; the Failure Contract retains
-its own authority. Diagnostic evidence may explain either Input result, but Diagnostic does not create or rewrite that
-meaning.
+If the declared Contract does not contain enough meaning to determine a legal Lowering realization, the definition is
+incomplete. Kontrakt must reject it or the Contract language must gain an explicit way to state the missing meaning.
+User implementation must not silently fill the gap.
 
-## 9. Relationship to Later Contracts
+---
 
-Input establishes only Input-owned Definition and Occurrence meaning and creates no later pipeline authority. Admission
-owns continuation under Section 6.8, Canonicalization may establish a stable same-shape representative when selected,
-and Lowering owns the later declared relation from Input coordinates toward Operation parameters and Fact coordinates.
-Which later authority observes an Established Input Presentation directly is determined by the selected inbound
-composition rather than by Input. Nested constituents under Section 6.9 do not become Lowering source coordinates
-merely because they are addressable inside the Input presentation. None of those later authorities enters Input
-Definition identity, and their negative results remain distinct from Input Definition Refusal and Input Occurrence
-`Refused` under Section 8.
+## 3. Decision Drivers
 
-### 9.1. World and Occurrence Semantic Placement
+Lowering is not business computation.
 
-Established Input Definition Material is definition-world meaning and is made available through the Canonical Contract
-World under ADR-0063. Direct Input coordinate meaning belongs to that complete Established Definition surface.
+Lowering is not an Invariant, State Transition, Publication rule, or result producer.
 
-Established Input Occurrence Material is occurrence-specific established meaning. It remains semantically separate from
-the Canonical Contract World unless a future owning law establishes an explicit relation requiring otherwise. That
-separation does not prescribe a second object store, occurrence repository, or dedicated allocation domain.
+The Lowering declaration must contain immutable Contract material only.
 
-```text
-Established Input Definition Material
-    -> made available through the Canonical Contract World
+Every target Fact coordinate formed by one Lowering occurrence must have one explicit mapping from one source
+coordinate.
 
-Established Input Occurrence Material
-    -> remains occurrence-specific established meaning
+Equal names and equal host types do not create hidden relations.
 
-Established Input Semantic Protocol
-    -> legal observation of the Input-owned Definition and Occurrence projections
-```
+One mapping must not fan out into several Contract-visible target coordinates in V1; distinct mappings may reuse the
+same source coordinate.
 
-These placement and observation rules do not mandate a storage topology. Physical retention, sharing, and reclamation
-remain realization concerns. Reclaiming physical representation for an occurrence does not mean the semantic
-application was never established, and retaining physical representation does not extend semantic authority by itself.
+Several source coordinates must not be combined within one mapping to form one target coordinate in V1.
 
-For Input-owned relations, legal observation keeps `relation not owned`, explicitly permitted absence, present relation,
-and required-but-unresolved relation distinct. A required unresolved coordinate or relation cannot appear as successful
-Established Input meaning. Likewise, the fact that a future Input Occurrence does not yet exist is not incompleteness of
-the Established Input Definition. Independently complete Input Definitions may become visible without making any one
-Definition partially authoritative. Source provenance remains an adjacent relation rather than Definition or Occurrence
-identity.
+Each explicitly fixed target Fact kind and its entire factual surface must be intelligible without retaining the
+external Input declaration, source object graph, or selecting Operation parameter surface.
 
-### 9.2. Established Input Semantic Protocol
+The user must not implement Lowering in Java or Kotlin merely because physical representation work is required.
 
-Input specializes the common ADR-0063 Established Semantic Protocol as the legal observation boundary over
-Input-owned Established meaning. The Protocol is not an occurrence object model, DTO layer, storage schema, or mandatory
-copy boundary. It exposes these typed reference domains:
+The compiler may derive planning, completion checks, verification, diagnostics, caching, and optimization from the
+established relation.
+
+The backend may choose any physical formation strategy that preserves that established relation and its required
+representation law.
+
+The compiler must not invent missing Contract meaning from raw implementation convenience.
+
+---
+
+## 4. Decision
+
+The Lowering authority path is:
 
 ```text
-EstablishedInputDefinitionRef
-EstablishedInputOccurrenceRef
-EstablishedInputCoordinateRef
+external presentation authority
+-> explicit source-to-Core-Fact-coordinate mappings (one-to-one per mapping)
+-> established Lowering Definition and operation-local IDL Binding
+-> compiler-derived Lowering realization knowledge
+-> backend candidate formation over the actual source values
+-> complete candidate set for every explicitly targeted Fact kind
+-> separately owned applicable Fact, standing Invariant, and movement judgments
+-> lawful Fact establishment / Core entry
+-> separate Operation Fact participation and ordinary user Operation invocation, when applicable
 ```
 
-The Input projection catalog is:
+Lowering forms candidate material only after the declared relation has been realized over the actual source values.
+External-presentation authority ends for Core entry only after the complete target Fact candidate set and every required
+separately owned judgment succeed. No incomplete or partially successful candidate set obtains Fact authority.
+
+Backend value formation does not own Fact meaning or establishment.
+
+The user Operation does not perform Lowering.
+
+---
+
+## 5. Boundary Source and Target
+
+The Lowering Contract owns the explicit formation relation between selected boundary coordinates and its fixed
+Core-owned Fact targets. Operation Fact participation is not a Lowering mapping.
 
 ```text
-Established Input Definition Projection
-Established Input Occurrence Projection
-Direct Established Relation Projection
+interface scope:
+    one closed `facts` vocabulary
+    one standing `invariants` declaration
 
-Fine-Grained Established Input Projections
-    Input Definition Coordinate Surface Projection
-    Input Definition Presentation Law Projection
-    Established Input Presentation Projection
-    Input Occurrence Outcome Projection
-    Input Direct Coordinate Value Projection
+boundary side:
+    selected Input presentation
+    optional same-shape canonical representative
+
+Lowering Contract:
+    immutable explicit mappings to one or more fixed Core-owned Fact kinds
+
+compiler/backend realization:
+    compiler-derived LoweringPlan
+    exact source reads and target writes
+    permitted representation refinement
+    complete candidate-set formation for all target Fact kinds
+    completion and declared failure paths
+
+judgment and core-entry side:
+    applicable interface-level Invariant judgment
+    applicable movement judgment
+    Fact establishment under its owning law
+    separately bound user Operation Fact parameter values, when required
 ```
 
-Input has no additional authority-specific Established Material family that requires a separate projection category.
-Definition and Occurrence material are sufficient for the Input-owned meaning closed by this ADR.
+The selected Input schema remains the source schema even when Canonicalization is present because Canonicalization does
+not change the Contract-visible coordinates.
 
-### 9.3. Projection Completeness and Availability
+When Canonicalization is selected, its representative values become the source values.
 
-Each Established Input Projection is complete only for its declared observation:
+When Canonicalization is absent, the admitted Input values continue unchanged.
 
-| Projection                                    | Complete observation and availability                                                                                                                                                                                                                        |
-|-----------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Established Input Definition Projection**   | Exact `EstablishedInputDefinitionRef`, Owning Input Authority Binding, Version Binding, complete Input Definition Meaning, and all direct established coordinate relations of that Definition.                                                               |
-| **Established Input Occurrence Projection**   | Exact `EstablishedInputOccurrenceRef`, its Definition and Interaction relations, its result, and the Established Presentation relation only when the result is `Presented`.                                                                                  |
-| **Established Input Presentation Projection** | Available only for `Presented` occurrences. Exact Occurrence, Definition, and Interaction References and the complete immutable Established Presentation relation.                                                                                           |
-| **Input Direct Coordinate Value Projection**  | For one direct coordinate of a `Presented` occurrence, exact `EstablishedInputOccurrenceRef` and `EstablishedInputCoordinateRef`, explicit presence state, and the presented value when present. Nested constituents do not become direct Input coordinates. |
+Lowering does not introduce a separate `CoreMaterial`, `OperationStart`, `LoweringTarget`, or user-visible candidate
+schema.
 
-When the Established Input Presentation Projection is unavailable, the occurrence result must still be observed through
-the Input Occurrence Outcome Projection. Projection equality follows each declared observation; equal payloads do not
-merge Definition or Occurrence References.
+Each Lowering Definition explicitly fixes one or more exact Core-owned Fact kinds and the exact factual
+coordinates it forms for each kind. Fact Definition meaning is independently determined in the Core, not produced by
+Input, Lowering, Output, or Publication compilation. These are Fact-owned targets, not Operation-parameter addresses.
+The enclosing interface's `facts` vocabulary is a separate use-qualification relation; it neither creates nor
+reselects the Lowering Definition's target. A successful occurrence forms exactly one complete candidate of each
+fixed Fact kind.
 
-Observing Input projections does not transfer Input or Publication authority. Semantic absence is distinct from
-unretained physical representation, delayed physical materialization, unsupported observation machinery, or corrupt
-storage. Failure to provide a required legal observation is a compiler-side availability problem under Section 9.6 and
-ADR-0074, not Input absence or Refusal.
+The selected Operation still supplies the IDL Binding context and declares its Fact parameters independently.
+Neither that parameter list nor the current Operation signature determines or silently changes the Lowering targets.
 
-### 9.4. Direct Relations and Consumer Law
+The Operation manifest does not repeat that vocabulary and does not gain a `fact` or `invariant` slot merely for
+Lowering.
 
-Input owns only these direct established relation families:
+---
+
+## 6. Target Fact Independence
+
+The target Fact surface must not name, import, embed, extend, or retain a reference to the Input declaration, source
+DTO, transport protocol, host object, Lowering declaration, framework context, adapter type, or source-coordinate
+handle.
+
+The target must be intelligible through its own Fact coordinates, sorts, presence, alternatives, relations, ordering,
+bounds, schema, and version material.
+
+The backend may physically read source values and materialize ordinary target values.
+
+Source type names, getters, constructors, collection implementations, object identity, runtime references, generated
+helpers, and backend machinery have no factual authority.
+
+A generated host carrier may exist because a target Fact representation or the selected Operation ABI requires one.
+That carrier is representation. It
+is not Fact authority.
+
+If a backend can lawfully eliminate an intermediate carrier while preserving the host-visible Operation call and every
+Contract obligation, that elimination is a physical optimization only.
+
+---
+
+## 7. Lowering Definition and Operation Selection
+
+The Lowering Contract contains no user implementation callback and no business algorithm.
+
+The enclosing interface declares `facts` and `invariants`.
+
+The Operation manifest selects a Lowering Definition by name from the definitions declared in the Lowering DSL. Each
+relation in that definition uses `source -> target : method`. The selected Operation identifies the pipeline Binding,
+not the owned address or identity of a target Fact.
 
 ```text
-Established Input Definition
-    -> direct Input coordinate
+interface DepositContract {
+    policy        DepositPolicy
+    governance    DepositGovernance
+    budget        DepositBudget
+    capacity      DepositCapacity
+    facts         DepositFacts
+    invariants    DepositInvariants
 
-Established Input Occurrence
-    -> exact Established Input Definition
+    operation deposit(command: DepositCommand): DepositRecorded {
+        manifest {
+            flow:
+                input             DepositInput
+                admission         DepositAdmission
+                canonicalization  DepositCanonicalization
+                lowering          DepositLowering
+        }
 
-Established Input Occurrence
-    -> exact Interaction
+    }
+}
 ```
 
-Contract World selection of an Input Definition belongs to the selecting authority, and subsequent relations toward
-Lowering belong to Lowering. Consumer navigation does not change those ownership directions.
-
-A later inbound Contract may consume the Established Input Presentation Projection only when the selected composition
-makes it that Contract's direct semantic input. Canonicalization may be that consumer when selected; otherwise Admission
-may consume it under its own law. No consumer may bypass an intervening established result, reopen the host carrier, or
-rederive Input meaning from Source or host operations.
-
-Lowering may observe Definition-level Input coordinates where its own law requires them. Its occurrence-time value
-source
-remains governed by Lowering and the selected composition. Diagnostics may use Occurrence or Outcome projections;
-generated API formation, Verification, and PBT planning may use Definition projections when legal.
-
-Consumers observe Input through its producer-owned projections. Any additional judgment belongs to the responsible
-consumer or derived-result producer, not to Input or an Established Input Projection. A compiler product dependency does
-not create an Input authority relation.
-
-### 9.5. Reuse and Current Validity
-
-Input Definition and HIR work may be reused when current validity is established under ADR-0071 and ADR-0063. A retained
-Definition or projection is reusable only when the current Input authority and Version still correspond, every
-meaning-determining input remains valid, every direct semantic reference still denotes the required exact meaning, and
-the complete direct coordinate membership and presentation law remain unchanged.
-
-Because an Input Definition claims a complete direct coordinate set, reuse validation must cover negative space as well
-as surviving members. It must establish that no new direct coordinate was added and no required direct coordinate was
-removed; validating only the old coordinates is insufficient.
-
-Occurrence authority follows a different law. A fresh Input boundary entry never reuses an older occurrence as the new
-semantic occurrence, even when the same Definition and Presentation yield the same deterministic result. Realization may
-reuse validated non-authoritative computation or physical representation under Section 9.6, but such reuse cannot
-substitute an older `EstablishedInputOccurrenceRef` for the fresh application or make two Occurrence References equal.
-
-Conversely, duplicated physical computation of one already-identified exact occurrence does not create two semantic
-occurrences. Parallel or speculative realizations may converge on the same legal occurrence result and Protocol
-observation when they are evaluating that same exact application.
-
-Clean formation and every validated reuse or reconstruction path must produce the same legal Input
-Protocol observations. Cache state, fingerprints, HIDs, dependency topology, or retained bytes may
-justify work avoidance only through separately validated current-validity evidence; they do not
-create Input meaning or authority.
-
-A cache miss or rejected reuse attempt is not itself an Input or compiler unsuccessful result. The compiler may return
-to
-the clean deterministic path when retained material cannot be validated. Successfully decoding or locating persisted
-bytes likewise does not establish current semantic validity without the checks above.
-
-### 9.6. Coherent Observation, Representation Freedom, and Verification
-
-One legal Input Protocol observation must be coherent. A consumer cannot combine a Definition from one semantic
-generation with a stale presentation-law projection or coordinate relation from another merely because old physical
-representation remains reachable. Cross-generation physical reuse may participate only after current validity has
-established one coherent logical observation.
-
-Protocol crossing does not require a dedicated object or full copy. The physical realization behind
-Resolved HIR and Established Input Protocol observations is replaceable, provided it preserves the
-same legal observations. Physical sharing does not merge semantic entities or turn a storage
-coordinate into an Input semantic reference.
-
-Lazy physical materialization is permitted only after the semantic unit and its legal membership are already complete. A
-consumer cannot treat unresolved semantic meaning as a value that will become complete on first access. Typed reference
-kinds remain distinct even when their physical handles use the same width, and stale generation-local handles or
-wrong-kind references must fail closed rather than resolve through unchecked numeric substitution.
-
-Every optimized or reused path remains checkable against the clean deterministic path and the
-producer-owned Input Protocol laws. The conformance and adversarial-testing strategy remains
-Verification or Design work. Malformed or resource-hostile input and physical representations must
-not be handled by weakening Input semantics. Semantic bounds remain distinct from compiler Budget and
-resource-safety limits.
-
-If already-Established Input meaning exists but compiler machinery cannot supply a required legal observation, that is a
-compiler availability problem rather than an Input Refusal. The observation failure does not revoke or rewrite the
-already-Established Input meaning. The exact common unsuccessful-result representation remains owned by Proposed
-ADR-0074.
-
-### 9.7. Non-Normative Compiler-Native Access Sketch
-
-The semantic laws above do not require an object graph. A V1 realization may use a shape such as the following without
-making these arrays or handles Contract meaning.
+The selected Lowering Definition is written separately in the Lowering DSL. A mapping method uses an explicit callable
+application. In the following illustrative target notation, `DepositCommand` denotes a fixed Fact kind from the Core
+Fact vocabulary, not the Operation parameter named `command`; the final Fact-qualified target spelling is still open.
+For example, Java static methods can be referenced through an import:
 
 ```text
-candidate_handle = current_dense_handle[input_definition_candidate_ref]
+import java.lang.Long
 
-coord_base  = input_candidate_coord_base[candidate_handle]
-coord_count = input_candidate_coord_count[candidate_handle]
-
-for i in coord_base ..< coord_base + coord_count:
-    coord_ref      = input_candidate_coord_ref[i]
-    presentation   = input_candidate_coord_presentation[i]
-    consume legal HIR observation
-
-input_definition_judgment(candidate_handle)
-    -> established_definition_ref
-    or Input Definition Refusal
+lowering DepositLowering {
+    accountIdText -> DepositCommand.accountId   : Long.parseLong(accountIdText)
+    amountText    -> DepositCommand.amountMinor : Long.parseLong(amountText, 10)
+}
 ```
 
-Occurrence realization may likewise use flat typed relations rather than an occurrence object. The following is one
-non-normative columnar/slab-shaped realization of the same semantic protocol.
+A Kotlin extension function uses its source coordinate as the receiver. Here `QuantityFact` denotes the exact target
+Fact kind, not an Operation parameter:
 
 ```text
-definition_ref = established_input_definition_for_interaction[interaction_ref]
-occurrence_ref = fresh_input_occurrence_ref()
-occurrence_handle = current_dense_handle[occurrence_ref]
+import kotlin.text.toInt
 
-result = judge_input_presentation(
-    definition_ref,
-    submitted_material
-)
-
-input_occurrence_definition_ref[occurrence_handle] = definition_ref
-input_occurrence_interaction_ref[occurrence_handle] = interaction_ref
-input_occurrence_result[occurrence_handle] = result
-
-if result == Presented:
-    presentation_ref = retain_or_reuse_immutable_presentation(submitted_material)
-    input_occurrence_presentation_ref[occurrence_handle] = presentation_ref
-
-expose legal Established Input Occurrence Projection
+lowering QuantityLowering {
+    quantityText -> QuantityFact.quantity : quantityText.toInt(10)
+}
 ```
 
-The arrays, handles, and presentation references in this sketch are physical realization only. A different realization
-may replace them without changing the Contract meaning or the producer-owned Protocol observations. Any later legal
-consumer reads the presentation through the Established Input Presentation Projection rather than through these physical
-columns or the carrier used to form them.
+Each application names its selected source coordinate exactly once, either as an explicit argument or as the receiver.
+Other arguments must be literals or statically resolved constants whose values and meanings are complete before
+Establishment. The DSL does not insert a source argument, infer an argument position, or use implicit default values.
 
-## 10. Open in This Section
+The right-hand side is one callable application, not a general expression body. Nested calls, another runtime source
+coordinate, runtime-computed arguments, open dispatch, and user callbacks are not permitted. Imports shorten names;
+resolution still must select one exact callable. Ambiguous or unresolved applications are rejected. The Resolver,
+Type Engine, and library semantic interpretation own that resolution and its meaning, not Lowering.
 
-No further V1 Input semantic question is left open by this ADR. Sections 4, 5, and 9 define its HIR, Establishment,
-Established Material, and Semantic Protocol boundaries. Remaining implementation and integration work must preserve the
-closed Input law.
+The relation body does not repeat Input carriers, Operation parameter declarations, Fact declarations, or Invariant
+declarations. A single Definition may explicitly target several distinct Fact kinds, but does not acquire a relation
+between those Facts merely by forming their candidates together.
+
+It contains only the exact Contract material owned by Lowering.
+
+Every source-to-target relation is explicit.
+
+Equal spelling does not create a relation.
+
+Different spelling does not prevent a relation.
+
+If the selected callable's qualified meaning and the applicable Contract meaning do not determine the required
+source-to-target formation, the declaration is incomplete. A user-written converter is not an implicit extension of the
+Contract.
+
+---
+
+## 8. V1 Cardinality Law
+
+The Contract-visible V1 relation is one explicit mapping at a time:
 
 ```text
-Input / ADR-0064
-    HIR Bundle                     -> DEFINED
-    Establishment Bundle           -> DEFINED
-    Established Protocol           -> DEFINED
-    Input Semantic Status          -> CLOSED
-    Common Compiler-Result Detail  -> PROVISIONAL-COMMON / ADR-0074
-    Physical Realization           -> DESIGN
+one selected Input coordinate
+-> one coordinate of one explicitly fixed Core Fact kind
 ```
 
-Remaining work is owned outside Input semantics:
+One mapping selects exactly one source coordinate and forms exactly one target factual coordinate. The same selected
+Input coordinate may be reused in separate, explicit mappings, including mappings into different target Fact kinds.
+Source reuse does not make any single mapping a multi-target computation.
 
-- **Compiler Result (ADR-0074, Proposed):** Common unsuccessful-result and recovery representation. Input retains the
-  distinction between compiler-side non-entry, Definition Refusal, and occurrence-time `Refused`.
-- **Authoring and API:** Final Input authoring tokens, public Java/Kotlin carrier syntax, the exact V1 set of concrete
-  bounded Leaf variants, and the generated Host API strategy for Policy-variable Input. Distinct Input Definitions
-  selected by different Contract Worlds need not share a host carrier.
-- **Platform (ADR-0073):** The exact Java/Kotlin direct-support matrix for Input Leaves and carrier operations. Legal
-  Input meaning does not by itself make a host carrier or operation legal.
-- **Interface, Policy, Governance, and HIR:** Exact Contract World selection and its HIR representation. That relation
-  must not be used to reconstruct missing Input Definition Meaning.
-- **Design:** Physical HIR representation, reusable Leaf-law representation, and compiler optimizations. None changes
-  Input meaning or introduces a user-selectable Input equality or normalization law.
+Each factual coordinate of each target Fact candidate must be formed exactly once. Duplicate formation of the same
+Fact-kind coordinate within the occurrence is prohibited. Unused Input coordinates are permitted.
 
-Concrete V1 bounded Leaf variants remain subject to the complete closure requirements of Section 6.9.5 before Visible
-HIR. A Candidate must retain all resolved meaning and exact semantic bases needed by its presentation law. Compiler
-comparison acceleration, including hashes or indexes, must be validated against that exact law.
+A single Lowering Definition may explicitly fix more than one distinct Fact kind. Each target kind must have one
+complete candidate factual surface; the number and coverage of Operation parameters do not determine that surface.
+The joint formation of several Fact candidates establishes no implicit relation between those Facts.
 
-Future presentation-family additions must preserve Input's closed meaning and external-authority boundaries. Host
-behavior,
-snapshot timing, open-world evolution, and backend representation cannot become Input meaning through such an extension.
+V1 still forbids one mapping from producing multiple factual coordinates and forbids combining multiple source
+coordinates to form one target coordinate. Such cross-coordinate computation is not authorized merely by source reuse
+or multiple Fact targets.
 
-## 11. Consequences
+Physical storage may still be split, packed, flattened, or combined behind the same Contract relation. Physical layout
+does not change Contract cardinality.
 
-Input establishes an immutable boundary presentation with a flat direct coordinate surface. Each coordinate may contain
-a finite, closed, acyclic structured value. Host carriers remain evidence rather than Contract authority, and physical
-representation and generated APIs remain replaceable when they preserve the same Input meaning.
+---
 
-Input owns the Presentation Sameness, uniqueness, and observable order of its declared values. Host equality or ordering
-cannot redefine those laws. Canonicalization may explicitly establish a different equivalence and representative;
-without it, no such relation is implied.
+## 9. Type Relation and Compiler-Derived Realization
 
-Changes to meaning-determining presentation laws or semantic bases change Input meaning. Source, library, or provider
-changes that preserve the exact resolved meaning remain realization. An application carrier that cannot preserve Input
-meaning must be adapted into a legal presentation before invocation or use an ADR-0073-qualified direct mapping.
+Source and target host types may be identical.
 
-Every fresh boundary entry establishes a distinct Input Occurrence, even when an earlier occurrence has the same
-presentation and result. Later Fact identity may converge without merging those occurrences. Validated Definition or
-physical computation reuse cannot replace a fresh Occurrence identity. HIR and Established Semantic Protocols let
-consumers observe permitted Input meaning without reconstructing it from source or host carriers, while physical sharing
-remains separate from Contract identity.
+Equal types do not authorize implicit copying and do not remove the explicit Lowering relation.
+
+Source and target host types may also differ.
+
+A raw type difference does not ask the user to provide an implementation.
+
+The declared relation identifies the source and target. Their sorts need not be directly structurally compatible when
+a qualified conversion can form the target from the source.
+
+The Resolver selects the exact callable. The Type Engine judges its argument and result type applicability. Library
+semantic interpretation supplies the qualified conversion meaning under the applicable semantic basis. Together, those
+subsystems determine whether the conversion is valid for the declared source and target meanings and applicable
+Contract-owned representation law. Lowering consumes the completed judgment to establish the explicit coordinate
+relation. It does not rejudge the conversion.
+
+Supported methods may use qualified Java/Kotlin standard-library operations or Kontrakt-supported formation-library
+operations, including parsing and decoding. An open or dynamically selected callable cannot complete Lowering meaning.
+The same applies when any required callable dependency remains unresolved or its behavior cannot be interpreted.
+
+The compiler does not select meaning from the raw host-type pair.
+
+A conversion catalog does not provide Contract authority merely because it contains a compatible function.
+
+A library does not select itself.
+
+A naming convention does not provide authority.
+
+Classpath contents do not provide authority.
+
+Backend support does not create missing Contract meaning.
+
+When the established Lowering Contract and qualified callable interpretation completely determine one permitted
+representation refinement, the compiler may lower that meaning to any supported backend operation, library primitive,
+generated helper, table, parser, copier, constructor path, or direct machine representation that preserves it.
+
+When that meaning remains incomplete, compilation must fail rather than requesting a user mapper.
+
+The backend realization must not perform repository lookup, environmental resolution, business computation, Invariant
+judgment, State movement, Publication, or undeclared capability access as part of Lowering. A selecting Operation
+parameter is neither a target source of authority nor an implicit conversion rule.
+
+---
+
+## 10. Representation Refinement, Not Core Computation
+
+Lowering changes representation and authority domain without deriving new cross-coordinate business meaning.
+
+Each selected mapping method determines how the source's declared meaning is formed in its target representation.
+
+At the Contract-visible boundary, V1 forms each coordinate of each explicitly fixed target Fact candidate through
+exactly one explicit mapping from one Input coordinate. That Input coordinate may be reused in other explicit mappings.
+
+Permitted one-to-one refinement families include:
+
+```text
+declared external scalar presentation
+    -> immutable Fact scalar of the same declared meaning
+
+nullable or optional presentation
+    -> one explicit optional Fact coordinate
+
+closed external alternative
+    -> one explicit finite-alternative Fact coordinate
+
+approved bounded opaque leaf presentation
+    -> one immutable Fact coordinate under the same declared leaf meaning
+
+direct selected Input coordinate
+    -> one explicitly addressed Core-owned Fact coordinate
+
+declared external identifier or reference presentation
+    -> one Fact representation of that same declared identifier or reference meaning
+```
+
+Compiler/backend realization may decode, parse, range-check, copy, freeze an approved bounded leaf, make an
+already-declared presence distinction explicit, or select a fixed internal representation only when that exact
+refinement is already determined by the established Contract meaning.
+
+A generic text coordinate does not become a date, account identity, money, or another business concept merely because a
+backend library can parse it.
+
+The following cardinalities are prohibited in V1:
+
+```text
+one mapping -> multiple Contract-visible Fact coordinates
+multiple source coordinates within one mapping -> one Contract-visible Fact coordinate
+```
+
+The prohibition is semantic, not physical. A backend may decompose one Fact coordinate into several machine words or
+pack several coordinates into one region. Those choices remain backend layout. Reusing the same source coordinate
+through separate, lawful one-to-one mappings is permitted; it does not make one mapping a `1:N` relation.
+
+Lowering must not create a new business proposition, consult mutable current machine state, execute core computation,
+produce Operation Result Material, decide whether movement is legal, evaluate an Invariant, select a Transition, grant
+Publication authority, apply business Policy, infer missing material, combine coordinates within one mapping, or split
+one mapping into
+several Contract-visible meanings. Distinct explicit mappings may lawfully reuse a source coordinate.
+
+The following are not Lowering:
+
+```text
+birth date -> current age
+price + customer grade -> discounted price
+score -> risk category
+year + month + day -> business date coordinate
+name text -> database lookup -> current company identity
+timestamp -> separate business-visible seconds and nanos coordinates
+current balance - withdrawal amount -> new balance
+Fact set -> Result
+Result -> outward presentation
+```
+
+The distinction is:
+
+```text
+Lowering Contract:
+    each explicit mapping: one boundary coordinate -> one fixed Core Fact coordinate of the same declared meaning
+
+Lowering realization:
+    compiler/backend formation of the actual target value under the established Lowering Contract
+
+core realization:
+    user Operation computation over established Facts and other lawfully available immutable material
+
+Invariant:
+    judgment over one complete candidate Fact under the standing interface-level law for its exact kind
+
+State and Transition:
+    legal movement authority under their own Contract law
+
+Publication:
+    permitted outward exposure authority
+```
+
+A conforming Lowering realization must be deterministic over its declared source domain and form the complete set of
+all declared target Fact candidates or refuse the Lowering occurrence under its declared law. Individual mapping
+refusals retain their exact attribution under the owning failure law.
+
+The generated machine supplies only the source coordinates selected by the established relation.
+
+Budget, Capacity, Version, Governance, and other cross-cutting judgments remain under their own authority and
+attribution.
+
+A declared reference may cross Lowering only as one explicit source coordinate refined into one explicit target
+coordinate of the same declared reference meaning. Resolution against another coordinate, a mutable registry, or current
+core state belongs elsewhere and must not be disguised as formation.
+
+---
+
+## 11. Definition-Time Completeness and Identity
+
+A Lowering Definition Candidate owns the complete resolved meaning of its explicit one-to-one-per-mapping formation
+relations for every fixed target Fact kind.
+Its Definition determinants are:
+
+```text
+Source Requirement: each declared nominal source coordinate and its required Input-visible presentation meaning
+Target Requirement: each exact, explicitly fixed Core-owned Fact kind and its factual coordinates, complete Fact
+    surface, applicable Fact meaning, version, and required representation meaning
+Mapping Relation: the complete declared source-to-Fact-coordinate relations for all fixed target Fact kinds,
+    preserving every mapping occurrence, source reuse, target uniqueness, and multiplicity
+Formation Meaning: the exact qualified callable, explicit source receiver or argument placement, meaning-determining
+    arguments, completed conversion meaning and applicability, and Lowering-owned partiality and refusal meaning
+Semantic Dependencies: the exact target Fact meaning/version and Contract-owned refinement, bounds, and semantic
+    Law or Basis references that determine the declared formation meaning
+```
+
+These determinants must be resolved before the Candidate becomes Visible HIR. Establishment cannot reconstruct missing
+Definition meaning from the IDL Binding Candidate, a current Operation, source syntax, or backend behavior. Resolved
+mapping occurrences retain their full multiplicity even when a complete declaration violates a Lowering
+law. Frontend resolution must not silently repair or discard mappings; unresolved meaning cannot enter Visible HIR.
+The declaration order of independent mappings is not Lowering Definition meaning. Their exact declared multiplicity
+and source-to-target/formation relations remain meaning, including repeated identical mappings. Source provenance
+and physical mapping index do not define Mapping identity or equality. An order explicitly belonging to a Fact
+coordinate, callable argument application, or another separately owned law remains governed by that law.
+
+A nominal source requirement does not incorporate the current selected Input Definition. The target requirement,
+however, fixes each exact Core Fact kind and its required factual coordinates independently of the current Operation
+Parameter Reference. Those exact Fact meanings and their applicable versions remain Definition dependencies. The
+current selected Input and Operation must satisfy their own Binding and application requirements; selection cannot
+give one Definition an unrecorded alternate Fact target, callable, or formation meaning.
+
+Lowering consumes the lawful boundary Presentation supplied for its actual application. When Canonicalization is
+selected, selected coordinates use its final representatives and unselected coordinates retain Input-established
+values. Lowering does not select Canonicalization, reconstruct that Presentation, or judge an upstream refusal or
+continuation outcome. The upstream source and entry laws do not become Definition determinants by being prerequisites
+for use.
+
+For a selected Operation, the Definition and its separate operation-local Binding, together with the applicable
+separately owned judgments, must close at least:
+
+```text
+the flow-selected Input schema
+the selected Canonicalization law, when present
+the enclosing interface's Fact vocabulary and standing Invariants
+the selected Operation signature for its own IDL Binding and application obligations, not as a Mapping Target
+every explicitly fixed target Core Fact kind and its complete factual surface
+every explicit Input-coordinate to fixed Fact-kind-coordinate mapping
+one source coordinate and one Fact-owned target address for every mapping
+explicit mapping even when source and target names or host types are equal
+completed conversion applicability for the source and target, as judged by the Type Engine and library semantic interpretation
+the selected mapping method's exact resolved callable and qualified formation meaning under the applicable semantic basis
+the explicit source argument or receiver and every meaning-determining constant argument
+the Contract-owned representation refinement required by each non-identical representation
+complete factual coverage and unique formation for every fixed target Fact candidate
+explicit source-coordinate reuse only through distinct, independently lawful mappings
+finite depth, cardinality, intermediate storage, output, and work bounds
+applicable schema, Version, and Governance material
+Lowering-owned refusal meaning and separately owned cross-contract stop attribution
+```
+
+Every factual coordinate of every fixed target Fact candidate must be formed exactly once under the complete flat
+Lowering Definition. Each target Fact kind must have one complete candidate; no target may be left partial.
+
+An Input coordinate may appear in several distinct, explicit mappings. An Input coordinate may also remain unused.
+Neither case implicitly creates a relation or requires an Operation parameter Fact surface to reproduce external
+material.
+
+Silent target defaults, fallback constructors, same-name auto-mapping, same-type auto-copying, catalog selection,
+structural guessing, package scanning, annotations, assignability, inheritance, and discovery from implementation shape
+are prohibited.
+
+A Lowering Definition with missing or duplicate formation of a target Fact coordinate, a single mapping with
+multiple targets, a target coordinate requiring combined runtime source coordinates, hidden absence, recursive
+host-object traversal, unbounded collection work, environment-dependent Contract meaning, executable user material
+inside the relation body, or a representation refinement whose meaning is not closed by the declared Contract and
+qualified callable interpretation cannot be established as a lawful Lowering Definition. Fully resolved duplicate
+mappings remain visible for the owning Lowering judgment rather than being repaired or discarded by the frontend.
+Unresolved authored nominal Source Requirement coordinates, unresolved or falsely attributed target Fact kinds or
+coordinates, and incomplete or
+unsuccessful qualified conversion resolution cannot supply complete Visible HIR meaning. Exact callable resolution,
+source/target sort applicability, and qualified Java/Kotlin library interpretation remain the responsibility of their
+owning compiler subsystems; Lowering consumes their completed meaning without rejudging it. A fixed target Fact kind
+absent from the current enclosing interface's Fact vocabulary is a separate Binding/Composition compatibility defect,
+not a missing or alternate Lowering Definition target. Repeated source coordinates in different explicit mappings are
+not a rejection reason. The HIR Seal and owning Definition refusal boundary is specified in Section 11.5. Fully resolved
+target
+multiplicity and coverage defects remain violations of the Lowering Definition law, not missing HIR meaning.
+
+There is no missing-Lowering-implementation link failure because the user does not supply a Lowering implementation.
+
+A backend that cannot realize a semantically complete Lowering Contract with the required guarantees must reject that
+backend realization. Backend inability does not change the Contract.
+
+The established Lowering Definition is represented as one flat, immutable, adapter-erased Lowering Contract material.
+Its complete Definition meaning preserves the nominal source requirements, the exact fixed target Fact kinds and
+complete target coordinate requirements, the complete declared mapping relations and their multiplicities, the qualified
+callable formation meaning and argument application, and all meaning-determining refinement, bounds, refusal, and
+semantic dependencies. One independently declared Lowering Contract denotes one Lowering Authority;
+that Authority and one exact Contract Version identify one complete Definition under ADR-0063 and ADR-0053. Conflicting
+resolved meanings cannot be established for the same Authority and Version. Equal meanings under different Authorities
+or Versions do not merge their identities. Import spelling and source location do not change Definition meaning.
+
+Selection by an Operation is a separate Binding. It preserves the exact Lowering Definition Reference and the selected
+Operation Reference. The selected Input, optional Canonicalization, selecting Operation signature, and applicable
+flow-world basis must
+be resolved for that Binding before use. Its fact-parameter participation obligations are separate from the
+Definition's fixed target Fact kinds and target coverage. Those contextual resolutions do not become Definition
+determinants merely because an Operation selects the Definition. If an exact basis determines the
+Definition's
+own meaning, ADR-0063 still requires that dependency to remain with the Definition. CRI may prepare exact compiler-time
+source and target correspondences from legal producer projections; it does not establish Binding validity, invent a
+mapping, or form runtime source values.
+
+The Binding must not change the Definition's declared relation or qualified callable meaning. A mismatch is rejected,
+not repaired through inference. The Definition's identity and the Binding's identity remain distinct even when one
+Operation is the only current user of that Definition.
+
+Backend helper identity, generated class identity, host object identity, allocation strategy, and machine-code shape are
+not part of Lowering Contract meaning.
+
+From ratified Lowering material, the compiler derives one immutable semantic `LoweringPlan` or equivalent realization
+knowledge.
+
+That derived material closes the exact source read set, target Fact-coordinate write set, required representation
+operations, completion checks for every fixed candidate Fact and their whole set, declared refusal branches, lawful
+Invariant and movement handoff, establishment requirements, cache dependencies, and backend layout requirements
+legitimately implied by the Contract.
+
+Derived material does not become another authored Lowering Contract.
+
+### 11.1. Resolved Lowering HIR Candidate References and Core Fact Dependency
+
+Lowering specializes the ADR-0071 Typed HIR Semantic Reference Domain with two Lowering-owned primary Candidate
+reference kinds when their exact subjects must be observed:
+
+```text
+LoweringDefinitionCandidateRef
+LoweringIDLBindingCandidateRef
+```
+
+`LoweringDefinitionCandidateRef` identifies one exact, current, resolved Lowering Definition Candidate under its
+owning Lowering Authority and authority-scoped resolved Version candidate coordinate. The independently declared
+Definition and its applicable Version determine the candidate's nominal identity scope. A future need to distinguish
+several independent Definitions under one Authority and Version must follow the owning authority-local coordinate law
+of ADR-0063; source order, a host symbol, an IDL selection, or a physical index cannot supply that distinction.
+This pre-authority Candidate Reference is not an Established Definition Reference.
+
+`LoweringIDLBindingCandidateRef` identifies one exact operation-local IDL selection occurrence. Its selecting
+Contract Interface/Interaction/Operation context, Lowering role coordinate, exact target
+`LoweringDefinitionCandidateRef`, and any independently required Binding qualifier are observed through the
+existing IDL/HIR reference laws. Two distinct Operation selections may target the same Definition Candidate without
+merging their Binding Candidates or changing the Definition's Fact targets. Selection observation at the owning role
+coordinate distinguishes an exact selected Binding Candidate from Explicit Absence under ADR-0071. An unresolved
+selection is not Explicit Absence, and absence does not require a fabricated Lowering Reference.
+
+A nominal Source Requirement belongs to the Lowering Definition Candidate, not to the currently selected Input
+Definition. Every required Source Coordinate must be exactly selectable within the owning Definition's resolved
+meaning, but no separate primary `SourceRequirementRef` is mandated. Every explicit Mapping occurrence must likewise
+remain exactly observable with its multiplicity, without requiring a new primary Mapping Reference or an independent
+Mapping Authority. Source position, declaration order, array slot, generated helper, and generation-local handle are
+not semantic selection or identity laws. Section 11.3 fixes target-qualified Mapping Meaning selection without
+mandating a physical selector representation.
+
+A fixed Target Requirement consumes the exact pre-authority meaning of a separately Core-compiled Fact Kind and its
+Fact-owned factual coordinates. The target reference is owned by the Fact HIR Protocol, not minted or reinterpreted
+by Lowering. The Fact Protocol may identify an exact Fact Kind directly or through an exact Fact Definition Candidate
+and its Fact-owned nominal Kind coordinate; Lowering does not mandate either representation, name, or encoding.
+The exact Fact Kind and its coordinates are not inferred from a current Operation parameter, the Input surface,
+interface vocabulary membership, a host class name, or a physical address. The full Fact-owned surface must be
+legally observable where required for complete target coverage, without recursively embedding or copying its
+separately owned Definition into Lowering HIR.
+
+Fact Definition compilation and its Contract authority are Core-owned and independent of inbound, output, and
+publication contracts. The Fact-to-Lowering reference is a semantic dependency, not a mandatory serial compiler-pass
+schedule. A Fact HIR Candidate reference does not establish that Fact Definition; an Established Fact Definition
+Reference and a runtime Established Fact are distinct from it and from each other. Any required Established Fact
+Definition Basis is governed by ADR-0063 and the later Lowering Establishment judgment, not granted by HIR lookup.
+
+The current Input Coordinate is observed through Input-owned `ResolvedInputCoordinateRef` where needed by a lawful
+Binding or Composition judgment; it is not the Lowering Definition's nominal Source Requirement. Exact qualified
+callable and library meaning is observed from the responsible resolver, Type Engine, and qualified semantic
+interpretation as already required in Sections 7, 9, and 11. Their internal reference forms, resolution algorithms,
+and library interpretation authority are not redefined by Lowering.
+
+HIR Candidate Reference equality, complete Definition Meaning equality, authoritative Definition identity, IDL
+Binding equality, and physical reuse eligibility remain distinct. Candidate References are exact in their current
+reference domain and cannot be inherited from an earlier HIR generation. A dense handle, HID, fingerprint, Query Key,
+serialized position, or reuse artifact does not confer semantic Reference identity or Contract authority.
+
+### 11.2. Resolved Lowering Definition Candidate Projection
+
+The Lowering Definition Candidate Projection is the complete, read-only, producer-owned observation of one exact
+`LoweringDefinitionCandidateRef` and all five Definition determinants in this Section. Its complete observation must
+retain, without loss or implicit reconstruction:
+
+```text
+Source Requirement
+    all nominal source requirements and each required Input-visible presentation meaning
+Target Requirement
+    every explicitly fixed Core Fact Kind, its exact Fact-owned factual coordinates,
+    complete target-surface dependency, meaning/version, and required representation meaning
+Mapping Relation
+    every declared source-to-Fact-coordinate mapping occurrence, source reuse,
+    target-formation multiplicity, and the complete declared relation for every target kind
+Formation Meaning
+    the completed, exact qualified callable application and meaning-determining arguments,
+    conversion applicability and Lowering-owned partiality/refusal meaning
+Semantic Dependencies
+    exact direct Fact and other Contract-owned Law/Basis references and the refinements,
+    bounds, versions, and other dependencies that determine this Lowering Definition
+```
+
+The following example illustrates semantic observations, not a physical HIR layout. It uses the
+`DepositLowering` declaration in Section 7. For this example, the complete Fact-owned
+`DepositCommand` surface has exactly `accountId` and `amountMinor`. All exact external meanings
+are observed through their owning producer Protocols.
+
+```text
+LoweringDefinitionCandidateRef
+LoweringIDLBindingCandidateRef
+
+Lowering Definition Candidate Projection
+    Definition: DepositLowering
+    Version: exact resolved Version candidate
+    Source Requirement: accountIdText -> exact Input-visible presentation meaning
+    Source Requirement: amountText -> exact Input-visible presentation meaning
+    Target Requirement: DepositCommand -> exact Fact-owned HIR Candidate meaning
+    Complete Target Surface: DepositCommand.accountId, DepositCommand.amountMinor
+    Mapping: accountIdText -> DepositCommand.accountId
+    Mapping: amountText -> DepositCommand.amountMinor
+    Formation: accountId <- qualified Long.parseLong(accountIdText)
+    Formation: amountMinor <- qualified Long.parseLong(amountText, 10)
+    Semantic Dependencies: exact meaning-determining producer references
+
+Lowering Mapping Surface Projection
+    DepositCommand.accountId -> accountIdText (1 occurrence)
+    DepositCommand.amountMinor -> amountText (1 occurrence)
+
+Lowering Selected Mapping Meaning Projection
+    Target: DepositCommand.amountMinor
+    Source: amountText
+    Callable: exact java.lang.Long.parseLong(String, int)
+    Receiver: none (static method)
+    Argument 0: amountText
+    Argument 1: constant 10
+    Conversion: exact qualified formation meaning and applicability
+    Partiality / Refusal: exact applicable Lowering-owned meaning
+    Semantic Dependencies: exact meaning-determining producer references
+```
+
+The named Source Requirements arise from the declared mappings; no separate `source` declaration is
+introduced. The Projection does not confer Establishment authority or promote any Fact Candidate Reference.
+
+The Projection expresses Lowering-owned meaning and exact direct references to separately owned semantic subjects.
+It does not assume ownership of the referenced Fact, Input, Type Engine, or library meaning. A legal direct reference
+and producer-owned projection may expose the required complete meaning without a redundant copy or recursive
+expansion. No current Operation selection, current Input or Canonicalization occurrence, runtime value, or Basis
+Binding enters Definition meaning merely because it is needed by a later application. Any reusable occurrence-basis
+requirement law independently owned by this Definition must be preserved if it determines its meaning under ADR-0063;
+its precise Lowering-specific requirements remain for subsequent Occurrence design.
+
+Every declared Mapping occurrence is preserved even when an exactly resolved duplicate makes the Definition unlawful.
+Independent Mapping declaration order is not semantic order; Mapping multiplicity and the source, target, and
+qualified Formation relation are semantic. The Projection must not silently deduplicate, overwrite, default, or
+normalize away an invalid but fully resolved mapping. It neither performs the later Lowering Definition Judgment nor
+changes the separately owned resolution and Fact laws.
+
+The complete Definition Projection determines comparison of the entire Definition meaning under the owning Lowering
+law, including the full Fact Target requirements, Mapping relation, qualified Formation meaning, and exact semantic
+dependencies. Source-only import spelling, provenance, physical layout, compiler partition, and generated backend
+helpers do not determine that equality. Equality of Definition meaning does not merge distinct Candidate References,
+Authorities, Versions, Established Definitions, or IDL Binding occurrences.
+
+Fine-grained Mapping Surface and selected Mapping Meaning observations may expose less than the complete Definition
+Projection, but only as complete observations of their stated extent under ADR-0071. Equal Mapping Surface does not
+prove equal Formation Meaning; equal selected Mapping Meaning does not prove equal complete Mapping Surface or
+Definition Meaning. An unobserved, unavailable, or omitted projection does not prove semantic absence. Section 11.3
+fixes the Mapping Surface and target-qualified selected Mapping Meaning observation laws without
+requiring separate primary Mapping References or a particular physical selector.
+
+All observations must be coherent within the applicable HIR snapshot and obey ADR-0071 visibility, lifetime, and
+semantic equality rules. The same observations may be computed on demand, share immutable physical backing, or be
+persisted and validated for reuse without creating another IR, Authority, or Contract Judgment. V2 may compare narrow
+observations for local reuse or early cutoff only under current-reference and dependency-validity checks; no such
+comparison substitutes for complete Definition Establishment or the clean recomputation reference path. No Query
+architecture, cache granularity, physical Mapping layout, or incremental update algorithm is mandated.
+
+### 11.3. Mapping Surface and Target-Qualified Mapping Meaning Projections
+
+Lowering specializes the ADR-0071 Fine-Grained Semantic Projection law with two producer-owned observations over
+one exact `LoweringDefinitionCandidateRef`:
+
+```text
+Lowering Mapping Surface Projection
+Lowering Selected Mapping Meaning Projection
+```
+
+The **Lowering Mapping Surface Projection** exposes the complete declared Source Requirement-to-Fact-target relation
+of that Definition. It preserves every declared Mapping occurrence, including source reuse, distinct Fact Kind
+ownership, repeated Source/Target pairs, and their exact multiplicity. Each Target is qualified by the exact fixed
+Fact Kind and its Fact-owned factual coordinate. The Surface may expose occurrence counts or equivalent complete
+multiplicity-preserving meaning; it does not silently reduce a multiset to unique pairs. It observes the Mapping
+relation, not a second copy of the complete Fact-owned factual surface or every selected Formation Meaning.
+
+The **Lowering Selected Mapping Meaning Projection** uses one exact Target selection within the Definition:
+
+```text
+exact LoweringDefinitionCandidateRef
++ exact fixed Core Fact Kind candidate meaning
++ exact Fact-owned target coordinate
+    -> complete multiset of declared Mapping meanings for that target
+```
+
+The Fact Kind and coordinate are identified through the Fact-owned HIR reference and legal observation law of
+Section 11.1, not through an Operation parameter, a host type, an interface vocabulary index, or a generated
+address. One selected observation preserves all Mapping occurrences for that Target and, for each occurrence, its
+exact nominal Source Requirement, Source/Target relation, qualified callable application, receiver and argument
+placement, meaning-determining constants, completed conversion applicability and meaning, Lowering-owned
+partiality/refusal meaning, and exact semantic dependencies. Resolved external meanings remain direct references or
+legal observations of their respective producers; Lowering does not repeat resolver, Type Engine, or library
+semantic interpretation judgments.
+
+A target-qualified selection may lawfully observe zero, one, or several declared Mapping occurrences before the
+Lowering Definition Judgment. Zero is a positive statement about absence only when the exact Target is legally
+referenceable and the complete Mapping observation for that Target is available in the coherent HIR snapshot. An
+unknown Target, incomplete Surface, inaccessible Projection, or failed reference resolution does not establish
+absence. The complete Fact-owned target-coordinate surface remains an independent prerequisite to any assertion
+that every required factual coordinate has exactly one Mapping.
+
+Under the V1 Lowering Definition law, exactly one declared Mapping must form each factual coordinate of every
+fixed target Fact candidate. Two or more declarations for one exact Fact-kind coordinate violate that law whether
+their Source Requirements or Formation Meanings differ or coincide. Two identical declarations are still two
+occurrences. Multiple independent mappings from the same Source Requirement to *different* Target coordinates remain
+permitted. Mapping selection and observation neither establish legality nor repair an invalid declaration by
+merging duplicates, arbitrarily selecting a winner, or inferring a missing mapping. The owning Lowering Definition
+Judgment rejects complete but unlawful duplicate or incomplete target-coverage declarations under Section 11.5.
+
+An exact Source Requirement may also be used as an observation index when a legal consumer needs to discover its
+uses. Such a reverse index merely reorganizes the existing declared relation under ADR-0071; it does not create an
+additional primary Mapping subject, new authority, or Source uniqueness restriction. Individual Mapping occurrences
+do not require persistent or primary Mapping References. The producer must preserve exact multiplicity even when
+two occurrences have equal meanings; a transient observation selector or diagnostic provenance may distinguish
+physical occurrences without giving them Contract identity. Declaration order, source locations, and storage
+indices do not determine Mapping Meaning. Deterministic observation ordering may be selected by the HIR producer
+without becoming semantic precedence.
+
+Equality of the complete Mapping Surface covers the whole declared Source/Target relation and multiplicity, not the
+qualified Formation Meaning of each mapping. Equality of one Selected Mapping Meaning covers exactly that Target's
+complete multiset of Mapping Meanings and multiplicities, not any other Target's mapping, the complete Target Fact
+surface, or the entire Lowering Definition. Neither equality implies Candidate Reference equality, authoritative
+Definition identity, Establishment success, or current physical reuse eligibility. In particular, unchanged
+Mapping projections do not discharge the owning Definition Judgment's complete coverage obligation when a referenced
+Fact Kind's complete surface or other semantic dependencies change.
+
+All such observations obey ADR-0071's current-reference, snapshot-coherence, visibility, completeness, Protocol
+compatibility, and equality laws. V1 may materialize the entire relation and compute it afresh; V2 may reuse
+individual complete observations or valid derived indexes after checking current dependencies. Neither a Query
+Graph, persistent Mapping ID, cache-key design, storage layout, physical enumeration order, nor delta algorithm is
+mandated. A narrow observation does not replace the complete Definition Candidate Projection of Section 11.2.
+
+### 11.4. Lowering IDL Binding Candidate and Role Selection Projections
+
+Under ADR-0071 Sections 4.13 and 8.9, the **Lowering IDL Binding Candidate Projection** exposes an actual,
+exactly resolved operation-local IDL selection occurrence. Its complete selection meaning includes:
+
+```text
+exact LoweringIDLBindingCandidateRef
+exact selecting OperationRef and independently required owning IDL selection context
+exact Lowering role coordinate at the Operation-local selection scope
+exact selected LoweringDefinitionCandidateRef
+only independently meaning-determining Binding-owned selection qualifiers, if any
+```
+
+The selecting Interface or Interaction context is preserved where necessary to identify the exact selection under
+its existing IDL/HIR reference law; it is not duplicated merely because it is structurally reachable from the
+Operation. A Definition may be selected by several Operations, yielding distinct Binding Candidates without
+copying, changing, or merging the selected Definition's Source Requirements, fixed Core Fact targets, Mapping
+relations, or Formation Meanings. Several fixed Fact Kind targets within one Definition do not themselves generate
+separate IDL Binding Candidates.
+
+The **Lowering Role Selection observation** is read from the selection-owning IDL/HIR Operation subject at its
+exact Lowering role coordinate. In valid Visible HIR the complete observation for that role is exactly one of:
+
+```text
+Selected: exact LoweringIDLBindingCandidateRef
+Explicit Absence: no LoweringIDLBindingCandidateRef exists for that selection
+```
+
+This owning-role observation is not a fictitious Binding Candidate Projection for an absent selection. Explicit
+Absence means only non-selection; whether absence is permitted is governed by the applicable separate Contract or
+Composition law. Missing or unresolved selection, competing selections for one role, and inability to observe the
+current Projection are not alternate valid selection states and cannot be silently converted into Explicit Absence.
+An unresolved or conflicting selection cannot be published as a normal completed Role Selection in Visible HIR;
+frontend resolution or HIR Seal retains its own unsuccessful result under the common laws.
+
+An actual Binding Candidate is complete only when its selecting occurrence, role, required qualifiers, and exact
+target Definition Candidate are resolved and referenceable under current HIR visibility and coherence rules. Such
+completeness does not prove that the selected Lowering Definition satisfies its own law, is Established, or is
+lawfully usable in the current Operation context. A fully resolved Binding may reference a complete Definition
+Candidate whose duplicate Mapping will later be refused by the owning Lowering Definition Judgment. Binding
+Establishment and any applicable Interface, Input, Canonicalization, Fact vocabulary, Operation participation,
+Version, Governance, or Contract-World compatibility judgment remain separately owned.
+
+The Binding Projection does not absorb the selecting Operation signature, current Input or Canonicalization
+Definition or occurrence, Interface Fact vocabulary, runtime values, a present World, or the selected Definition's
+payload merely because these may be needed in a later legality judgment. Only an exact qualifier independently
+owned by this IDL selection belongs to its Binding Candidate meaning. Neither World selection nor a current
+Binding may silently substitute another Lowering Definition, Version, Fact target, or qualified Formation Meaning.
+
+Exact Binding Candidate Reference equality, complete Binding selection-meaning equality, complete Lowering
+Definition meaning equality, authoritative Binding identity, and physical reuse eligibility are independent.
+A change in another Operation role or current Interface vocabulary may leave the Lowering IDL selection observation
+unchanged while requiring a separate Composition or application judgment to be reconsidered. V2 may exploit that
+narrow unchanged observation only with current semantic dependencies, correct ownership, and ADR-0071
+snapshot/Protocol-validity checks; it cannot infer successful Establishment or current use legality from local
+Binding equality.
+
+### 11.5. HIR Seal, Early Static Verification, and Legal Establishment Entry
+
+The Lowering Resolved HIR Candidate Protocol of Sections 11.1-11.4 is subject to the common ADR-0071 HIR Seal,
+visibility, lifecycle, and Protocol conformance laws. HIR Seal verifies complete, resolved, coherent pre-authority
+candidate meaning; it is not a Lowering Definition Judgment, Binding Judgment, Fact Judgment, or new Contract
+Authority. The compiler may detect static Contract violations at the earliest lawful point where the required
+resolved meaning and authoritative prerequisites are available. Such early physical execution does not transfer
+the owning law or relax a Judgment's legal entry conditions.
+
+For a Lowering Definition Candidate, Seal requires the exact owning Authority and Version candidate coordinate,
+complete nominal Source Requirements, all exact fixed Fact Kind candidate references and Fact-owned coordinate
+references, complete declared Mapping relation with its multiplicity, completed qualified Formation Meaning,
+exact semantic dependencies, and coherent legal observations of every required Projection. Each direct reference
+must be resolved and referenceable in its own producer's pre-authority HIR domain. Seal does not require a Fact
+Definition to acquire Establishment authority merely because its exact Candidate meaning is referenced. Unknown
+or unsupported required semantic material, incompatible Protocol observation, incomplete or dangling references,
+poison/recovery placeholders, and mixed or invalid HIR snapshots cannot be silently sealed or made Visible.
+
+For a Lowering IDL Binding Candidate, Seal requires the exact operation-local selecting subject, Lowering role,
+complete selection qualifiers where required, and an exact referenceable target Lowering Definition Candidate.
+The selection-owning subject must support the complete `Selected` or `Explicit Absence` observation for its role;
+missing or conflicting selections must not be normalized into a successful Visible HIR selection. Fact vocabulary
+membership and the current Operation's Input/Canonicalization compatibility are not inferred or established by
+HIR Seal; they remain separate lawful use judgments.
+
+A declaration may be completely resolved yet violate the Lowering Definition law. In particular, two distinct
+Formation Meanings assigned to one Target, two identical Mapping declarations assigned to that Target, or an
+otherwise complete declaration that omits formation for a required Fact coordinate may remain exactly represented
+in a sealable pre-authority Candidate. HIR construction, projection, and Seal must not deduplicate mappings,
+insert implicit target defaults, choose a winning Formation, change a Fact target, or invent missing declared
+relations to conceal the violation. The complete but unlawful declaration is rejected by the owning Lowering
+Definition Judgment. This does not make it lawful or permit successful code generation.
+
+Conversely, an unresolved Fact Kind or factual coordinate, nominal Source Requirement, or required qualified
+callable/semantic interpretation cannot supply complete Visible HIR meaning. A compiler producer or entered HIR
+Seal verifier that detects failure of its own resolution or completeness obligation retains its own unsuccessful
+compiler result. A failed required producer before legal Seal entry does not cause a synthetic HIR Seal rejection.
+When a separately owned authoritative prerequisite fails before Lowering Definition Judgment entry, no Lowering
+Definition Refusal is fabricated; that prerequisite's result remains its owner's. An entered Lowering Definition
+Judgment that finds duplicate Mapping formation, missing complete Target coverage, or another violation of
+Lowering-owned Definition law must refuse the Definition rather than silently warn and establish it.
+
+A Lowering Definition Judgment may legally enter only after its complete Resolved Definition Candidate is available
+through the valid Visible HIR Candidate Protocol and every authoritative Definition-time Required Basis specified in
+Section 11.6 is complete under ADR-0063. The current Lowering IDL Binding, selected Input or Canonicalization
+Occurrence, current Operation parameter surface, and current application World do not automatically become
+Definition-time prerequisites merely because a selection later uses that Definition. An HIR Candidate Reference does
+not satisfy an Established Fact Definition requirement.
+
+Early static verification may execute the owning Lowering Definition Judgment during frontend processing as soon as
+its lawful inputs are ready, including an immediate compile-time refusal of fully resolved duplicate or incomplete
+Target formation. This does not require a separate frontend pass, a second duplicate check, or physically distinct
+HIR-builder, Seal, and Judgment execution. Conversely, pass fusion, parallelism, or V2 incremental work may not
+merge the legal meanings of resolution failure, HIR Seal failure, Lowering Definition Refusal, or current Binding/
+Composition incompatibility. Each remains attributed to its owning law; a dependent judgment that never legally
+entered has no invented result.
+
+V1 clean recomputation and V2 incremental, parallel, lazy, or reused observations must satisfy the same Seal and
+Establishment entry obligations. An old Generation's successful Seal or a cached selected Mapping Meaning does not
+certify the current HIR Candidate or current Fact Target Coverage. Every reused observation and prerequisite must be
+current, compatible, complete for its declared extent, and coherent under ADR-0071. Where safe reuse cannot be
+established, the compiler must follow an applicable legal re-resolution or deterministic clean recomputation path;
+implementation schedules, physical HIR storage, frontend validator placement, and incremental algorithm choices
+remain open.
+
+### 11.6. Definition-Time Required Basis and Established Definition Direct Relations
+
+Every distinct fixed Core Fact Kind targeted by a Lowering Definition requires its exact Established Fact Definition
+Meaning as a mandatory Definition-time Required Basis. The exact Fact Kind and its applicable Version determine one
+Required Basis coordinate. Multiple Mapping occurrences for that Kind do not create additional Fact Definition
+requirements. No other Fact Kind or Version may satisfy it, even when its factual surface is equal. A Fact HIR
+Candidate Reference does not establish this Basis.
+
+A separately owned Contract Law is an additional Definition-time Required Basis only when its owning law requires
+prior authoritative Establishment for the Lowering Definition. A refinement or bound stated completely within the
+Lowering Definition does not create such an external Basis. Resolved callable, Type Engine, and qualified library
+interpretation remain compiler-owned semantic inputs to complete HIR; they are not Contract Required Basis merely
+because Formation Meaning consumes them. The Lowering Definition's own Version Binding follows ADR-0063 and ADR-0053
+without inventing another universal Basis.
+
+Each Required Basis uses the exact source domain determined by its owning law. The fixed Fact requirement admits
+exactly one Applicable Established Fact Definition and no permitted absence. Its exact Basis Binding, Applicability,
+and Complete Basis follow ADR-0063 Sections 7 and 8. A resolved reference or successful compiler lookup alone cannot
+satisfy it. An incomplete prerequisite prevents lawful Definition Establishment entry; it does not produce a
+Lowering Definition Refusal.
+
+A successfully Established Lowering Definition preserves a direct Established relation to the exact Established
+Fact Definition of each fixed target Kind. Its Mapping targets retain their Fact-owned coordinate meanings. A
+separately Established Contract Law is directly referenced when its meaning determines this Lowering Definition.
+These direct relations preserve the source Authorities without copying or re-establishing their Definitions. They do
+not duplicate Basis Binding or its internal representation, add independent Mapping Authorities, or introduce current
+Operation Binding or compiler realization material into Definition Meaning. The complete immutable Definition Meaning
+and authoritative identity remain as specified in Section 11 and ADR-0063.
+
+### 11.7. Established Lowering Definition Semantic Protocol
+
+Lowering uses the read-only Established Semantic Protocol of ADR-0063 Section 11. The complete Established
+Definition Projection observes one exact Established Lowering Definition Reference and all its established
+Definition meaning under Section 11, including the direct relations fixed by Section 11.6. This observation
+does not require the source declaration or Resolved HIR Candidate.
+
+The **Established Mapping Surface Projection** exposes the complete established Mapping relation. The **Established
+Selected Mapping Meaning Projection** exposes the complete Formation Meaning for one exact
+fixed Fact Kind and its factual coordinate. Their observation scopes follow Sections 11.2-11.3, applied
+only to lawfully Established Definition meaning. Fact-owned meaning remains accessible through its direct
+Established relation rather than a copy owned by Lowering.
+
+The following example observes the same Definition after lawful Establishment. `L1` and `F3`
+are illustrative Version coordinates, not new DSL syntax. The complete target surface is the same
+as in the HIR example above.
+
+```text
+Established Lowering Definition Reference
+    Authority: DepositLowering
+    Version: L1
+
+Established Lowering Definition Projection
+    Source Requirement: accountIdText -> exact required presentation meaning
+    Source Requirement: amountText -> exact required presentation meaning
+    Fixed Target: DepositCommand at Fact Version F3
+    Mapping: accountIdText -> DepositCommand.accountId
+    Mapping: amountText -> DepositCommand.amountMinor
+    Formation: accountId <- qualified Long.parseLong(accountIdText)
+    Formation: amountMinor <- qualified Long.parseLong(amountText, 10)
+    Semantic Dependencies: exact established meaning-determining relations
+    Direct Established Relation: exact DepositCommand F3 Fact Definition
+
+Established Mapping Surface Projection
+    DepositCommand.accountId -> accountIdText (1 occurrence)
+    DepositCommand.amountMinor -> amountText (1 occurrence)
+
+Established Selected Mapping Meaning Projection
+    Target: DepositCommand.amountMinor
+    Source: amountText
+    Callable: exact java.lang.Long.parseLong(String, int)
+    Receiver: none (static method)
+    Argument 0: amountText
+    Argument 1: constant 10
+    Conversion: exact qualified formation meaning and applicability
+    Partiality / Refusal: exact applicable Lowering-owned meaning
+    Semantic Dependencies: exact established meaning-determining relations
+```
+
+The direct Fact relation does not copy the Fact Definition into Lowering. This example does not
+specify an Established Material data structure or a physical Protocol representation.
+
+These observations grant no new Authority. Their reference, completeness, equality, availability, and
+current-validity laws follow ADR-0063 Section 11. They require no additional Mapping Reference or physical
+Protocol representation.
+
+---
+
+## 12. Compiler and Backend Realization Boundary
+
+A selected Lowering declaration creates no user implementation interface.
+
+The user does not implement `DepositLowering`, `PlaceOrderLowering`, a generated mapper, or another Lowering callback.
+
+Kontrakt resolves the selected Lowering Contract and derives the executable obligations required to form the
+complete candidate set for its fixed Core Fact targets. Operation parameters are supplied separately under their
+applicable Fact participation and realization obligations.
+
+The backend realizes those obligations directly.
+
+A backend may use an internal generated function, method, table, parser, constructor path, value builder, direct field
+or array access, primitive slab, stack local, register value, or another internal representation.
+
+Those structures are replaceable implementation.
+
+They are not retained user-facing Contract surfaces.
+
+They do not select Lowering meaning.
+
+They do not own Fact authority.
+
+They do not require runtime classpath scanning, reflection, service discovery, coordinate-name search, type-pair lookup,
+or DI resolution to select a Lowering implementation.
+
+The actual user Operation implementation is bound separately under ADR-0046 and admitted as User-System Realization
+under ADR-0070.
+
+The selected pipeline may invoke that Operation only after the required candidate and independently owned
+establishment judgments succeed and the Operation's Fact parameter requirements are lawfully satisfied.
+
+The exact internal method decomposition, helper ABI, carrier materialization strategy, refusal encoding, and JVM
+lowering remain compiler/backend decisions.
+
+Any chosen realization must preserve the explicit relation and absence of hidden implementation authority.
+
+---
+
+## 13. Compiler-Derived Material
+
+From the established Lowering Definition and its resolved Operation Binding, including the qualified callable meaning
+supplied by the frontend, the compiler may derive:
+
+```text
+semantic LoweringPlan
+source-read closure
+target-Fact-coordinate-write closure
+representation-refinement operations
+complete candidate-set formation plan for each fixed Fact kind
+judgment and establishment handoff
+verification obligations
+automatic tests
+diagnostic mapping
+cache dependencies
+optimization opportunities
+backend formation material
+```
+
+These are derived compiler material.
+
+They do not become another authored Lowering Contract.
+
+The compiler may choose how to execute an already-established refinement.
+
+It may not create a refinement whose meaning is absent from the Contract.
+
+---
+
+## 14. Judgment and Establishment Boundary
+
+One Lowering Occurrence applies the Established Lowering Definition to the lawful source Presentation of one
+exact inbound application. Equal source values from distinct Input Occurrences do not merge those applications,
+and physical re-evaluation of the same application does not create a new Occurrence.
+
+Backend value formation does not establish Fact authority merely by producing target-shaped values.
+
+The generated machine verifies the declared mapping coverage, each exact target Fact surface, and completion of
+the entire declared candidate set. A Lowering occurrence forms its target candidates as one all-or-nothing set: failure
+of any required mapping or target formation prevents successful completion of that occurrence and no partial candidate
+set is passed as a successful result.
+
+The applicable Fact, standing Invariant, and movement authorities then perform their independently owned judgments.
+Only after every required judgment succeeds may the corresponding Fact authority be established and the separate
+Operation Fact participation obligations be satisfied for a lawful invocation, when applicable. The exact atomic
+establishment, rollback, and publication mechanism remains governed outside this ADR.
+
+Successful value formation therefore does not equal successful Core entry or Operation handoff.
+
+Candidate formation is not Fact establishment.
+
+The generated pipeline must preserve at least these obligations:
+
+```text
+every coordinate of every fixed target Fact kind is formed exactly once
+every formed candidate conforms to its fixed Fact kind and entire declared factual surface
+every target coordinate is justified by one explicit mapping from one Input coordinate
+repeated source coordinates are permitted only through separately declared lawful mappings
+all declared target Fact candidates form one complete occurrence result or the occurrence is refused
+every required representation refinement follows the established Lowering law
+the material is immutable and no mutable external alias survives into Fact authority
+presence, alternatives, relations, and ordering are explicit where the Fact surface declares them
+applicable schema, Version, Governance, Budget, and Capacity judgments succeed under their own authority
+every interface-level Invariant applicable to the candidate Fact kind holds
+every applicable movement judgment succeeds
+no back-reference to the external presentation or backend realization machinery remains
+```
+
+Only after those obligations succeed may the machine establish the corresponding Fact authority and, if the selected
+Operation requires them, provide lawfully participating established Fact values through its separately declared
+Operation realization parameters. Lowering targets need not coincide with every Operation Fact parameter.
+
+Object allocation, constructor completion, builder completion, parsing completion, or backend materialization alone does
+not create Fact authority.
+
+The backend may use temporary mutable builders, scratch buffers, ordinary libraries, offset tables, sorting workspaces,
+or staged regions when those choices preserve the established Lowering law.
+
+Such objects belong exclusively to implementation and must never be exposed as established Facts.
+
+---
+
+## 15. Refusal Boundary
+
+Lowering refuses when the established Lowering law cannot form the complete candidate set for every explicitly
+fixed target Fact kind from the actual admitted source values. This is distinct from whether the selecting Operation
+has separately satisfied all of its Fact parameter requirements.
+
+A runtime refusal is distinct from a definition that failed to state enough Lowering meaning.
+
+An incomplete Contract is rejected before executable realization.
+
+A semantically complete Contract may still define an actual-value refusal condition, such as a declared representation
+that cannot be formed for the presented value under the exact Lowering law.
+
+One mapping refusal does not suppress another mapping that remains independently reachable. All such mappings must
+complete their required judgments, regardless of discovery or execution order. If any required mapping or target Fact
+candidate formation refuses, the declared complete candidate set does not exist and the whole Lowering occurrence is
+refused. No successfully formed subset is published or established as a partial Lowering success.
+
+The refusal preserves the exact attribution of each failed mapping. These attributions do not automatically establish
+separate Failures. ADR-0057 governs Failure cardinality according to the exact authoritative unsuccessful judgments;
+no first-failure priority or aggregate Failure identity is introduced here.
+
+A backend or library exception is not itself a Lowering refusal. Only a failure defined by the qualified mapping-method
+meaning may be attributed to Lowering. Failure of required realization and Crash retain their separate meanings under
+ADR-0057.
+
+Lowering refusal does not mean Input refusal, Admission rejection, Canonicalization refusal, Invariant refusal, or a
+Budget or Capacity result.
+
+A target that is incomplete does not become partially established Fact material. Formation success for some target
+Fact candidates does not authorize the establishment or publication of that subset under a failed occurrence.
+Subsequent Fact, Invariant, or movement refusals retain their own authority and attribution, not Lowering refusal.
+
+Lowering refusal, user Operation failure, Invariant refusal, and Publication refusal are distinct:
+
+```text
+Lowering refusal:
+    the full declared set of complete target Fact candidates cannot be formed under the Lowering law
+
+user Operation failure:
+    established input Facts exist,
+    but the admitted user Operation realization does not complete with its declared result
+
+Invariant refusal:
+    complete candidate Fact material exists,
+    but a standing law for that exact Fact kind does not hold
+
+Publication refusal:
+    the Operation result Fact exists,
+    but the declared outward exposure is not permitted
+```
+
+The machine must preserve exact Failure and diagnostic attribution to the owning authority.
+
+---
+
+## 16. V1 Optimization Boundary
+
+Kontrakt owns the Lowering Contract, derived `LoweringPlan`, exact source and target relation, completion checks,
+generated judgment handoff, verification, diagnostics, test derivation, cache dependencies, and backend realization
+requirements.
+
+There is no user Lowering implementation whose call must be preserved.
+
+The backend may therefore optimize the generated formation path directly when it preserves the established Contract.
+
+Possible realizations include:
+
+```text
+Canonicalization-Lowering orchestration fusion
+intermediate presentation elimination
+dead unused source-coordinate elimination
+direct source access and direct target writes
+exact buffer and region sizing
+single-allocation or bounded-allocation formation
+primitive and finite-alternative specialization
+packed relation and presence layouts
+structural cache keys from the exact declared read set
+specialized parsing or decoding for an established representation law
+carrier construction only at the host ABI boundary
+direct binding of lawfully established and participating Fact values at the generated Operation ABI boundary
+AOT-generated completion, judgment, establishment, and invocation paths
+```
+
+If the generated host Operation ABI requires a carrier instance, the backend materializes that actual value before the
+user Operation call.
+
+If an intermediate carrier is not host-observable and can be removed without changing the Operation ABI or Contract
+meaning, the backend may erase it.
+
+Optimization does not permit same-name mapping, raw type-pair conversion inference, undeclared coordinate synthesis, or
+business computation inside Lowering.
+
+Lowering authority does not extend into the user core realization.
+
+ADR-0070 separately governs analysis and optimization of the admitted user Operation realization after the legal
+Operation handoff.
+
+---
+
+## 17. Handoff to the User Operation
+
+Successful Lowering candidate formation and lawful Operation handoff are distinct:
+
+```text
+Lowering occurrence completion:
+    every declared mapping realized over the actual source values
+    + one complete candidate per fixed target Fact kind
+    + entire candidate set complete (all-or-nothing)
+
+Subsequent Core entry and Operation handoff, when applicable:
+    required separately owned Fact, standing Invariant, and movement judgments succeeded
+    + lawful establishment of the complete applicable candidate set
+    + external-presentation authority ended
+    + separately satisfied Operation Fact participation and parameter requirements
+    = legal Operation handoff
+```
+
+The compiler/backend forms the actual target Fact candidate representations and, separately, the ordinary host
+values required by the Operation parameters from lawfully participating established Facts. An Operation Fact parameter
+need not have been a target of the selected Lowering Definition.
+
+For an object-shaped generated Fact carrier, this means the backend supplies an actual value of that generated type. The
+user does not construct that input value merely to perform Lowering.
+
+Conceptually:
+
+```text
+actual Input presentation value
+    -> established Lowering relation
+    -> complete target Fact candidate set
+    -> independently owned candidate judgments
+    -> lawful Fact establishment
+    -> separately bound Operation Fact participation
+    -> user Operation receives its declared host parameter values
+```
+
+The Operation does not receive the Input presentation, canonical presentation object, Lowering declaration,
+source-to-target relation table, `LoweringPlan`, backend helper metadata, candidate wrapper, established-Fact wrapper,
+staging object, or host-language execution context.
+
+```text
+external presentation authority:
+    ended
+
+target Fact candidate set:
+    complete under the declared relation before subsequent judgments
+
+standing judgment:
+    every applicable Invariant and movement obligation succeeded
+
+Fact authority:
+    established outside the host value representation by its owning law
+
+user Operation invocation:
+    ordinary generated or declared host parameter values, with separate lawful Fact participation
+
+Result and Publication:
+    not yet established or authorized
+```
+
+The Operation may produce its ordinary declared result candidate.
+
+Result-side Fact establishment, result-side movement, Publication, and Output Presentation belong to later authorities.
+
+The core must not reopen the erased Input or Lowering declaration as sources of factual meaning.
+
+---
+
+## 18. Open in This Section
+
+The exact compiler-internal Lowering representation is open.
+
+The exact backend helper decomposition and JVM ABI are open.
+
+The exact carrier materialization and allocation strategy are open.
+
+The exact encoding of declared Lowering refusal is open.
+
+The Lowering DSL expresses each binding as `source -> target : method`.
+
+Mapping-method references and arguments use the explicit callable applications defined in Section 7. The supported
+mapping-method inventory and any additional authoring needed for nontrivial one-to-one representation refinement remain
+open. User implementation callbacks remain prohibited.
+
+Those decisions must not weaken the fixed Lowering law: one immutable Lowering Definition selected through an
+operation-local Binding, one-to-one formation per explicit mapping with permitted source reuse, one or more explicitly
+fixed Core Fact targets with complete candidate surfaces, all-or-nothing candidate-set completion, no runtime
+implementation discovery, no user-supplied Lowering implementation, no implicit conversion authority, and independent
+judgment and establishment handoff.
+
+The exact Fact-qualified target spelling and physical Mapping selector encoding remain open. Sections 11.1-11.5
+fix Lowering's HIR Candidate References, complete Definition Candidate Projection, complete Mapping Surface and
+target-qualified Selected Mapping Meaning Projections, operation-local Binding Candidate and Role Selection
+observations, and HIR Seal/Definition Judgment entry boundary. They do not establish the Fact-owned HIR Protocol
+internals, a concrete frontend execution architecture, or any successful Contract Establishment result.
+
+Sections 11, 11.6, and 11.7 fix Established Lowering Definition meaning, Definition-time Required Basis,
+direct Established relations, and Established Definition observations. Later Binding/Occurrence Establishment
+remains separate follow-up work.
+
+The exact atomic Fact establishment, rollback, and publication mechanics and the complete authoring surface for
+additional Fact participation, Operation Result Material, result-side change formation, Publication, and Output
+Presentation remain outside this ADR.
+
+---
+
+## 19. Consequences
+
+Lowering becomes an explicit representation-boundary Contract instead of a mapper callback.
+
+External and core vocabularies may remain independent because every Contract-visible relation is authored directly.
+Each Lowering Definition fixes its Core Fact targets rather than deriving them from Operation parameters; the selected
+Operation remains the center of the IDL pipeline Binding.
+
+Equal host types do not create hidden copying authority.
+
+Different host types do not force the user to supply a converter.
+
+The Contract must instead state enough meaning for Kontrakt to determine the permitted representation refinement.
+
+The compiler gains a closed relation from which it can derive verification, diagnostics, tests, caching,
+candidate-completion checks, and backend formation.
+
+The backend gains freedom to realize that established relation without exposing a user implementation port.
+
+The user implements the Operation business algorithm rather than reimplementing Lowering.
+
+The cost moves into Contract expressiveness and compiler/backend responsibility. Kontrakt must reject incomplete
+Lowering meaning, support the declared representation law on the selected backend, and preserve exact refusal and
+establishment boundaries.
+
+V1 deliberately rejects a single `1:N` mapping, multi-source `N:1` coordinate derivation, same-name inference,
+raw type-pair converter selection, and hidden callbacks because those mechanisms would obscure Contract meaning.
+Distinct explicit mappings may reuse a source coordinate, and a Definition may target several complete Fact candidates.
+
+---

@@ -994,6 +994,23 @@ not duplicate Basis Binding or its internal representation, add independent Mapp
 Operation Binding or compiler realization material into Definition Meaning. The complete immutable Definition Meaning
 and authoritative identity remain as specified in Section 11 and ADR-0063.
 
+### 11.7. Established Lowering Definition Semantic Protocol
+
+Lowering uses the read-only Established Semantic Protocol of ADR-0063 Section 11. The complete Established
+Definition Projection observes one exact Established Lowering Definition Reference and all its established
+Definition meaning under Section 11, including the direct relations fixed by Section 11.6. This observation
+does not require the source declaration or Resolved HIR Candidate.
+
+The **Established Mapping Surface Projection** exposes the complete established Mapping relation. The **Established
+Selected Mapping Meaning Projection** exposes the complete Formation Meaning for one exact
+fixed Fact Kind and its factual coordinate. Their observation scopes follow Sections 11.2-11.3, applied
+only to lawfully Established Definition meaning. Fact-owned meaning remains accessible through its direct
+Established relation rather than a copy owned by Lowering.
+
+These observations grant no new Authority. Their reference, completeness, equality, availability, and
+current-validity laws follow ADR-0063 Section 11. They require no additional Mapping Reference or physical
+Protocol representation.
+
 ---
 
 ## 12. Compiler and Backend Realization Boundary
@@ -1066,6 +1083,10 @@ It may not create a refinement whose meaning is absent from the Contract.
 ---
 
 ## 14. Judgment and Establishment Boundary
+
+One Lowering Occurrence applies the Established Lowering Definition to the lawful source Presentation of one
+exact inbound application. Equal source values from distinct Input Occurrences do not merge those applications,
+and physical re-evaluation of the same application does not create a new Occurrence.
 
 Backend value formation does not establish Fact authority merely by producing target-shaped values.
 
@@ -1311,9 +1332,9 @@ target-qualified Selected Mapping Meaning Projections, operation-local Binding C
 observations, and HIR Seal/Definition Judgment entry boundary. They do not establish the Fact-owned HIR Protocol
 internals, a concrete frontend execution architecture, or any successful Contract Establishment result.
 
-Sections 11 and 11.6 fix Established Lowering Definition meaning, its direct Established relations, and its
-Definition-time Required Basis. Later Binding/Occurrence Establishment and the Established Semantic Protocol remain
-separate follow-up work.
+Sections 11, 11.6, and 11.7 fix Established Lowering Definition meaning, Definition-time Required Basis,
+direct Established relations, and Established Definition observations. Later Binding/Occurrence Establishment
+remains separate follow-up work.
 
 The exact atomic Fact establishment, rollback, and publication mechanics and the complete authoring surface for
 additional Fact participation, Operation Result Material, result-side change formation, Publication, and Output
