@@ -558,8 +558,9 @@ give one Definition an unrecorded alternate Fact target, callable, or formation 
 Lowering consumes the lawful boundary Presentation supplied for its actual application. When Canonicalization is
 selected, selected coordinates use its final representatives and unselected coordinates retain Input-established
 values. Lowering does not select Canonicalization, reconstruct that Presentation, or judge an upstream refusal or
-continuation outcome. The upstream source and entry laws do not become Definition determinants by being prerequisites
-for use.
+continuation outcome. The current upstream sources and entry results do not become Definition determinants by being
+prerequisites
+for use. The reusable Occurrence Basis Requirement Law in Section 14.1 belongs to Lowering Definition meaning.
 
 For a selected Operation, the Definition and its separate operation-local Binding, together with the applicable
 separately owned judgments, must close at least:
@@ -621,7 +622,8 @@ The established Lowering Definition is represented as one flat, immutable, adapt
 Its complete Definition meaning preserves the nominal source requirements, the exact fixed target Fact kinds and
 complete target coordinate requirements, the complete declared mapping relations and their multiplicities, the qualified
 callable formation meaning and argument application, and all meaning-determining refinement, bounds, refusal, and
-semantic dependencies. One independently declared Lowering Contract denotes one Lowering Authority;
+semantic dependencies. It also preserves the complete Occurrence Basis Requirement Law in Section 14.1.
+One independently declared Lowering Contract denotes one Lowering Authority;
 that Authority and one exact Contract Version identify one complete Definition under ADR-0063 and ADR-0053. Conflicting
 resolved meanings cannot be established for the same Authority and Version. Equal meanings under different Authorities
 or Versions do not merge their identities. Import spelling and source location do not change Definition meaning.
@@ -716,8 +718,9 @@ serialized position, or reuse artifact does not confer semantic Reference identi
 ### 11.2. Resolved Lowering Definition Candidate Projection
 
 The Lowering Definition Candidate Projection is the complete, read-only, producer-owned observation of one exact
-`LoweringDefinitionCandidateRef` and all five Definition determinants in this Section. Its complete observation must
-retain, without loss or implicit reconstruction:
+`LoweringDefinitionCandidateRef` and all five Definition determinants in this Section. It also exposes the complete
+Occurrence Basis Requirement Law in Section 14.1. Its complete observation must retain, without loss or implicit
+reconstruction:
 
 ```text
 Source Requirement
@@ -736,13 +739,55 @@ Semantic Dependencies
     bounds, versions, and other dependencies that determine this Lowering Definition
 ```
 
+The following example illustrates semantic observations, not a physical HIR layout. It uses the
+`DepositLowering` declaration in Section 7. For this example, the complete Fact-owned
+`DepositCommand` surface has exactly `accountId` and `amountMinor`. All exact external meanings
+are observed through their owning producer Protocols.
+
+```text
+LoweringDefinitionCandidateRef
+LoweringIDLBindingCandidateRef
+
+Lowering Definition Candidate Projection
+    Definition: DepositLowering
+    Version: exact resolved Version candidate
+    Source Requirement: accountIdText -> exact Input-visible presentation meaning
+    Source Requirement: amountText -> exact Input-visible presentation meaning
+    Target Requirement: DepositCommand -> exact Fact-owned HIR Candidate meaning
+    Complete Target Surface: DepositCommand.accountId, DepositCommand.amountMinor
+    Mapping: accountIdText -> DepositCommand.accountId
+    Mapping: amountText -> DepositCommand.amountMinor
+    Formation: accountId <- qualified Long.parseLong(accountIdText)
+    Formation: amountMinor <- qualified Long.parseLong(amountText, 10)
+    Semantic Dependencies: exact meaning-determining producer references
+    Occurrence Basis Requirement Law as defined in Section 14.1
+
+Lowering Mapping Surface Projection
+    DepositCommand.accountId -> accountIdText (1 occurrence)
+    DepositCommand.amountMinor -> amountText (1 occurrence)
+
+Lowering Selected Mapping Meaning Projection
+    Target: DepositCommand.amountMinor
+    Source: amountText
+    Callable: exact java.lang.Long.parseLong(String, int)
+    Receiver: none (static method)
+    Argument 0: amountText
+    Argument 1: constant 10
+    Conversion: exact qualified formation meaning and applicability
+    Partiality / Refusal: exact applicable Lowering-owned meaning
+    Semantic Dependencies: exact meaning-determining producer references
+```
+
+The named Source Requirements arise from the declared mappings; no separate `source` declaration is
+introduced. The Projection does not confer Establishment authority or promote any Fact Candidate Reference.
+
 The Projection expresses Lowering-owned meaning and exact direct references to separately owned semantic subjects.
 It does not assume ownership of the referenced Fact, Input, Type Engine, or library meaning. A legal direct reference
 and producer-owned projection may expose the required complete meaning without a redundant copy or recursive
 expansion. No current Operation selection, current Input or Canonicalization occurrence, runtime value, or Basis
-Binding enters Definition meaning merely because it is needed by a later application. Any reusable occurrence-basis
-requirement law independently owned by this Definition must be preserved if it determines its meaning under ADR-0063;
-its precise Lowering-specific requirements remain for subsequent Occurrence design.
+Binding enters Definition meaning merely because it is needed by a later application. The reusable Occurrence Basis
+Requirement Law remains part of the Definition observation. Its instantiated
+requirements and exact Basis Bindings belong to the application under Section 14.1.
 
 Every declared Mapping occurrence is preserved even when an exactly resolved duplicate makes the Definition unlawful.
 Independent Mapping declaration order is not semantic order; Mapping multiplicity and the source, target, and
@@ -997,8 +1042,9 @@ and authoritative identity remain as specified in Section 11 and ADR-0063.
 ### 11.7. Established Lowering Definition Semantic Protocol
 
 Lowering uses the read-only Established Semantic Protocol of ADR-0063 Section 11. The complete Established
-Definition Projection observes one exact Established Lowering Definition Reference and all its established
-Definition meaning under Section 11, including the direct relations fixed by Section 11.6. This observation
+Definition Projection observes one exact `EstablishedLoweringDefinitionRef` and all its established
+Definition meaning under Section 11, including the direct relations fixed by Section 11.6 and the
+Occurrence Basis Requirement Law in Section 14.1. This observation
 does not require the source declaration or Resolved HIR Candidate.
 
 The **Established Mapping Surface Projection** exposes the complete established Mapping relation. The **Established
@@ -1006,6 +1052,46 @@ Selected Mapping Meaning Projection** exposes the complete Formation Meaning for
 fixed Fact Kind and its factual coordinate. Their observation scopes follow Sections 11.2-11.3, applied
 only to lawfully Established Definition meaning. Fact-owned meaning remains accessible through its direct
 Established relation rather than a copy owned by Lowering.
+
+The following example observes the same Definition after lawful Establishment. `L1` and `F3`
+are illustrative Version coordinates, not new DSL syntax. The complete target surface is the same
+as in the HIR example above.
+
+```text
+Established Lowering Definition Reference
+    Authority: DepositLowering
+    Version: L1
+
+Established Lowering Definition Projection
+    Source Requirement: accountIdText -> exact required presentation meaning
+    Source Requirement: amountText -> exact required presentation meaning
+    Fixed Target: DepositCommand at Fact Version F3
+    Mapping: accountIdText -> DepositCommand.accountId
+    Mapping: amountText -> DepositCommand.amountMinor
+    Formation: accountId <- qualified Long.parseLong(accountIdText)
+    Formation: amountMinor <- qualified Long.parseLong(amountText, 10)
+    Semantic Dependencies: exact established meaning-determining relations
+    Occurrence Basis Requirement Law as defined in Section 14.1
+    Direct Established Relation: exact DepositCommand F3 Fact Definition
+
+Established Mapping Surface Projection
+    DepositCommand.accountId -> accountIdText (1 occurrence)
+    DepositCommand.amountMinor -> amountText (1 occurrence)
+
+Established Selected Mapping Meaning Projection
+    Target: DepositCommand.amountMinor
+    Source: amountText
+    Callable: exact java.lang.Long.parseLong(String, int)
+    Receiver: none (static method)
+    Argument 0: amountText
+    Argument 1: constant 10
+    Conversion: exact qualified formation meaning and applicability
+    Partiality / Refusal: exact applicable Lowering-owned meaning
+    Semantic Dependencies: exact established meaning-determining relations
+```
+
+The direct Fact relation does not copy the Fact Definition into Lowering. This example does not
+specify an Established Material data structure or a physical Protocol representation.
 
 These observations grant no new Authority. Their reference, completeness, equality, availability, and
 current-validity laws follow ADR-0063 Section 11. They require no additional Mapping Reference or physical
@@ -1132,6 +1218,148 @@ The backend may use temporary mutable builders, scratch buffers, ordinary librar
 or staged regions when those choices preserve the established Lowering law.
 
 Such objects belong exclusively to implementation and must never be exposed as established Facts.
+
+### 14.1. Occurrence Basis, Applicability, and Composition Boundary
+
+Every Lowering Occurrence requires the exact Presented Input Occurrence of its inbound application.
+When Canonicalization is selected for that application, Lowering also requires its successful whole Occurrence.
+The reusable requirement law belongs to Lowering Definition meaning. Each application owns the requirements
+instantiated for that application.
+
+```text
+requirement coordinate
+    presentedInput
+
+required meaning
+    one Established Input Occurrence whose result is Presented
+
+cardinality
+    exactly one
+
+permitted absence
+    no
+
+requirement coordinate
+    selectedCanonicalization
+
+instantiation
+    only when Canonicalization is selected for the exact inbound application
+
+required meaning
+    one Established Canonicalization Occurrence whose whole result is Canonicalized
+
+cardinality
+    exactly one
+
+permitted absence
+    no
+```
+
+When Canonicalization is explicitly absent, `selectedCanonicalization` is not instantiated. This is not permitted
+absence of an instantiated requirement. The `presentedInput` requirement remains mandatory.
+
+ADR-0048 determines the legal upstream sources. Basis Binding must identify the exact Occurrences supplied by that
+Composition. The Canonicalization Occurrence must have applied to the same Input Occurrence bound to
+`presentedInput`. Equal values from another Input origin do not satisfy that relation. Section 5 determines which
+Presentation values Lowering consumes.
+
+Admission continuation remains an obligation of inbound Composition under ADR-0048. Lowering does not instantiate
+an Admission Required Basis or rejudge Admission's result. If the selected Admission has not established the
+required continuation, Lowering cannot enter.
+
+Basis Binding, Applicability, and Complete Basis follow ADR-0063 Sections 7 and 8. V1 requires no additional
+Applicable Context for these Lowering requirements. A legal Binding for the exact application is Applicable under
+this law. Complete Basis requires exactly one Applicable Basis for every instantiated requirement. An incomplete
+or ambiguous Basis prevents entry; it does not establish a Lowering Refusal. The original Input cannot replace a
+missing successful selected Canonicalization Occurrence.
+
+### 14.2. Established Lowering Occurrence Material
+
+The exact `EstablishedLoweringOccurrenceRef` identifies the legal semantic application described in Section 14.
+The Material follows ADR-0063 Sections 4.4.1 and 7.6. Lowering establishes one whole outcome for its completed
+Occurrence Judgment:
+
+- **`Lowered`:** The complete candidate set has been formed under the Lowering law.
+- **`Refused`:** The Lowering Judgment establishes a refusal under Section 15.
+
+Only an entered Lowering Judgment may establish its own outcome. A prerequisite that prevents entry does not
+establish either result. A subsequent unsuccessful judgment does not change an established `Lowered` outcome.
+
+The successful Occurrence has the following complete semantic material:
+
+```text
+Established Lowering Occurrence
+    exact EstablishedLoweringOccurrenceRef
+    exact legal Lowering application
+    exact applied EstablishedLoweringDefinitionRef
+    complete Applicable Basis attribution
+    whole outcome Lowered
+    complete Fact Candidate set
+```
+
+The Basis attribution preserves the exact Binding and Established Input Occurrence for `presentedInput`.
+When `selectedCanonicalization` is instantiated, it also preserves the exact Binding and Established
+Canonicalization Occurrence. The same-Input-origin relation in Section 14.1 remains observable. These references
+retain the upstream Authorities without copying their Material.
+
+The complete Fact Candidate set contains exactly one complete candidate for every fixed target Fact kind.
+It establishes no Fact authority. For `Refused`, the whole outcome is established without a complete Fact Candidate
+set. Section 15 governs refusal attribution; its detailed Established refusal Material and Failure integration
+remain for the Failure design.
+
+The exact application and its established relations remain immutable. Reusing equal candidate formation does not
+merge distinct Occurrences or replace their exact Basis attribution.
+
+### 14.3. Established Lowering Occurrence Semantic Protocol
+
+The Established Semantic Protocol of ADR-0063 Section 11 exposes Lowering through two typed reference domains:
+
+```text
+EstablishedLoweringDefinitionRef
+EstablishedLoweringOccurrenceRef
+```
+
+Section 11.7 governs Definition observations. The following projections observe one exact Lowering Occurrence:
+
+```text
+Established Lowering Occurrence Projection
+Lowering Occurrence Outcome Projection
+Complete Fact Candidate Set Projection
+```
+
+The **Established Lowering Occurrence Projection** exposes the complete Occurrence Material under Section 14.2.
+Its direct relations are observable through the Direct Established Relation Projection of ADR-0063. The **Lowering
+Occurrence Outcome Projection** exposes only the whole `Lowered` or `Refused` result.
+
+The **Complete Fact Candidate Set Projection** is available only when the whole Occurrence is `Lowered`.
+It exposes the entire formed set, not a selected subset. For `Refused`, the projection is unavailable rather
+than an empty successful result.
+
+For example, the `DepositLowering` declaration in Section 7 forms its complete candidate from the lawful
+source values `"12"` and `"100"`:
+
+```text
+Lowering Occurrence Outcome Projection
+    Lowered
+
+Complete Fact Candidate Set Projection
+    DepositCommand(accountId = 12, amountMinor = 100)
+```
+
+For a refused occurrence:
+
+```text
+Lowering Occurrence Outcome Projection
+    Refused
+```
+
+The complete candidate set is not available in the second example. Neither example represents a host carrier
+or a physical Protocol layout. Subsequent authorities consume the candidate set under Section 17 without acquiring
+Lowering's judgment authority.
+
+Projection completeness, equality, availability, and reuse follow ADR-0063 Section 11. Equal outcomes or candidate
+sets do not establish equal Occurrence identity or current Basis validity. No separate Mapping Occurrence Reference
+or Candidate-specific Lowering Authority is introduced. Detailed refusal observations remain for the Failure design.
 
 ---
 
@@ -1333,8 +1561,10 @@ observations, and HIR Seal/Definition Judgment entry boundary. They do not estab
 internals, a concrete frontend execution architecture, or any successful Contract Establishment result.
 
 Sections 11, 11.6, and 11.7 fix Established Lowering Definition meaning, Definition-time Required Basis,
-direct Established relations, and Established Definition observations. Later Binding/Occurrence Establishment
-remains separate follow-up work.
+direct Established relations, and Established Definition observations. Sections 14.1-14.3 fix the Occurrence Basis
+Requirement Law, whole outcome, successful Established Occurrence Material, and Occurrence observations.
+Binding Establishment remains separate follow-up work. Detailed refusal Material and Failure observations remain
+for the Failure design.
 
 The exact atomic Fact establishment, rollback, and publication mechanics and the complete authoring surface for
 additional Fact participation, Operation Result Material, result-side change formation, Publication, and Output
