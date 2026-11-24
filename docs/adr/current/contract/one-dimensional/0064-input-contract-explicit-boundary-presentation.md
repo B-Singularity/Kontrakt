@@ -19,6 +19,13 @@ ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 - ADR-0066: Canonicalization Contract
 - ADR-0065: Admission Contract
 - ADR-0073: JVM Platform-Native Contract Ratification and External Contract Infiltration Boundary
+- ADR-0079: Type Interpretation and Semantic Binding
+- ADR-0078: Deterministic Numeric Value and Operation Semantics
+- ADR-0080: Characters, Strings, and Unicode
+- ADR-0081: Collections and Structured Data
+- ADR-0082: Dates, Times, and Time Zones
+- ADR-0051: Budget Contract
+- ADR-0052: Capacity Contract
 - ADR-0071: Resolved Contract HIR Semantic Boundary, Deterministic Visibility, Lifecycle, and Reuse
 - ADR-0074: Compiler Result, Explicit Unsuccessful Result, Recovery, and Observation Boundary
 - ADR-0063: Contract Establishment, Identity, Applicability, and Composition
@@ -40,15 +47,14 @@ Input is the first one-dimensional Contract of the inbound airlock. It defines o
 external material must realize at an Interaction boundary. Input does not own the selecting Interaction or its Binding,
 downstream Operations or Contracts, or the host carrier that supplies evidence.
 
-A supported host declaration may already express that presentation completely, so a duplicate Kontrakt-specific DTO is
+A supported host declaration may already express the presentation completely, so a duplicate Kontrakt-specific DTO is
 not required. Host representation and runtime behavior may affect program observations but cannot become Contract
-authority. Kontrakt must resolve, refine, and ratify the source evidence before it becomes authoritative Input meaning,
-independent of the source language or carrier.
+authority. Kontrakt resolves the source evidence under the applicable source and value laws, independently of the
+source language or carrier.
 
-Input admits only finite, closed, directly inspectable presentations. Its established meaning remains available to later
-authorities that may lawfully observe it. Material that cannot meet this law must be formed into a supported
-presentation
-before invocation.
+Input consumes the resolved meaning and applies its own ratifiability law (Section 6). It admits only finite, closed,
+directly inspectable presentations. Its established meaning remains available to later authorities that may lawfully
+observe it. Material that cannot meet this law must be formed into a supported presentation before invocation.
 
 Input does not own later judgments, transformations, composition, or ordering. Those remain with the Contracts and
 composition law that own them.
@@ -57,8 +63,8 @@ composition law that own them.
 
 - Supported host declarations should express Input without requiring duplicate carriers, while Contract authority
   remains with Kontrakt.
-- Input must support finite, closed, structured values without introducing nested Contract authorities or direct Input
-  coordinates.
+- Input must admit resolved value meanings by its presentation law rather than by a separate inventory of value forms.
+  Structured values must not introduce nested Contract authorities or direct Input coordinates.
 - Input Definition meaning must be complete and deterministic, independent of the Interaction or Policy World that
   selects it.
 - Invocation must judge already-formed immutable material without making Input responsible for acquisition or snapshot
@@ -98,9 +104,8 @@ Nested members, alternatives, elements, keys, and values are constituents of tha
 not become nested Input Definitions, independent Input Occurrences, or additional direct Input coordinates merely
 because the presentation has internal structure.
 
-A host carrier may contain richer topology, but Input does not adopt host runtime structure or
-lifecycle relations as presentation meaning. Section 6.9 owns the legal value topology. Section 6.4
-owns carrier separation.
+A host carrier may contain richer topology, but Input does not adopt host runtime structure or lifecycle relations as
+presentation meaning. Section 6.9 governs the use of resolved value meaning, while Section 6.4 owns carrier separation.
 
 Material whose complete presentation cannot be resolved under those laws must be formed into a supported declared
 presentation before it reaches the Input boundary.
@@ -148,12 +153,12 @@ its own.
 ### 4.2. Complete Input Candidate Meaning
 
 The Resolved Input Definition Candidate must preserve the complete declared direct coordinate surface and every
-Input-visible distinction of its closed presentation meaning.
+Input-visible distinction of its closed presentation meaning. Candidate formation consumes completed source
+interpretation under Section 6.9, including the resolved meaning of each coordinate.
 
-Every meaning-determining semantic law or reference must be fully resolved before Visible HIR, through complete resolved
-meaning or an exact legally owned reference. Establishment cannot recover missing meaning through later source
-resolution,
-host behavior, or ambient state.
+Every law or reference that determines this meaning must be fully resolved before Visible HIR, through complete resolved
+meaning or an exact legally owned reference. Establishment cannot recover missing meaning through later source or type
+resolution, host behavior, or ambient state.
 
 Common Input rules need not be duplicated as Candidate payload when HIR formation or typed projections already enforce
 them.
@@ -165,7 +170,8 @@ completely. Section 6.4 identifies carrier mechanics that do not survive into Co
 that rule to the zero-adapter path.
 
 An Input-visible distinction cannot be erased when Establishment or another legal HIR observer would then need to reopen
-source to recover it. Sections 6.1, 6.6, 6.8, and 6.9 own the semantic distinctions that must survive when applicable.
+source or type interpretation to recover it. Sections 6.1, 6.6, 6.8, and 6.9 govern the preservation of those
+distinctions.
 
 Visible Input HIR cannot use a recovery placeholder in place of required meaning. It also cannot silently prune an
 undeclared semantic coordinate. If richer external material must be projected into the declared Input surface, that
@@ -215,8 +221,8 @@ or realization changes do not require a new Version when the complete resolved I
 
 Input Definition Meaning is equal only when all Input-owned meaning determinants are equal under their owning laws.
 
-Presentation Sameness, defined in Section 6.9, compares legal values under one exact Input presentation meaning. It
-governs Membership uniqueness and Association key uniqueness without a separate user-selectable equality law.
+Presentation Sameness, defined in Section 6.9.1, compares legal values under one exact Input presentation meaning. It
+governs the applicable constituent discrimination and uniqueness without a separate user-selectable equality law.
 
 Presentation Sameness does not determine Candidate Reference equality, Definition or Occurrence identity, Fact sameness,
 or Canonicalization equivalence. Equal Input meanings under different Authorities or Versions remain distinct.
@@ -297,14 +303,13 @@ Fine-Grained Semantic Projections
 The **Input Candidate Coordinate Surface Projection** exposes the complete direct coordinate surface of one exact
 Candidate, including each nominal coordinate and its resolved presentation meaning.
 
-The **Input Candidate Presentation Law Projection** exposes the complete Candidate-owned presentation topology and its
-applicable laws:
+The **Input Candidate Presentation Law Projection** exposes the complete resolved presentation meaning and the Input
+laws that apply to it. It preserves the required value distinctions and constituent relations, including:
 
 - presence and absence;
 - form-defining cardinality or extent;
-- Presentation Sameness and collection uniqueness;
-- observable collection order;
-- closed Leaf laws; and
+- Presentation Sameness and applicable constituent discrimination and uniqueness;
+- observable order; and
 - exact semantic-law references when they determine Input meaning.
 
 The **Input Binding Target Projection** exposes one exact Input selection occurrence and its target Input Definition
@@ -325,7 +330,7 @@ An Input Definition Candidate may become Visible HIR only when:
 - its exact Input Authority and Resolved Version Candidate Coordinate are known;
 - its complete Definition Meaning and direct coordinate surface are closed;
 - every required semantic reference is exact; and
-- its presentation topology is complete under Section 6.9.
+- its resolved presentation meaning is complete under Section 6.9.
 
 The corresponding Input Binding Candidate must resolve the selecting context, Interaction, Input role, and exact target
 Candidate. The same selection occurrence cannot have competing targets.
@@ -375,16 +380,10 @@ Established Input Definition
     direct established relation to each direct Input coordinate
 ```
 
-The complete Definition Meaning is the same source-owned meaning closed by Sections 4 and 6. It
-includes:
-
-- the direct coordinate surface and presentation topology;
-- presence and absence;
-- form-defining cardinality or extent;
-- Presentation Sameness and collection uniqueness;
-- observable collection order when owned;
-- closed Leaf laws; and
-- exact semantic-law references when they determine the presentation.
+The complete Definition Meaning is the same source-owned meaning closed by Sections 4 and 6. It retains the direct
+coordinate surface and the resolved presentation meaning of each coordinate, together with the Input laws that apply to
+that meaning (Section 6.9). Its presentation law retains the observations required by the Input Candidate Presentation
+Law Projection in Section 4.8, including exact semantic-law references when they determine the presentation.
 
 Each direct coordinate may be observed through an `EstablishedInputCoordinateRef`. Its semantic form
 is the exact `EstablishedInputDefinitionRef` plus the exact nominal direct Input coordinate. The
@@ -685,91 +684,71 @@ denoted target is not established by Input.
 A reference-valued Input coordinate does not by itself create a Definition Reference, Occurrence Reference, object
 relation, lookup obligation, or dereference authority under ADR-0063.
 
-An opaque value is admissible only when its complete Input-visible presentation distinctions are
-fixed by an exact Input presentation law. Opaque treatment cannot admit an arbitrary user object by
-disregarding its behavior, mutability, identity, or lifecycle.
+An opaque value is admissible only when its complete resolved meaning fixes every Input-visible distinction under
+Section 6.9. Opaque treatment cannot admit an arbitrary user object by disregarding its behavior, mutability, identity,
+or lifecycle.
 
-A frontend may map a supported host type to that already-defined presentation meaning only when the
-mapping is complete. The host type does not define the Input law. Its operations do not become Input
-meaning merely because they are associated with the carrier.
+A frontend may map a supported host type to that meaning only when the mapping is complete. The host type does not
+define the Input law, and its operations do not become Input meaning merely because they are associated with the
+carrier.
 
 Input does not establish canonical identity or normalized meaning for an opaque value. Those meanings remain with the
 Contract that owns them.
 
 ### 6.8. Presentation-Only Authority
 
-Input judges whether boundary material realizes its declared presentation. A structural bound belongs to Input when it
-defines the required presentation form, such as extent or cardinality. Conditions governing whether correctly presented
-values may continue belong to Admission or another owning authority.
+Input judges whether boundary material realizes its declared presentation. The domain and its limits follow the value
+meaning resolved by the Type Subsystem (Section 6.9). Input neither introduces an independent size or range limit nor
+relaxes a limit of that meaning. Conditions governing whether correctly presented values may continue belong to
+Admission or another owning authority.
+
+Resource obligations remain with Budget and Capacity under ADR-0051 and ADR-0052. They do not redefine the legal value
+domain. Compiler resource safety remains separate from Input judgment (Section 9.6).
 
 Input establishes no authority over a target denoted by a presented value. It also does not establish downstream
 Contract
 meaning, governing selection, or machine movement. Those judgments remain with their respective authorities.
 
-### 6.9. V1 Presentation Algebra
+### 6.9. Resolved Value Meaning
 
-Input uses a small closed value-presentation algebra. These semantic families describe Contract-visible value topology.
-They are not Java or Kotlin classes, and they do not prescribe one generated host API form.
+Input consumes completed source interpretation under ADR-0079 and the applicable value laws. The Type Subsystem resolves
+what the authored value means; Input determines whether that meaning can serve as a boundary presentation. Successful
+interpretation alone does not establish Input authority.
 
-The V1 fundamental families are:
+Input does not maintain an independent inventory of value forms. A resolved meaning is eligible when it satisfies this
+ADR, independently of its value family. Expansion of interpretation support does not require a new Input presentation
+family or change the meaning of an existing Input Definition. Platform support remains subject to ADR-0073.
 
-```text
-Leaf
+Each direct coordinate must have a complete resolved value meaning. Its domain, including the applicable range and
+structural limits, follows the interpretation of the owning value law. Input preserves all distinctions that the
+presentation makes observable. Its use must satisfy Sections 6.1–6.8 and the following requirements:
 
-Named Product
+- Every constituent and meaning-determining relation required for judgment is fully resolved before Visible HIR.
+- The presentation supports exact, deterministic observation, including Presentation Sameness under Section 6.9.1.
+- The complete actual value satisfies the constituent closure law of Section 6.9.2.
+- Any observable order satisfies Section 6.9.3.
 
-Closed Tagged Choice
+A meaning that consumes versioned or external semantic data must retain the exact applicable law and basis under the
+owning law. Ambient provider state cannot complete it later. Section 4.10 distinguishes these Definition determinants
+from ADR-0063 Required Basis.
 
-Sequence
-
-Membership
-
-Association
-```
-
-Their exact authoring tokens and physical HIR encoding remain open under Section 10.
-
-A **Leaf** is a complete presentation meaning that Input does not further decompose into constituent topology. Its
-complete legal domain, Input-visible distinctions, and Presentation Sameness are fixed by the Kontrakt-owned Input law.
-When that meaning genuinely consumes versioned or external semantic data, the exact meaning-determining semantic law
-material must be explicitly ratified and closed rather than supplied by ambient provider state. Section 4.10
-distinguishes
-that Definition determinant from ADR-0063 Required Basis.
-
-A **Named Product** is a finite closed set of nominally identified members. Each member has one complete presentation
-meaning and its own explicit presence law when absence is permitted. Product member declaration order is not semantic
-order.
-
-A **Closed Tagged Choice** has one finite closed domain of nominal alternatives. Exactly one alternative is selected in
-one occurrence. A case may have no payload or one complete constituent presentation. Case declaration order is not
-semantic order. Runtime subtype discovery and untagged structural matching do not select a case.
-
-A **Sequence** contains zero or more occurrences of one constituent presentation. Position is intrinsic semantic
-meaning, multiplicity is retained, and every actual Input occurrence is finite. Fixed or bounded extent is expressed
-through the presentation cardinality law rather than by creating another fundamental family.
-
-A **Membership** contains zero or more occurrences of one constituent presentation. Two members cannot be distinct
-within the same Membership when they are the same under that constituent presentation's exact Presentation Sameness law.
-Membership itself has no intrinsic position. Its order-observation law is independent of uniqueness.
-
-An **Association** contains zero or more key/value associations. Keys are unique under the key presentation's exact
-Presentation Sameness law. Key and value are presentation constituents rather than Input coordinate identities.
-Association itself has no intrinsic entry position.
+Source shorthand is permitted only when its resolved meaning preserves every required distinction. Unsupported meaning
+cannot be approximated by a supported form. Input does not apply implicit conversion, normalization, defaults or
+representative selection to obtain a legal presentation. Authoring tokens and physical representation remain outside
+this law (Section 10).
 
 #### 6.9.1. Presentation Sameness and Input Uniqueness
 
-Every exact Input presentation meaning defines **Presentation Sameness** from the complete set of
-distinctions that Input owns for that presentation. Presentation Sameness asks whether two legal
-values preserve the same Input-visible meaning. It remains distinct from Host equality, Candidate
-semantic equality, Definition and Occurrence identity, Fact sameness, Canonicalization equivalence,
-HID equality, and physical representation equality.
+Every exact Input presentation meaning defines **Presentation Sameness** from the complete set of distinctions that
+Input owns for that presentation. Presentation Sameness asks whether two legal values preserve the same Input-visible
+meaning. It remains distinct from Host equality, Candidate semantic equality, Definition and Occurrence identity, Fact
+sameness, Canonicalization equivalence, HID equality, and physical representation equality.
 
-Presentation Sameness is intrinsic to the resolved presentation meaning and is fixed by the
-Kontrakt-owned Input semantic law. V1 provides no user-selectable Input equality, collation,
-normalization, or equivalence strategy. A Leaf obtains its sameness from its exact resolved
-presentation meaning. Named Product, Closed Tagged Choice, and Sequence lift constituent Presentation
-Sameness through their declared structure. Membership and Association preserve the exact presented
-constituent or key representatives and every Input-visible order distinction.
+Presentation Sameness is intrinsic to the resolved presentation meaning and is fixed by the Kontrakt-owned Input
+semantic law. V1 provides no user-selectable Input equality, collation, normalization, or equivalence strategy. The
+relation consumes the exact resolved value distinctions and composes constituent Sameness through the declared
+structure.
+It preserves the applicable relations and every required representative, including observable order and multiplicity.
 
 For every legal complete value in one exact presentation domain, Presentation Sameness must be deterministic, reflexive,
 symmetric, and transitive. Missing, unresolved, malformed, unsupported, or otherwise illegal material is outside that
@@ -779,19 +758,19 @@ HIR. An explicitly ratified closed semantic basis may participate when the prese
 Runtime-selected provider state, ambient locale, host defaults, service discovery, or another unbound environment source
 cannot complete the relation later.
 
-Membership uniqueness is defined only by the constituent presentation's Presentation Sameness. Association key
-uniqueness is defined only by the key presentation's Presentation Sameness. V1 Input provides no independently
-selectable coarser equality or equivalence law for Membership or Association. Within one occurrence, two members that
-are the same under constituent Presentation Sameness cannot coexist as distinct Membership members, and two keys that
-are the same under key Presentation Sameness cannot coexist as distinct Association keys. Input does not choose
-first-wins, last-wins, silent deduplication, or a representative.
+Where a resolved form distinguishes members, tuples or keys, its discrimination must coincide with Presentation Sameness
+of the corresponding constituent meaning. Uniqueness follows that relation wherever the form requires uniqueness.
+Members or keys that are the same cannot coexist as distinct members or keys in such a form. A form that preserves
+multiplicity retains that multiplicity under the applicable value law; Input does not combine independently submitted
+entries to form it. No independently selectable coarser equality is permitted. Input does not choose first-wins,
+last-wins, silent deduplication, or a representative.
 
-Host operations, ambient environment state, and backend implementation details cannot redefine Input
-Presentation Sameness or collection uniqueness. A host carrier is usable only when the supported
-boundary mapping can preserve every Input distinction required by the Kontrakt-owned presentation
-law. If the carrier has already collapsed values that Input distinguishes, direct binding is not a
-lossless Input presentation and must be rejected or formed through another legal boundary before
-Input. ADR-0073 owns that platform-support and preservation gate.
+Host operations, ambient environment state, and backend implementation details cannot redefine Presentation Sameness or
+uniqueness. A host carrier is usable only when the supported boundary mapping preserves every required Input
+distinction.
+If the carrier has already collapsed values that Input distinguishes, direct binding is not a lossless Input
+presentation and must be rejected or formed through another legal boundary before Input. ADR-0073 owns that
+platform-support and preservation gate.
 
 A later Contract may intentionally establish a different relation without retroactively changing Input. In particular,
 Canonicalization may explicitly declare an equivalence and establish a stable representative that collapses distinctions
@@ -802,21 +781,30 @@ their respective authorities.
 
 #### 6.9.2. Constituent Closure
 
-A direct coordinate may contain these families recursively only as a finite, closed, acyclic presentation graph. Nested
-members, cases, elements, keys, and values belong to the containing Input Definition. They do not create
-independent Contract authorities, independent Input Definitions, or independent Input Occurrences.
+The Input law applies to the complete resolved presentation of each direct coordinate, including every constituent
+and meaning-determining relation. Its value schema must be finite, closed and acyclic. Nested constituents belong to
+the containing Input Definition; they do not create independent Contract authorities, Definitions or Occurrences.
 
-The actual value judged at the Input boundary must be complete and finite. A semantic recursive type, mutually recursive
-presentation, runtime cyclic graph used as presentation meaning, lazy constituent source, or live stream is not a V1
-Input presentation.
+The actual value judged at the Input boundary must be complete and finite. This requirement concerns the value itself,
+not the cardinality of its possible domain. A closed descriptor may describe an infinite domain without presenting an
+infinite collection. A finite value may describe cyclic relations without containing recursive value meaning or a live
+reference cycle.
+
+Semantic recursive types and mutually recursive presentations remain outside V1 Input. An open structure, runtime
+type discovery, lazy constituent source, live stream or pending computation cannot complete an Input presentation.
+Actual values may vary within their resolved domains; such variation does not select or extend their meaning at runtime.
 
 Host aliasing and shared-reference topology do not change Input meaning. If an external relation must be presented, it
-is carried as an explicitly declared descriptive value under Section 6.7 rather than as pointer identity.
+is carried as an explicitly declared descriptive value under Section 6.7 rather than as pointer identity. No constituent
+may introduce behavior, capability or another Contract authority through a containing value (Section 6.12).
 
-#### 6.9.3. Collection Order Observation
+Coordinate absence remains distinct from a present value whose own meaning expresses absence, an empty collection or a
+null-like value, and from whole-Input absence (Section 6.6).
 
-Sequence owns positional order intrinsically, while Membership and Association may own one of the following
-order-observation laws:
+#### 6.9.3. Order Observation
+
+Input preserves any order intrinsic to the resolved value meaning. When the applicable value law permits an additional
+order observation, the Input presentation must declare its meaning explicitly. The order-observation laws are:
 
 ```text
 No Observable Order
@@ -829,18 +817,18 @@ Ordered By an Exact Total Ordering Law
 `Encounter Order` means that one occurrence preserves an observable linear encounter sequence. It does not imply a
 comparison relation between arbitrary constituent values.
 
-`Ordered By` means that an exact deterministic total ordering law determines the observable constituent order. For
-Association the ordering law applies to keys. The law must have an exact closed domain and every semantic-basis
-distinction required to determine its result. It must be stable for the presented value and free of ambient state and
+`Ordered By` means that an exact deterministic total ordering law determines the observable order over its declared
+domain. Where a form orders entries by key, the law applies to those keys. Its domain must be closed and every required
+semantic-basis distinction must be resolved. It must be stable for the presented value and free of ambient state and
 executable callback authority.
 
-For V1 Membership and Association, ordering zero-equivalence must coincide exactly with the applicable constituent or
-key Presentation Sameness. An ordering law that groups two Input-distinct values at one ordering position, or separates
-values that Presentation Sameness identifies, is not a legal V1 `Ordered By` relation.
+Ordering zero-equivalence under `Ordered By` must coincide exactly with Presentation Sameness of the values being
+ordered. An ordering law cannot group two Input-distinct values at one ordering position or separate values that
+Presentation Sameness identifies. This requirement concerns the law that determines a total observation order, not a
+value that merely describes an ordering relation.
 
-Observable order participates in Presentation Sameness whenever this Input presentation makes that order visible.
-Membership and Association uniqueness still use the applicable constituent or key Presentation Sameness rather than a
-separate host equality operation. A host platform's `equals` operation does not authorize the compiler to erase an
+Observable order participates in Presentation Sameness whenever the Input presentation makes that order visible.
+Discrimination and uniqueness remain governed by Section 6.9.1. Host equality does not authorize erasure of an
 Input-visible encounter or ordered-by distinction.
 
 Contract-visible order, deterministic compiler observation order, and physical storage order are separate:
@@ -851,115 +839,36 @@ Contract-visible order
     != physical storage order
 ```
 
-The compiler may sort an unordered presentation for deterministic compiler processing or
-representation. That realization order does not become Input meaning. Conversely, deterministic
-implementation cannot erase a declared encounter or ordered-by obligation.
+The compiler may sort an unordered presentation for deterministic compiler processing or representation. That
+realization order does not become Input meaning. Conversely, deterministic implementation cannot erase a declared order.
 
-An exact JVM collection surface never selects one of these Input order-observation laws. Platform
-collection behavior is platform evidence only. ADR-0073 may admit such a surface for an Input role
-only when it preserves the already-declared Input order, constituent Presentation Sameness,
-uniqueness, and every other required Input distinction without loss. Additional platform observations
-remain platform meaning; they do not enlarge Input meaning.
+A host or generated collection surface never selects the Input order-observation law. ADR-0073 may admit that surface
+only when it preserves the declared order and every other required Input distinction. Additional platform observations
+remain platform meaning. A platform order may realize `Ordered By` only when its zero-equivalence and observable order
+preserve the exact Input law. Input cannot repair a carrier that has already collapsed distinct values. Order
+compatibility alone does not establish direct-carrier legality; the remaining Input and ADR-0073 laws still apply.
 
-Host collection ordering behavior is not adopted as Input authority. A platform order may realize
-`Ordered By` only when its zero-equivalence and observable order preserve the exact Input ordering
-law. A carrier that has already collapsed Input-distinct members or keys cannot be repaired at the
-Input boundary. Order compatibility alone does not establish direct-carrier legality; immutability,
-constituent closure, alias safety, capability isolation, and the other applicable Input and ADR-0073
-laws still apply.
+Host or generated collection operations are not Input presentation relations. The owning API law and ADR-0073 govern
+their use and preservation obligations. No such operation may silently introduce a broader equality, ordering, or
+key-equivalence relation into Input.
 
-Host or generated collection operations are not Input presentation relations and do not create
-additional fundamental presentation families. When a supported platform or generated API exposes such
-operations, its owning API law and ADR-0073 own the separate preservation and use-legality
-obligation. No such operation may silently introduce a broader equality, ordering, or key-equivalence
-relation into Input.
+#### 6.9.4. Pending Common Value Law Transfer
 
-#### 6.9.4. Derived Presentations and Deliberate V1 Exclusions
+The following previously established distinctions remain in force until their common value laws are complete. This
+transitional provision preserves existing meaning; it is not an inventory of eligible Input forms. Their resolved
+value meanings remain subject to Sections 6.1–6.9.3.
 
-A semantic shorthand does not require a new fundamental family when the existing algebra preserves every Input-visible
-distinction.
+| Meaning       | Required distinctions                                                                                                                                        | Distinctions not supplied by Input                                                       |
+|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| Boolean       | One legal truth value; Sameness compares the truth values.                                                                                                   | Source spelling or numeric source convention.                                            |
+| Bytes         | One finite octet sequence; Sameness compares length and each octet in position order.                                                                        | Base64, hexadecimal, transport framing, or source encoding spelling.                     |
+| UUID          | One exact 128-bit UUID datum; Sameness compares all 128 bits.                                                                                                | Textual case or punctuation spelling, lookup of a denoted entity, or resource authority. |
+| URI Reference | One syntactically legal closed URI-reference under the applicable grammar; Sameness compares retained component presence and character presentation exactly. | Resource identity, dereference result, scheme-specific resolution, or URI normalization. |
 
-Examples include:
-
-```text
-Enum
-    -> payloadless Closed Tagged Choice
-
-Flags
-    -> Membership over a finite nominal case domain
-
-Option-like value
-    -> two-case Closed Tagged Choice
-
-Fixed-extent sequence
-    -> Sequence + exact presentation cardinality
-```
-
-Coordinate absence remains distinct from an Option-like value, an empty collection, a null-like Leaf value, and
-whole-Input absence. V1 deliberately does not add a generic positional heterogeneous Tuple, Multiset, or generic Result
-family. A future
-revision may add one only after demonstrating a Contract-visible distinction that cannot be represented without semantic
-loss and after passing the same HIR, Establishment, platform-preservation, and API review applied here. Unsupported
-meaning is not approximated through a supported family.
-
-V1 excludes the following Input presentation categories:
-
-- Open structures: open records, extensible tables, open rows, and flexible or unknown alternatives.
-- Dynamically interpreted structures: dynamic `Any` or document values and untagged unions selected by runtime shape.
-- Recursive or reference-based structures: recursive presentations and object/reference topology.
-- Executable or externally controlled material: capabilities, resources, futures, streams, callbacks, and executable
-  values.
-
-#### 6.9.5. Closed Leaf Presentations
-
-A Leaf is ratifiable only when its complete legal presentation domain, every Input-visible distinction, and Presentation
-Sameness are closed by the submitted presentation together with fixed Kontrakt-owned law and, only when that meaning
-actually requires it, an explicitly ratified closed semantic basis. Runtime-selected provider state, ambient
-environment, host defaults, user-selected comparison policy, or executable application behavior cannot complete the Leaf
-meaning.
-
-This section defines V1 Input Leaf presentation profiles and their Presentation Sameness. Shared Numeric, Text, and
-Temporal value meanings remain governed by ADR-0078, ADR-0080, and ADR-0082. ADR-0073 governs the separate legality
-of Java and Kotlin carriers and operations.
-
-The following table defines the baseline V1 Input Leaf profiles and their Presentation Sameness. All meaning-determining
-requirements must be closed before a concrete Leaf can be published. The listed names are semantic labels, not required
-authoring or generated API names.
-
-| Leaf meaning                           | Legal Input presentation                                                                                                        | Presentation Sameness                                                           | Distinctions not supplied by Input                                                                           |
-|----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
-| Boolean                                | one legal truth value                                                                                                           | the truth values are equal                                                      | source spelling or numeric source convention                                                                 |
-| Fixed-width signed or unsigned Integer | one value in the exact declared integer domain                                                                                  | the mathematical integer values are equal within that same presentation domain  | source radix, sign spelling, leading zeroes, or cross-Leaf numeric equality                                  |
-| Bytes                                  | one finite bounded octet sequence                                                                                               | the sequences have the same length and the same octet at every position         | Base64, hexadecimal, transport framing, or source encoding spelling                                          |
-| Text                                   | one finite bounded sequence of Unicode scalar values                                                                            | the sequences contain the same scalar values in the same positions              | UTF-8/UTF-16 storage, source spelling, Unicode normalization, case folding, collation, or locale             |
-| UUID                                   | one exact 128-bit UUID datum                                                                                                    | all 128 bits are equal                                                          | textual case or punctuation spelling, lookup of any denoted entity, or resource authority                    |
-| Decimal                                | one finite decimal coefficient together with its exact scale under the applicable closed bounds                                 | coefficient and scale are both equal                                            | lexical spelling, numerical-cohort equality, trailing-zero collapse, NaN, or infinity                        |
-| Binary32 or Binary64                   | one exact IEEE binary interchange datum admitted by the applicable Leaf law                                                     | the complete admitted bit datum is equal                                        | host numerical equality or ordering, NaN canonicalization, signed-zero collapse, or arithmetic-result policy |
-| ISO Date                               | one date in the fixed proleptic Gregorian presentation domain                                                                   | year, month, and day are equal                                                  | source date spelling or another calendar system                                                              |
-| Local Time                             | one closed local civil time value under the fixed V1 time-of-day domain                                                         | hour, minute, second, and fractional-second value are equal                     | source precision spelling, time zone, offset, or leap-second lexical evidence                                |
-| Local Date-Time                        | one exact local civil date-time under the fixed ISO Date and Local Time laws                                                    | all Input-visible local date-time distinctions are the same                     | offset, zone, instant interpretation, or source timestamp spelling                                           |
-| Numeric UTC Offset                     | one exact numeric offset in the applicable closed offset domain                                                                 | the numeric offsets are equal                                                   | zone identity, zone rules, or source offset spelling                                                         |
-| Offset Date-Time                       | one exact offset date-time whose retained distinctions include local civil date-time and numeric UTC offset                     | the retained local date-time and offset distinctions are the same               | same-instant equivalence, zone identity, or source timestamp spelling                                        |
-| Duration                               | one exact signed duration quantity under the fixed unit and resolution law                                                      | the duration quantities are equal under that law                                | lexical duration spelling or calendar-relative period meaning                                                |
-| Instant                                | one position under the fixed Kontrakt Instant Temporal Reference (origin, time scale, leap-second law, unit, range, resolution) | the complete coordinate is equal under the exact fixed Temporal Reference       | source timestamp spelling, source offset, zone, clock provenance, or leap-second parse evidence              |
-| Zone Descriptor                        | one exact closed zone descriptor, preserving its descriptor kind and payload                                                    | the descriptor kind and exact descriptor payload are the same                   | current zone rules, current offset, provider availability, alias resolution, or resource authority           |
-| Resolved Zoned Date-Time               | one exact resolved zoned date-time whose retained distinctions include local date-time, numeric UTC offset, and Zone Descriptor | all retained temporal and zone-descriptor distinctions are the same             | current time-zone-rule consistency, same-instant equivalence, or future rule interpretation                  |
-| URI Reference                          | one syntactically legal closed URI-reference presentation under the applicable grammar                                          | the retained component presence and character presentation are exactly the same | resource identity, dereference result, scheme-specific resolution, or URI normalization                      |
-
-Input Text follows the Unicode Scalar meaning defined by ADR-0080. A Java or Kotlin `String` is only a possible carrier
-and must preserve the admitted Input Text meaning. Normalization and case folding are not implicit Input operations.
-
-Temporal Input Leaves represent already-formed values under ADR-0082. `Instant` requires its exact fixed Temporal
-Reference. `Zone Descriptor` does not establish zone rules. `Resolved Zoned Date-Time` preserves its declared local
-date-time, offset, and zone descriptor independently of later changes to time-zone rules.
-
-Temporal acquisition, zone-rule resolution, and conversions using versioned temporal data remain separate operations
-under ADR-0082 and ADR-0073. They cannot introduce ambient provider state into Input meaning. Local Date-Time and Zone
-Descriptor do not automatically establish a Resolved Zoned Date-Time.
-
-A host type name or scalar-shaped carrier does not establish an Input Leaf. A separately ratified descriptive value
-must have closed presentation meaning and Presentation Sameness, and cannot import external resource authority. An
-existing Input family may represent that value when it preserves the declared meaning.
+No independent Input size bound is introduced by this provision (Section 6.8). The remaining common meanings are
+consumed
+under their owning laws. Temporal presentations in particular retain the exact resolved reference and applicable value
+distinctions under ADR-0082. Input does not select a time scale, resolve zone rules, or perform temporal conversion.
 
 ### 6.10. V1 User-Facing Authoring Classes
 
@@ -973,14 +882,12 @@ presentation. The host category does not create Contract meaning.
 | Implementation-shaped carrier                                    | Require explicit formation or reject the source                                                                        | Mutable JavaBean; proxy; runtime-discovered implementation                                       | Host conventions, mutable observation, lifecycle, and implementation relationships do not become Input meaning                                                       |
 | Behavior, capability, movement, or role leakage                  | Reject from Input                                                                                                      | Callback; service; live resource; stream; core Fact authority; State; backend handle             | The material belongs to another role or is not Input presentation data                                                                                               |
 
-A platform collection category does not by itself determine whether a carrier is accepted or
-rejected. Section 6.9 defines Input semantic meaning. ADR-0073 owns the platform-surface ratification
-and constituent-closure gate that determines whether a particular host surface can realize that
-meaning without loss.
+A platform collection category does not by itself determine whether a carrier is accepted or rejected. Section 6.9
+governs eligibility of the resolved meaning. ADR-0073 owns the platform-surface ratification and constituent-closure
+gate that determines whether a particular host surface can realize that meaning without loss.
 
-The exact V1 direct-support matrix for nested and collection-shaped Java or Kotlin carriers remains
-compiler/platform-support work. A legal Input presentation does not imply that every familiar host carrier for a similar
-shape is a legal zero-adapter carrier.
+The exact V1 direct-support matrix for Java or Kotlin carriers remains compiler/platform-support work. A legal Input
+presentation does not imply that every familiar host carrier for a similar meaning is a legal zero-adapter carrier.
 
 ### 6.11. Zero-Adapter Direct Carrier
 
@@ -1007,13 +914,13 @@ be formed into a supported presentation before invocation.
 Another frontend may later realize semantically equal Input presentation meaning. Section 4.6 prevents that equality
 from merging independently declared Contract identities.
 
-### 6.12. Behavior and Capability Are Not Opaque Leaves
+### 6.12. Behavior and Capability Are Not Opaque Values
 
-Labeling an executable capability as opaque does not make it legal Input. Input may instead carry an
-approved closed descriptive value that denotes something outside the machine, under the applicable
-Leaf or structured-presentation law. The execution capability, live resource authority, provider
-state, or resource ownership denoted by that value remains outside Input authority. A bearer or
-capability token is not rescued by scalar-shaped presentation.
+Labeling an executable capability as opaque does not make it legal Input. Input may instead carry a closed descriptive
+value that denotes something outside the machine, when its resolved meaning satisfies Sections 6.7 and 6.9. The
+execution
+capability, live resource authority, provider state, or resource ownership denoted by that value remains outside Input
+authority. A bearer or capability token is not rescued by scalar-shaped presentation.
 
 ---
 
@@ -1030,8 +937,8 @@ expresses one selected Input Contract. That frontend convenience is separate fro
 several selection occurrences.
 
 Richer application objects remain legal outside Kontrakt, but they must be formed into the applicable Input presentation
-before invocation unless their exact host surface passes the applicable direct-carrier gate. Section 6.9 defines the
-semantic presentation independently of that platform support. The authoring surface therefore does not force the
+before invocation unless their exact host surface passes the applicable direct-carrier gate. Section 6.9 governs the use
+of resolved value meaning independently of that platform support. The authoring surface therefore does not force the
 application object model into the Contract Core.
 
 ## 8. Refusal Boundary
@@ -1314,23 +1221,24 @@ Remaining work is owned outside Input semantics:
 
 - **Compiler Result (ADR-0074, Proposed):** Common unsuccessful-result and recovery representation. Input retains the
   distinction between compiler-side non-entry, Definition Refusal, and occurrence-time `Refused`.
-- **Authoring and API:** Final Input authoring tokens, public Java/Kotlin carrier syntax, the exact V1 set of concrete
-  bounded Leaf variants, and the generated Host API strategy for Policy-variable Input. Distinct Input Definitions
-  selected by different Contract Worlds need not share a host carrier.
-- **Platform (ADR-0073):** The exact Java/Kotlin direct-support matrix for Input Leaves and carrier operations. Legal
-  Input meaning does not by itself make a host carrier or operation legal.
+- **Authoring and API:** Final Input authoring tokens, public Java/Kotlin carrier syntax, and the generated Host API
+  strategy for Policy-variable Input. Distinct Input Definitions selected by different Contract Worlds need not share a
+  host carrier.
+- **Platform (ADR-0073):** The exact Java/Kotlin direct-support matrix for resolved presentations and carrier
+  operations.
+  Legal Input meaning does not by itself make a host carrier or operation legal.
 - **Interface, Policy, Governance, and HIR:** Exact Contract World selection and its HIR representation. That relation
   must not be used to reconstruct missing Input Definition Meaning.
-- **Design:** Physical HIR representation, reusable Leaf-law representation, and compiler optimizations. None changes
-  Input meaning or introduces a user-selectable Input equality or normalization law.
+- **Common value laws and interpretation:** Complete the transfer of the retained distinctions in Section 6.9.4 and
+  reconcile the earlier Input-specific support restrictions in the common laws. Expansion of interpretation support
+  remains subject to Section 6.9 rather than an Input inventory.
+- **Design:** Physical HIR representation, reusable resolved meaning, and compiler optimizations. None changes Input
+  meaning or introduces a user-selectable Input equality or normalization law.
 
-Concrete V1 bounded Leaf variants remain subject to the complete closure requirements of Section 6.9.5 before Visible
-HIR. A Candidate must retain all resolved meaning and exact semantic bases needed by its presentation law. Compiler
-comparison acceleration, including hashes or indexes, must be validated against that exact law.
-
-Future presentation-family additions must preserve Input's closed meaning and external-authority boundaries. Host
-behavior,
-snapshot timing, open-world evolution, and backend representation cannot become Input meaning through such an extension.
+Compiler comparison acceleration, including hashes or indexes, must be validated against the exact Presentation
+Sameness law. Expanded interpretation support must preserve Input's closed meaning and external-authority boundaries.
+Host behavior, snapshot timing, open-world evolution, and backend representation cannot become Input meaning through
+such an extension.
 
 ## 11. Consequences
 
