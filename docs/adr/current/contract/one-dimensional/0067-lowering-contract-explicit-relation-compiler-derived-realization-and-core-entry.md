@@ -504,17 +504,34 @@ A Lowering Definition Candidate owns the complete resolved meaning of its explic
 relations for every fixed target Fact kind.
 Its Definition determinants are:
 
-```text
-Source Requirement: each declared nominal source coordinate and its required Input-visible presentation meaning
-Target Requirement: each exact, explicitly fixed Core-owned Fact kind and its factual coordinates, complete Fact
-    surface, applicable Fact meaning, version, and required representation meaning
-Mapping Relation: the complete declared source-to-Fact-coordinate relations for all fixed target Fact kinds,
-    preserving every mapping occurrence, source reuse, target uniqueness, and multiplicity
-Formation Meaning: the exact qualified callable, explicit source receiver or argument placement, meaning-determining
-    arguments, completed conversion meaning and applicability, and Lowering-owned partiality and refusal meaning
-Semantic Dependencies: the exact target Fact meaning/version and Contract-owned refinement, bounds, and semantic
-    Law or Basis references that determine the declared formation meaning
-```
+**Source Requirement**
+
+Defines each declared nominal source coordinate and the Input-visible presentation meaning it requires.
+
+**Target Requirement**
+
+Identifies each explicitly fixed Core-owned Fact Kind at its exact Version. This requirement includes the complete
+factual coordinate surface, applicable Fact meaning and required representation meaning.
+
+**Mapping Relation**
+
+Defines the complete relation from declared source coordinates to the factual coordinates of every fixed target Fact
+Kind. It preserves every mapping occurrence under the cardinality law of Section 8, including its declared multiplicity
+before judgment.
+
+**Formation Meaning**
+
+Determines how each declared mapping forms its target value through an exact qualified callable. Its meaning includes:
+
+- Explicit placement of the source as a receiver or argument.
+- Arguments that determine the conversion meaning.
+- Completed conversion meaning and applicability.
+- Lowering-owned partiality and refusal meaning.
+
+**Semantic Dependencies**
+
+Identifies the exact target Fact meaning and Version. It also preserves references to any Contract-owned refinement,
+bounds, Law or Basis that determines the declared formation meaning.
 
 All five determinants must be resolved before the Candidate becomes Visible HIR. Establishment cannot reconstruct
 missing Definition meaning from any of these sources:
