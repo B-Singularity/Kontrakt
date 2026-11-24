@@ -35,9 +35,10 @@ found source-declaration candidate CSV remains an independent *audit input*, not
 ## 1.1. Task of this Design
 
 The compiler must be able to distinguish every source-visible Collection meaning that matters to a lawful authored
-calculation, even when that meaning is absent from the current Input allow-list. It first resolves an exact Java/Kotlin
-callable under ADR-0079, qualifies that callable's SDK behavior under ADR-0084, and only then maps the understood result
-to the shared constituent meaning provided by ADR-0081. The receiving 1D independently decides admissibility.
+calculation, independently of its eligibility for Input. It first resolves an exact Java/Kotlin callable under ADR-0079,
+qualifies that callable's SDK behavior under ADR-0084, and only then maps the understood result to the shared
+constituent
+meaning provided by ADR-0081. The receiving 1D independently decides admissibility.
 
 Collection coverage includes ordinary List/Set/Map interfaces, concrete and legacy implementations, arrays (including
 primitive and unsigned arrays), Range and Progression, queues and concurrent structures, Collections and Kotlin
@@ -58,8 +59,9 @@ are determined by the owning laws, not by a generic JVM Collection whitelist.
   result. A Source Operation that exposes a live view is not thereby an established closed value.
 - The deterministic refinement default belongs to ADR-0081 §3.3: preserve results guaranteed by the specification;
   refine a specification-permitted choice lawfully and deterministically while retaining mandatory execution effects.
-- The current Input presentation allow-list remains that of ADR-0064 §7.9. A shared Multiset, Positional Product,
-  source View or Queue protocol has no automatic V1 Input authority.
+- Input consumes resolved value meaning under ADR-0064 §6.9 and applies its ratifiability law without a separate
+  inventory of collection forms. Recognition of a source View or Queue protocol does not establish a completed value
+  or Input authority.
 - Compile-time Resolved Contract HIR, Establishment and Canonical Contract World are distinct from runtime Interaction
   Ingress, Input/Fact occurrences and JVM user Operation execution. Catalog metadata is not a Contract semantic
   reference, HID, source-path identity or compiler-produced authoritative result.
@@ -178,9 +180,9 @@ A Composition can be represented by relations among core families; a separately 
 mandatory. Source grouping with downstream filtering can retain an empty group while filtering before grouping may
 omit that group. Consequently Map equality or final Value class alone cannot stand in for Grouped meaning.
 
-Named/Positional Product and Choice are deliberately included in the common interpretation inventory, but the legal
-set of Input presentation constructors remains ADR-0064 §7.9. Being representable does not imply being authored,
-accepted, established or usable as an independent Authority.
+Named/Positional Product and Choice are included in the common interpretation inventory. Their use as Input follows
+ADR-0064 §6.9, like any other resolved value meaning. Being representable does not imply being authored, accepted,
+established or usable as an independent Authority.
 
 ---
 

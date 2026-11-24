@@ -357,7 +357,7 @@ through execution.
 
 Nested Named Product observations are semantically legitimate, but this does not automatically ratify nested DTOs as
 V1 zero-adapter direct carriers. Admission may use a constituent path only after each mapping is qualified under
-ADR-0064 Sections 7.9–7.11. Compiler recognition of the path must not be confused with supporting arbitrary mutable
+ADR-0064 Sections 6.9–6.11. Compiler recognition of the path must not be confused with supporting arbitrary mutable
 or recursively discovered host object graphs.
 
 ### 3.2.2. Presence and closed alternatives — bundle 3
@@ -556,14 +556,15 @@ source profiles are distinguished:
 | Exact external enum case `status == Status.PAID`       | Support nominal closed-case comparison under Section 3.2.3; no enum initialization or user method is thereby authorized.                                                                 |
 | Kotlin `===`/`!==` or Java reference `==`/`!=`         | Do not use host object identity as Contract value equality.                                                                                                                              |
 
-For whole-collection comparison, an Input `Sequence` preserves positions and the sameness of constituents.
-`Membership` and `Association` preserve their exact members, keys, associated values, and any **Input-visible**
-encounter
-or exact ordered-by distinction. `No Observable Order` does not admit physical iterator order as a comparison input.
-Nested presentations compare their lawful constituents according to their exact structural meaning. The spelling
-`a == b` is supported for these forms only after the frontend can map it to such a complete comparison. The supported
-host collection class alone is insufficient evidence. Kotlin arrays' reference-oriented `==` is not silently
-reinterpreted as `contentEquals`; array-wide comparison needs its own exact profile.
+Whole-collection comparison must preserve every distinction of the resolved Input presentation under ADR-0064
+§§6.9.1–6.9.3. For example, a `Sequence` preserves positions and the sameness of constituents, while `Membership`
+and `Association` preserve their exact members or key/value relations. Any declared encounter or exact ordered-by
+distinction must also survive comparison. `No Observable Order` does not admit physical iterator order as a comparison
+input. Nested presentations compare their lawful constituents according to their exact structural meaning.
+
+The spelling `a == b` is supported only after the frontend can map the actual source operation to such a complete
+comparison. The supported host collection class alone is insufficient evidence. Kotlin arrays' reference-oriented
+`==` is not silently reinterpreted as `contentEquals`; array-wide comparison needs its own exact profile.
 
 For example, numeric `Double` comparison regards `-0.0` and `+0.0` as equal but Input Binary64 Presentation Sameness
 preserves their distinct bits. A NaN also makes numeric equality non-reflexive, so numeric `==` cannot be the general
@@ -802,18 +803,18 @@ This inventory preserves the subjects previously identified for V1 consideration
 approved merely by appearing here.** Exact method names, signatures, sample implementations, and per-operation rules
 will be drafted during subsequent reviews.
 
-| Area for later design        | Scope to examine                                                                                            |
-|------------------------------|-------------------------------------------------------------------------------------------------------------|
-| Declaration and Input access | Selected class, independent Boolean conditions, helpers and constants, scalar and nested Input observation  |
-| Boolean and control flow     | Reviewed Boolean/bitwise operators, exact equality, guards, branches, returns and finite loop control       |
-| Numeric values               | Exact numeric types, floating/decimal relations, remaining bit utilities, conversions and overloads         |
-| Closed alternatives          | Optional and absent values, enums, tagged choices, product constituents                                     |
-| Text and binary              | Characters, Unicode-aware text, byte sequences, exact comparisons and finite derived operations             |
-| Other closed leaves          | Temporal values, identifiers, syntactic references, and qualified value operations                          |
-| Arrays and collections       | Finite arrays; Input `Sequence`, `Membership`, `Association`; traversal, cardinality, lookup and membership |
-| Derived collection work      | Quantification, reduction, pipelines, ordering, grouping, matching and nested finite work                   |
-| Calls and local computation  | Closed private helpers, binders, local temporary state, qualified standard-library operations               |
-| Patterns                     | Exact pattern matching and regular-expression forms with qualified semantic profiles                        |
+| Area for later design        | Scope to examine                                                                                           |
+|------------------------------|------------------------------------------------------------------------------------------------------------|
+| Declaration and Input access | Selected class, independent Boolean conditions, helpers and constants, scalar and nested Input observation |
+| Boolean and control flow     | Reviewed Boolean/bitwise operators, exact equality, guards, branches, returns and finite loop control      |
+| Numeric values               | Exact numeric types, floating/decimal relations, remaining bit utilities, conversions and overloads        |
+| Closed alternatives          | Optional and absent values, enums, tagged choices, product constituents                                    |
+| Text and binary              | Characters, Unicode-aware text, byte sequences, exact comparisons and finite derived operations            |
+| Other closed leaves          | Temporal values, identifiers, syntactic references, and qualified value operations                         |
+| Arrays and collections       | Finite arrays; resolved Input collection meanings; traversal, cardinality, lookup and membership           |
+| Derived collection work      | Quantification, reduction, pipelines, ordering, grouping, matching and nested finite work                  |
+| Calls and local computation  | Closed private helpers, binders, local temporary state, qualified standard-library operations              |
+| Patterns                     | Exact pattern matching and regular-expression forms with qualified semantic profiles                       |
 
 Parallel or potentially open-ended streams, unsupported recursion, unresolved dynamic behavior, hidden environmental
 reads, and arbitrary user callbacks are not made legal by placement in this inventory. Their treatment must follow

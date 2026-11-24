@@ -56,8 +56,9 @@ ratified under ADR-0073.
 - A Java/Kotlin `char`/`Char` is a UTF-16 Code Unit. Host `String` intermediate results may contain unpaired surrogates.
   Interpretation must preserve them without establishing an invalid value as Kontrakt Text or silently substituting
   U+FFFD.
-- An Input-specific size or presentation bound does not create a global Text length bound. Resource exhaustion, capacity
-  and target encodings retain separate owners.
+- Input follows the Text domain and its limits resolved by the Type Subsystem (ADR-0064 §§6.8–6.9). Budget and
+  Capacity govern resource obligations. Resource exhaustion and target encoding constraints remain separate from
+  Input presentation legality.
 - Each 1D decides which calculations its authored law permits and owns the resulting Judgment/Material; Canonicalization
   Laws separately own their `E_L`, `C_L`, Coverage and exact Version. The shared operation can be used without
   performing that Judgment.
