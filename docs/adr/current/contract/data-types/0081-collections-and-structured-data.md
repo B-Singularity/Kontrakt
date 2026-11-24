@@ -11,7 +11,7 @@
 - ADR-0047: One-Dimensional Contract Presentations and Realization Boundary
 - ADR-0055: Whole Machine, Pipeline Composition, and Contract Concurrency
 - ADR-0063: Contract Establishment, Identity, Applicability, and Composition
-- ADR-0064: Input Contract, especially §§7.3 and 7.9
+- ADR-0064: Input Contract, especially §§6.3 and 6.9
 - ADR-0065: Admission Contract, especially §7
 - ADR-0067: Lowering Contract, especially §§4, 6, and 17
 - ADR-0068: Fact Contract, especially §10
@@ -85,7 +85,7 @@ profiles and conformance evidence belong to the Collection SDK Interpretation an
 ### 3.1. Shared Collection Meaning and Authority
 
 This ADR defines the meaning of completed collection and structured values; it does not create a new 1D or a shared
-judgment authority. The owning 1D admits each form and determines its judgment and Establishment.
+judgment authority. The owning 1D determines legal use and retains its judgment and Establishment authority.
 
 | Boundary              | Rule                                                                 |
 |-----------------------|----------------------------------------------------------------------|
@@ -94,7 +94,8 @@ judgment authority. The owning 1D admits each form and determines its judgment a
 | Input and Fact        | This ADR cannot establish their material; their owning 1D laws apply |
 | Sameness and Identity | The owning 1D retains its own rules                                  |
 
-In particular, Bag and Positional Product do not enlarge ADR-0064 §7.9's V1 Input presentation forms.
+Input consumes resolved collection meaning and applies its ratifiability law (ADR-0064 §6.9). Eligibility does not
+depend on a separate inventory of collection forms.
 
 A family describes what a value must preserve, independently of the class or storage used to realize it. A source
 operation may return a value that combines several such laws. The laws below describe **five basic forms of completed
@@ -291,7 +292,7 @@ coupling. The conversion rules are in §3.4.2.
 | Ordered Interval / Range | Closed interval law                             | Ordered carrier, exact bounds, endpoint inclusion or exclusion, empty condition and lawful membership       |
 | Discrete Progression     | Closed progression law                          | Start, step, direction, termination, last-value and generated-occurrence laws                               |
 | Named Product            | Declared Product, named roles                   | Exact declared constituent coordinates and their presence laws                                              |
-| Positional Product       | Declared Product, fixed slots                   | Per-slot roles and values, without treating the slots as a generic V1 Input tuple                           |
+| Positional Product       | Declared Product, fixed slots                   | Per-slot roles and values; slots do not create direct Input coordinates                                     |
 | Closed Tagged Choice     | Closed Tagged Alternative                       | Exact selected case and conditional payload                                                                 |
 
 An Indexed Sequence can derive relative position from encounter order. Any additional Source-defined index unit,
@@ -1121,7 +1122,6 @@ The word `window` does not prescribe one selection law. The selected calculation
 
 Each has its own domain and completion conditions; a shaped window also supplies the resulting axis schema and
 coordinate correspondence (§3.1.3). An incomplete time/window producer does not become complete by its label.
-These forms do not expand V1 Input eligibility.
 
 #### 3.4.1.13. Range, Progression and Shaped Calculations (R02-13)
 
@@ -1505,7 +1505,7 @@ or a mask that actually distinguishes the original coordinates. Recognizable fil
 NaN cannot on their own distinguish original constituents from padding.
 
 Masked-to-Unmasked conversion follows the exact mask law. A Boolean mask is not universally deletion,
-zero-fill or null-fill. No Tensor buffer layout or new V1 Input form follows (ADR-0064; ADR-0078 §14.1).
+zero-fill or null-fill. This law specifies no Tensor buffer layout. Tensor support remains a V2 target (ADR-0078 §14.1).
 
 #### 3.4.2.10. Weighted Relations, Deltas and Completed Collection Results
 
@@ -1558,7 +1558,7 @@ ADR-0075. Their consumers do not acquire an alias through which the producer's l
 that meaning.
 
 At runtime, the external Java or Kotlin collection is a carrier of Input evidence, not the Input occurrence or a Fact.
-Kontrakt-controlled acquisition may form the required stable presentation **before** the Input judgment. ADR-0064 §7.3
+Kontrakt-controlled acquisition may form the required stable presentation **before** the Input judgment. ADR-0064 §6.3
 requires that judgment to receive an already-formed complete immutable presentation; Input cannot make an otherwise
 illegal carrier lawful by copying, snapshotting, normalizing or freezing it during judgment. The formed presentation
 must correspond to one lawful observation and preserve all declared constituent distinctions (ADR-0073 §5.2).
@@ -1621,7 +1621,7 @@ domain. The relevant distinctions are:
 | Invalid coordinate                                 | Outside the admitted coordinate domain        |
 | Unresolved meaning or failed calculation           | Not established constituent Absence           |
 
-See ADR-0064 §§7.6 and 7.9.4, ADR-0063 and ADR-0071.
+See ADR-0064 §§6.6 and 6.9.2, ADR-0063 and ADR-0071.
 
 Source-language `null` has its exact Source meaning. It is not automatically Contract Absence or a universal
 Kontrakt Null value. A present constituent may be null-like only if its admitted domain permits that meaning.
@@ -1662,7 +1662,7 @@ The selected SDK operation keeps its actual comparison semantics. Equality-based
 reference-identity-based source operations can discriminate constituents differently. Those distinctions must be
 understood before the source result is used in a governed judgment.
 
-The receiving 1D owns its own relation. In particular, ADR-0064 §7.9.1 owns Input Presentation Sameness, and ADR-0068
+The receiving 1D owns its own relation. In particular, ADR-0064 §6.9.1 owns Input Presentation Sameness, and ADR-0068
 §10 owns Fact sameness. Host `equals`, `hashCode`, a comparator, or a collection constructor cannot replace either law.
 
 An Admission-local calculation may use a different explicit comparison when ADR-0065 §7 permits it. That comparison does
@@ -1701,7 +1701,7 @@ history. If candidates are indistinguishable under every permitted observation, 
 Contract meaning. Neither case specifies a representative-selection algorithm.
 
 This does not amend Input's rule against silent deduplication or representative choice at its boundary (ADR-0064
-§7.9.1).
+§6.9.1).
 
 ### 3.9. Deferred and Unlawful Calculations
 
@@ -1871,5 +1871,5 @@ detailed work without introducing new Contract authority.
 
 The distinction between Source-permitted choice and actual randomness is defined in §3.3. The proposed
 ADR-0065 amendment addresses Admission Judgment Meaning and authored exception handling; ADR-0057 retains
-machine Failure decisions. ADR-0064's V1 Input allow-list is unchanged by the common forms (§3.1). Future
+machine Failure decisions. Input eligibility follows ADR-0064 (§3.1). Future
 Family and Source Profile revisions remain subject to their owning laws.

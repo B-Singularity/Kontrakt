@@ -655,8 +655,8 @@ Admission may judge enums, presence or absence, nullability, closed product memb
 when Input exposes those distinctions. Character and text calculations follow ADR-0080, and temporal calculations follow
 ADR-0082. Binary, range, and positional operations require exact qualified semantics and legal observations.
 
-Finite arrays and Input `Sequence`, `Membership`, and `Association` forms are eligible judgment domains. Their
-presentation, cardinality, membership, key, and ordering laws remain Input-owned under ADR-0064.
+Admission may consume resolved collection and structured value meanings lawfully exposed by Input, subject to
+its own judgment laws. Input retains authority over the presentation and its observable distinctions under ADR-0064.
 
 Admission may use qualified collection operations, including lookup, transformation, quantification, reduction, and
 judgment-local pipelines, under ADR-0081 and Section 7.4. Source operations retain their exact comparison and selection
@@ -706,14 +706,14 @@ resolved semantic operation and all reachable effects, as further constrained by
 ### 7.4. Finite Collection, Pipeline, and Binder Condition
 
 Admission may inspect Input collection constituents only through distinctions owned by the Established Input
-presentation.
-Input also decides the collection's membership or key relation and whether order or cardinality is semantic. If the
-Input law does not expose one of those distinctions, a host collection implementation cannot supply it implicitly.
+presentation. Input governs the observable distinctions of the resolved collection meaning, including member, tuple or
+key discrimination, cardinality, multiplicity and order. A host collection implementation cannot supply a distinction
+that the Input law does not expose.
 
-A finite Input collection need not have one fixed maximum cardinality. A traversal is legal when its finite domain and
-completion can be established from lawful Input and closed Definition material through qualified operations. Resource
-limits
-on that work belong to Budget, Capacity, compiler safety, or backend policy rather than to Admission semantics.
+The extent and limits of an Input collection follow its resolved value meaning (ADR-0064 §§6.8–6.9). Admission imposes
+no independent maximum cardinality. A traversal is legal when its finite domain and completion can be established
+from lawful Input and closed Definition material through qualified operations. Resource limits on that work belong to
+Budget, Capacity, compiler safety, or backend policy rather than to Admission semantics.
 
 A lambda or function object is not itself Admission material. It may contribute through an exactly resolved and
 qualified operation when its body and invocation semantics are closed and it does not escape the judgment. This matters

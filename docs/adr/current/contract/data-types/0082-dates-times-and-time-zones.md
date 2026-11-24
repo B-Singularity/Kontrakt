@@ -16,7 +16,7 @@
 - ADR-0058 — Publication Contract
 - ADR-0060 — Diagnostic Evidence and Retention Contract
 - ADR-0063 — Contract Establishment
-- ADR-0064 — Input Contract, especially §7.9.5
+- ADR-0064 — Input Contract, especially §§6.8–6.9
 - ADR-0065 — Admission Contract, especially §§7–10
 - ADR-0066 — Canonicalization Contract
 - ADR-0068 — Fact Contract
@@ -40,8 +40,8 @@ on physical time. ADR-0051 already defines a `Relative Elapsed Time` Budget for 
 
 These uses require a common temporal basis rather than a single host-library model.
 
-ADR-0064 §7.9.5 defines nine temporal Input Leaves. ADR-0079 and ADR-0084 govern Java/Kotlin source
-interpretation. This ADR supplies the temporal meaning for both Contract judgments and the compiler itself.
+This ADR supplies temporal meaning for Contract judgments and the compiler itself. ADR-0079 and ADR-0084 govern
+Java/Kotlin source interpretation. Input consumes resolved temporal meaning under ADR-0064.
 
 The compiler and its generated machine also need reliable measurements for resource enforcement and
 engineering tests. The meaning of those measurements must be established independently of the hardware that
@@ -688,8 +688,8 @@ The concrete estimation laws, representation and propagation rules remain subjec
 
 ### 3.2. Temporal Value Distinctions
 
-The following values illustrate completed meanings under §3.1.1. For an Input Leaf, ADR-0064 §7.9.5 owns the
-exact presentation and Sameness.
+The following values illustrate completed meanings under §3.1.1. Input owns the presentation and its
+Sameness under ADR-0064.
 
 | Meaning                  | Required distinction                                                                                                              |
 |--------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
@@ -704,8 +704,8 @@ exact presentation and Sameness.
 | Resolved Zoned Date-Time | A local date-time, offset, and Zone Descriptor whose retained distinctions remain observable.                                     |
 | Calendar Period          | A calendar-relative amount whose application requires a calendar and a temporal starting context. It is not an elapsed Duration.  |
 
-ADR-0064 defines the first nine meanings for its Input inventory. Its Instant profile follows §3.3 of this
-ADR. **Calendar Period is a common calculation subject proposed here**, not an additional V1 Input Leaf.
+Input eligibility follows ADR-0064 §6.9 rather than this table. **Calendar Period remains a proposed common
+calculation subject**; the table alone does not establish its complete meaning or qualify its use.
 
 An `Instant` is a position under §3.1.3; Duration is a quantity under §3.1.2. A `TimeMark` or another
 running-clock reading becomes a transferable Instant only through a qualified correspondence supplying the
@@ -731,11 +731,10 @@ For the Java and Kotlin Instant comparison, see §3.9.
 Unit definitions follow §3.1.2. Representation resolution follows §3.7; calendar-day calculations are
 illustrated in §3.4.
 
-ADR-0064 §7.9.5 predates this basis. Its fixed Kontrakt Instant epoch is an Input profile, not a normalization
-rule for all temporal values. Revision of that Leaf profile belongs to ADR-0064. The profile must adopt an
-established temporal meaning and retain the distinctions required by Input Presentation Sameness. Until
-revision, the existing Input law governs; this ADR changes neither the admitted Leaf inventory nor its
-Sameness. A calculation requiring an undetermined epoch or another missing determinant cannot proceed.
+An Instant used in Input retains its exact resolved Temporal Reference and the distinctions required by
+Input Presentation Sameness (ADR-0064 §6.9). Input does not select a time scale or convert the value to a
+fixed Kontrakt epoch. A calculation requiring an undetermined epoch or another missing determinant cannot
+proceed.
 
 ### 3.4. Calendar Arithmetic and Elapsed-Time Arithmetic
 
@@ -882,7 +881,7 @@ Formatting can lose distinctions needed for round-trip conversion (§3.1.4). Omi
 recovery of the original Offset Date-Time. A seconds-only pattern can discard fractional precision.
 
 Non-ISO chronologies in `java.time.chrono` require their own qualified operations and semantic data. Their
-dates are not ISO Input Leaves unless the selected conversion establishes an exact lawful result.
+dates do not become ISO dates without an exact lawful conversion.
 
 ### 3.9. Java/Kotlin Source Operations
 
@@ -1266,7 +1265,6 @@ The remaining decisions are owned as follows:
 
 | Owner                                | Work still requiring a separate decision or design                                                                                                                    |
 |--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ADR-0064                             | Revisit the Instant Leaf profile under §3.3. Complete its reference and representation determinants before publishing an eligible Leaf profile.                       |
 | ADR-0079 / ADR-0084 and SDK Design   | Qualify the exact temporal callable inventory for declared JDK and Kotlin profiles, including applicable external data.                                               |
 | ADR-0051 and Backend Conformance     | Align the elapsed-time judgment and stop law with §§3.11–3.12; qualify boundary observations and competing establishment.                                             |
 | Each other 1D ADR                    | Decide whether new time-dependent judgments or time-based resource quantities are needed.                                                                             |

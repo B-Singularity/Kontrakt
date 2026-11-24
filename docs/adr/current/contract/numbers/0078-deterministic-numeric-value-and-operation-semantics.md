@@ -566,9 +566,9 @@ ADR-0078 does not supersede any owning Contract (Section 3.1). Its Numeric Meani
 Contract processing lawfully consumes or forms numeric values, including results returned by user
 Operation realization. Their legal use and establishment remain with their owning Contracts.
 
-Input Presentation remains governed by ADR-0064. Binary16, bfloat16, and Binary128 are V1 exact-bit
-Scalar Input Leaf support targets, but ADR-0064 must ratify their Presentation laws and ADR-0073 must
-qualify their carriers and executable uses. This ADR does neither.
+Binary16, bfloat16, and Binary128 remain V1 Numeric Value support targets (Sections 3.6 and 4.2).
+Input consumes their resolved meaning under ADR-0064 Section 6.9 without separate format-specific
+ratification. Carrier and executable-use qualification remain subject to ADR-0073.
 
 ## 14.1. V2 Vector, Matrix, and Tensor Support
 
@@ -609,9 +609,9 @@ The shared operation-qualification law is closed by Sections 3–10. A newly sup
 requires individual qualification; universal coverage of Java, Kotlin, BigInteger, or Decimal APIs
 is not claimed.
 
-The remaining V1 integration work is the independent Input and carrier ratification described in Section
-
-14. Section 4.2 already closes the three formats' Numeric Meanings.
+The remaining V1 integration work for these three formats is to support their exact interpretation and
+qualify their carriers and executable uses under Section 14. Section 4.2 already defines their Numeric
+Meanings.
 
 The V2 work in Section 14.1 is not an acceptance condition for the current Scalar Numeric Law.
 

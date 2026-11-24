@@ -13,7 +13,7 @@ turn its proposals into Accepted Contract law.
 - ADR-0053: Version Contract
 - ADR-0057: Failure Contract
 - ADR-0063: Contract Establishment, Identity, Applicability, and Composition
-- ADR-0064: Input Contract, especially §7.9.1 and §7.9.5
+- ADR-0064: Input Contract, especially §§6.8–6.9.1
 - ADR-0065: Admission Contract
 - ADR-0066: Canonicalization Contract
 - ADR-0067: Lowering Contract
@@ -39,8 +39,8 @@ turn its proposals into Accepted Contract law.
 ## 1. Context
 
 ADR-0078 establishes how common value and operation semantics can be defined without creating a 1D Contract or selecting
-an implementation. ADR-0064 already defines Input `Text` Presentation Sameness. ADR-0066 and ADR-0076 retain the
-authority of the selected Canonicalization Laws.
+an implementation. Input consumes resolved Character and Text meaning under ADR-0064, which owns Presentation
+Sameness. ADR-0066 and ADR-0076 retain the authority of the selected Canonicalization Laws.
 
 This ADR defines the meaning of common Character and Text calculations. Their meaning is the same wherever the compiler
 uses them. Each 1D still determines whether and how to use a calculation in its own judgment.
@@ -65,8 +65,8 @@ version or another profile determines the result, it is part of that operation's
 inputs must give the same legal result, regardless of the compiler component or algorithm.
 
 **Exact Text equality** compares the original Scalar sequence. It neither normalizes nor folds text. This agrees with
-Input Presentation Sameness under ADR-0064. The finite Input presentation bound is not a global limit on other Text
-calculations. Details of the value domain are in §3.2; the selected calculations begin in §3.3.
+Input Presentation Sameness under ADR-0064. Input follows the resolved value domain without imposing an independent
+Text size bound (ADR-0064 §§6.8–6.9). Details of the value domain are in §3.2; the selected calculations begin in §3.3.
 
 **Authority remains with each 1D.** A shared normalization result is not a Canonicalization judgment: the selected Law
 still owns its `E_L`, `C_L`, Version, and established Material under ADR-0066 and ADR-0076. Other judgments retain their
@@ -786,4 +786,3 @@ deliberately undecided.
 - JVM output and compiler reuse obey their own representation and validity laws (§§3.11–3.12).
 - Semantic selection does not establish V1 conformance. Integration and executable verification follow their owning
   Designs (§3.14).
-
