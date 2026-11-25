@@ -1,4 +1,4 @@
-# ADR-0068: Fact Contract, Explicit Immutable Core Information, Sameness, Uniqueness, and Vocabulary
+# ADR-0068: Fact Contract, Explicit Immutable Core Information, Sameness, and Vocabulary
 
 ## Status
 
@@ -102,12 +102,11 @@ after resolution.
 
 Fact meaning must remain separate from physical representation.
 
-Host equality and hashing must not own Fact sameness.
+Fact sameness must preserve the complete information without depending on host equality or hashing. Fact owns no
+independent object identity or restriction on the coexistence of different Facts.
 
-Fact-owned uniqueness must remain distinct from Fact sameness.
-
-Currentness, supersession, history, topology, and cross-Fact relations must not be synthesized from Fact identity or
-uniqueness.
+Currentness, supersession, history, topology, and cross-Fact relations must not be synthesized from Fact sameness or
+derived physical keys.
 
 Facts must not contain semantic references to other Facts.
 
@@ -118,7 +117,8 @@ factual distinction.
 
 ## 4. Fact Meaning
 
-A Fact is the immutable factual proposition declared by one Fact kind and its complete canonical factual material.
+A Fact is an immutable factual proposition under one exact Versioned Fact Definition, expressed by its complete
+canonical factual material.
 
 **Fact Contract**
 
@@ -212,8 +212,8 @@ Declaration order and physical position do not determine coordinate meaning.
 Fact Kind does not substitute for a factual value or serve as a marker attached to another Fact. Neither the presence
 nor the absence of a Fact establishes State authority (Section 17).
 
-The user does not need to author a second separate Fact Contract body merely to repeat identity, equality, or hashing.
-The declared surface itself is the source evidence from which canonical Fact material is resolved.
+The declared surface is the source evidence from which canonical Fact material is resolved. No additional identity,
+equality or hashing declaration is required or admitted as Fact meaning (Sections 10 and 13).
 
 Fact is not universally an entity, event, identifier, persisted record, message, or state snapshot.
 Those meanings exist only when the declared factual material says so.
@@ -275,17 +275,17 @@ value distinctions of the corresponding constituents. Distinctions required by F
 comparison. Intrinsic or declared order and multiplicity must be preserved where they belong to the resolved meaning;
 physical storage or compiler processing order does not add factual meaning.
 
-Fact does not perform implicit conversion, representative selection, deduplication or normalization. An explicitly
-formed value may be supplied by the owning formation authority; Fact need not reconstruct distinctions from that
-formation's earlier inputs. Platform preservation of the value presented to Fact remains subject to ADR-0073.
+Fact does not perform implicit conversion, representative selection, deduplication of constituents or normalization.
+An explicitly formed value may be supplied by the owning formation authority; Fact need not reconstruct distinctions
+from that formation's earlier inputs. Platform preservation of the value presented to Fact remains subject to ADR-0073.
 
 Presence and selection retain their declared distinctions. Only the material belonging to a present value or selected
 alternative contributes its value distinctions. Unused storage must not be observed as factual information, including
 for comparison, derived keys, diagnostic evidence or Publication.
 
-This law fixes the preservation of value distinctions. Section 10 owns whole-Fact sameness; Section 14 owns declared
-uniqueness across Facts. The exact comparison does not prescribe an encoding, full physical traversal or a particular
-access strategy (Section 20).
+This law fixes the preservation of value distinctions. Section 10 defines whole-Fact sameness, and Section 12 governs
+the repeated establishment of identical information without changing its constituent meaning. Exact comparison does
+not prescribe an encoding, full physical traversal or a particular access strategy (Sections 13 and 20).
 
 ---
 
@@ -324,7 +324,7 @@ That later Contract owns the relation. Fact does not.
 A value lawfully obtained from a participating Fact may be expressed as part of a different Fact under the applicable
 formation law. The resulting information must be complete in its own right and must not depend on continued access to
 the original Fact. Participation is separately authorized under Section 15. Physical sharing of immutable backing is
-permitted, but grants no additional observation or participation authority.
+permitted under Section 20, but grants no additional observation or participation authority.
 
 A descriptive value must not retain capability or resource authority over its denoted target. This distinction follows
 ADR-0073 Sections 5.3–5.5, regardless of the carrier used. The law concerns the resolved meaning and its lawful use;
@@ -421,10 +421,12 @@ A domain-named host declaration remains frontend evidence. Kontrakt does not car
 another domain object into the Contract Core as the Fact itself. A carrier used to express a structured value must not
 import another Fact or its authority (Section 7).
 
-Resolution retains domain-neutral canonical Contract material. The resolved Fact kind and its declared coordinates
-retain the complete value meanings and factual distinctions under Section 6. Applicable contract-world material is
-preserved; source coordinates required for attribution remain separate from factual meaning unless explicitly declared
-as factual information. Candidate formation realizes the actual values under that resolved meaning (Section 5).
+Resolution retains domain-neutral canonical Contract material. The resolved Fact kind identifies the exact Versioned
+Fact Definition, whose coordinates retain the value meanings and factual distinctions under Section 6. Applicable
+Contract World material is preserved for establishment and applicability under their owning laws, not as an additional
+determinant of informational sameness (Section 10). Source coordinates required for attribution remain separate from
+factual meaning unless explicitly declared as factual information. Candidate formation realizes the actual values
+under that resolved meaning (Section 5).
 
 Host constructors, methods, receivers, object identity, and class layout do not survive as Fact authority.
 
@@ -437,29 +439,29 @@ Those realizations are implementation.
 
 ## 10. Fact Sameness
 
-Fact sameness is determined by the resolved Fact kind and complete canonical factual material under the same applicable
-Contract world.
+Fact sameness determines whether two complete factual materials express the same information. The resolved Fact kind
+identifies one exact Established Fact Definition under its owning Authority and Version (ADR-0053 Sections 3.1 and 3.5;
+ADR-0063 Section 6). It introduces no independent Fact identity or user-selected identity coordinate.
 
 ```text
-same resolved Fact kind
+same exact Versioned Fact Definition
 + same complete canonical factual material
-+ same applicable Contract world
 = same Fact
 ```
 
-Host object identity is irrelevant.
+Two different Authorities or Versions denote different Fact kinds even when their factual surfaces and actual values
+are identical. Version is part of the Definition binding, not an additional factual coordinate. The same Definition
+retains its identity across physical recompilation or relocation under ADR-0063.
 
-Allocation history is irrelevant.
+Sameness is a deterministic equivalence relation over complete lawful factual material: it is reflexive, symmetric
+and transitive. The comparison preserves every distinction of the declared coordinates and their constituents under
+Section 6.3. If necessary information is incomplete or unavailable, no sameness result may be inferred from that
+condition alone. In particular, failure to observe material does not establish that it differs.
 
-Repeated construction is irrelevant.
-
-Repeated delivery is irrelevant.
-
-Storage location is irrelevant.
-
-User-defined `equals` and `hashCode` are not Fact authority.
-
-They may neither merge different canonical factual material nor divide identical canonical factual material.
+User-defined `equals`, `hashCode`, identity selectors and custom comparison laws are not admitted on the Fact authoring
+surface. Host-generated methods have no Fact authority. Neither host equality nor another Contract's equivalence may
+merge different canonical factual material or divide identical material. Comparison must not normalize, convert or
+select a representative in order to establish sameness.
 
 For example:
 
@@ -470,12 +472,23 @@ Balance(accountId = 42, currency = KRW, amountMinor = 1000)
     -> the same Fact
 ```
 
-Repeated boundary occurrence and repeated Fact establishment are different questions.
+This assumes the same exact Versioned Fact Definition. Host object identity, allocation history, repeated construction,
+delivery and storage location do not determine the result. Fact sameness is an internal Contract law, not a separately
+authored comparison API.
 
-The same external presentation may arrive more than once.
+### 10.1. World and Authority Boundary
 
-If each successful establishment produces the same resolved Fact kind and complete canonical factual material under the
-same applicable Contract world, the established material is the same Fact.
+Informational sameness is independent of the surrounding Contract World, Governance selection and compiler World
+generation. Changes to other Contracts do not change the information expressed under an unchanged Fact Definition.
+Any meaning-determining basis of that Definition remains part of its exact resolved meaning.
+
+Sameness does not establish that the information holds authority in a particular machine or may participate in a current
+application. Establishment and applicability retain their exact World and Scope bindings under their owning laws.
+World selection alone neither establishes nor removes Fact authority. The existence of identical information in another
+World or Scope grants no automatic authority, compatibility, conversion, reinterpretation or participation. Material
+from a different Version is not the same Fact and must enter any later processing under the applicable explicit laws.
+
+Repeated boundary occurrence and repeated establishment remain separate from information sameness (Sections 11–12).
 
 ---
 
@@ -502,7 +515,9 @@ WithdrawalSubmitted(
     -> different Facts
 ```
 
-The two Facts differ because declared factual material differs.
+The two Facts differ because declared factual material differs. A coordinate used to express occurrence has no special
+identity authority by virtue of its name or value domain. Its actual value must be supplied by the applicable formation
+law; Fact does not generate an occurrence identifier.
 
 Kontrakt must not preserve occurrence through hidden message identity, host object identity, allocation history,
 delivery history, runtime reference, or storage identity.
@@ -514,70 +529,62 @@ yet express the required distinction.
 
 ## 12. Set-Like Fact Semantics
 
-For Fact authority, repeated establishment of identical canonical factual material does not create implicit
-multiplicity.
+For Fact authority within the same established information context, repeated establishment of the same Fact under
+Section 10 does not create implicit multiplicity.
 
 ```text
 { F, F } = { F }
 ```
 
-This is a Contract observation law.
+This is a Contract observation law, not a requirement for a particular set data structure or a prohibition on repeated
+lawful establishment. Storage duplicates and delivery duplicates do not create additional factual meaning. Information
+sameness does not merge independent authority scopes or grant authority in another scope (Section 10.1).
 
-It does not require one particular set data structure.
+A repeated formation or establishment may have its own occurrence and applicable judgments. Sameness alone neither
+refuses the repeated establishment nor permits the compiler to omit those judgments or their required observations.
+Other Contract obligations remain independent of the resulting informational multiplicity. Any reuse must satisfy
+Section 20.
 
-When count or repeated observation is factual meaning, that meaning must be represented explicitly.
-
-Storage duplicates do not create additional factual meaning.
-
-Delivery duplicates do not create additional factual meaning.
+When count or repeated observation is factual meaning, it must be expressed explicitly (Section 11). Multiplicity and
+order belonging to a constituent value remain governed by Section 6.3; the set-like law does not alter them. Internal
+reference counts or incremental weights do not become factual occurrence counts and do not authorize removal of
+Established Facts.
 
 ---
 
 ## 13. Derived Identity and Physical Keys
 
-Kontrakt may derive internal digests, HIDs, intern keys, routing keys, cache keys, indexing keys, or storage keys from
-canonical material.
+Kontrakt may derive physical keys from the canonical information under Section 10. A digest, HID, intern key or index
+key is derived representation material, not a logical identifier assigned to a Fact. No hash algorithm, canonical byte
+encoding or interned representation is required by Fact.
 
-These keys are derived representation material.
+Compact key equality establishes at most a candidate match. A comparison may reject sameness on key inequality only
+when the keys are valid and comparable under a common derivation basis that preserves equality of the information being
+compared. Keys produced under different derivation or encoding bases cannot establish factual difference merely by
+differing. A candidate match requires exact verification; the probability of a collision does not discharge this
+obligation. No key collision may merge different Facts.
 
-They are not logical identifiers assigned to Facts.
+An exact comparison may use the resolved structure directly or exploit already verified immutable material. A physical
+reference can establish sameness only where its identity is known to denote the same exact information and its backing
+remains valid for the observation (Section 20). Neither a reused address nor an unverified handle provides such
+evidence.
 
-Compact key equality establishes at most a candidate match.
-
-Fact sameness requires exact equality of the resolved Fact kind and complete canonical factual material under the
-applicable Contract world.
-
-A digest collision, HID collision, intern-key collision, or storage-key collision must never merge different Facts.
+A change in the hash algorithm, physical encoding or key layout does not itself change Fact meaning or Version. The
+metadata identity design of ADR-0041 does not impose its encoding and HID suite on every runtime Fact. Section 20
+governs
+the security and reuse conditions of any derived representation.
 
 ---
 
-## 14. Declared Uniqueness
+## 14. No Fact-Owned Coexistence Restriction
 
-A Fact declaration may state which factual coordinate tuples must be unique within that Fact kind.
+Fact expresses individual information. It does not declare unique coordinates or coordinate tuples, nor does it own a
+restriction on the coexistence of different Facts. Sharing some factual values is not a ground for refusing one Fact,
+merging it with another or replacing existing information. Section 12 governs identical information only.
 
-Declared uniqueness is not Fact sameness.
-
-Two Facts that differ in any canonical factual value remain different Facts even if they collide on a declared unique
-tuple.
-
-The resulting Fact world may forbid their coexistence because of the declared uniqueness law.
-
-Uniqueness does not silently establish:
-
-```text
-replacement
-supersession
-currentness
-history
-continuity
-relation
-ownership
-transition
-```
-
-Those meanings require their own explicit authority.
-
-Invariant does not restate or rediscover Fact-owned uniqueness.
+The absence of a Fact-owned coexistence restriction does not establish the legality of a formation or change under
+other applicable Contracts. Fact grants no replacement, supersession, currentness or relationship authority (Sections
+7 and 15). No corresponding coexistence obligation is introduced into Invariant or another Contract by this decision.
 
 ---
 
@@ -618,7 +625,8 @@ The interface-level Invariant catalog declares those laws separately.
 
 Invariant may inspect declared factual coordinates under its own law.
 
-It does not create the coordinates, define Fact sameness, own Fact uniqueness, or create cross-Fact relations.
+It does not create the coordinates, define Fact sameness or create cross-Fact relations. Its Fact-local integrity law
+does not impose a restriction on the coexistence of different Facts (Section 14).
 
 ---
 
@@ -681,17 +689,37 @@ publication.
 
 ## 20. Optimization Boundary
 
-A backend may choose any deterministic representation compatible with the canonical Fact material.
+A backend may choose any representation compatible with the complete canonical Fact material and deterministic legal
+observation. Direct comparison, SIMD, indexing and immutable sharing may accelerate Section 10 without changing the
+information it distinguishes. Section 13 governs the use of derived keys. No particular serialization, interning,
+storage layout or comparison algorithm is required.
 
-It may use primitive arrays, packed bytes, tables, generated classes, columnar layouts, interned material, or other
-optimized forms.
+The realization must preserve the stability required by Section 5 throughout comparison and use. Sharing, relocation
+and physical reclamation must not cause a reference to observe different information, or permit a stale reference to
+establish sameness. Selection among equivalent valid physical backings is implementation; acquisition or scheduling
+order cannot establish factual meaning or authority.
 
-It may derive indexes for exact Fact lookup and Fact-owned uniqueness.
+Exact comparison must remain sound in the presence of collisions. Resource safety is a separate realization obligation:
+collision verification alone does not protect against adversarial comparison or lookup cost. Applicable Budget and
+Capacity obligations remain with their owners. A resource or compiler failure must not be converted into an invented
+sameness result or a Fact refusal. Routing and physical iteration order must not determine a Contract observation.
 
-Those structures remain implementation.
+Physical sharing and derived representation material remain subject to the applicable security boundary. Sameness does
+not authorize sharing across independent trust boundaries, and a sharing optimization must preserve information and
+authority isolation, including against unauthorized inference through observable reuse behavior. Internal keys, handles
+and cache observations have no automatic outward or diagnostic authority. Their disclosure remains subject to the
+applicable Publication and diagnostic laws. Concrete isolation, comparison and resource-protection mechanisms remain
+realization decisions.
 
-They may not add Fact relations, Fact multiplicity, Fact currentness, participation authority, or cross-Fact semantics
-that the Contract does not declare.
+A matching Fact may support reuse of its material, but it does not establish the current validity of an earlier
+judgment,
+establishment or participation. Reuse must satisfy the exact observation and current-validity requirements of ADR-0063
+Section 11.7 and ADR-0075 Sections 13 and 22. The optimized path must preserve the legal observation of the
+deterministic
+clean path. These requirements do not prescribe a universal cache key or introduce new factual coordinates.
+
+Derived structures remain implementation. They may not add Fact relations, Fact multiplicity, Fact currentness,
+participation authority or cross-Fact semantics that the Contract does not declare.
 
 ---
 
@@ -723,7 +751,8 @@ Repeated identical establishment does not create hidden multiplicity.
 
 Occurrence distinction remains possible when it is declared as factual material.
 
-Uniqueness remains a separate factual law instead of silently becoming entity identity or replacement semantics.
+Fact owns no user-declared uniqueness or other coexistence restriction on different information. Informational sameness
+does not itself confer authority across Worlds or scopes.
 
 Cross-Fact relations remain explicit responsibilities of the Contract that actually needs them.
 
@@ -740,3 +769,5 @@ The extraction preserves the latest Accepted ADR-0049 Fact law as of the 2026-08
 The extraction does not intentionally introduce a new Fact authority or change the accepted Fact meaning.
 
 ADR-0049 remains the owner of the shared core-flow relation in which Fact establishment participates.
+
+The later decision in Sections 10–14 supersedes the extracted World-sensitive sameness and declared uniqueness laws.
