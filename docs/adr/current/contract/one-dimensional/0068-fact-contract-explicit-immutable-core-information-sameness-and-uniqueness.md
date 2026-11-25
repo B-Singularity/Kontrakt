@@ -97,8 +97,8 @@ Fact vocabulary membership must be explicit.
 Package membership, directory placement, classpath discovery, reflection scanning, runtime collections, inheritance, and
 neighboring source declarations must not add Fact kinds implicitly.
 
-A named host declaration may group exact Fact surface references as frontend evidence. It must disappear as authority
-after resolution.
+The interface selects its Fact surfaces directly in the IDL. No separate host vocabulary declaration is required
+(Section 8).
 
 Fact meaning must remain separate from physical representation.
 
@@ -229,6 +229,10 @@ constituents and relations and any semantic basis required to interpret them. A 
 must be resolved under its owning law; ambient provider state cannot complete the meaning later. Runtime values may
 vary within that resolved meaning, but must not select or extend the schema, coordinate meanings or comparison law.
 
+Generic value forms are permitted when interpretation resolves their complete constituent meaning at compile time. An
+unresolved type argument or open value meaning that prevents this completion must not be admitted. Runtime type
+information cannot supply the missing Definition meaning.
+
 Fact does not maintain an independent inventory of value forms. A resolved meaning is eligible if it satisfies this
 ADR, regardless of its value family. Expansion of interpretation support does not by itself change an existing Fact
 Definition. Platform ratification and preservation remain subject to ADR-0073.
@@ -296,8 +300,12 @@ surface through a source relation. Inheritance, nesting or flattening a Fact dec
 that inclusion lawful. This restriction applies throughout the constituent structure (Section 6.2).
 
 A closed structured value interpreted under the applicable common value law may be used without creating another
-Fact authority. Neither a domain-named host type nor a user-defined object model supplies an independent Core value
-authority (Section 9).
+Fact authority. An ordinary data declaration may be reused as such a value in several Facts (Section 9). Neither a
+domain-named host type nor a user-defined object model supplies an independent Core value authority.
+
+The compiler must resolve the actual declaration and its applicable Contract role when checking this boundary. A type
+alias or a generic application must not conceal the inclusion of another Fact. The prohibition does not depend on
+whether the two Facts are selected by the same interface or on World selection.
 
 A factual coordinate such as `accountId` is factual material only. It may describe a target without establishing the
 target's existence, identity, content or accessibility.
@@ -342,58 +350,21 @@ The Fact Contract does not invent that owner.
 
 ## 8. Fact Vocabulary
 
-The enclosing interface declares one exact Fact vocabulary.
-
-The vocabulary is authored through a restricted host-language declaration rather than package selection, class-literal
-collections, runtime registration, or a separate rich IDL body.
-
-A Kotlin frontend may express the declaration as an uninstantiable type signature:
-
-```kotlin
-class AccountFacts private constructor(
-    depositOperationInput: DepositOperationInput,
-    depositRecorded: DepositRecorded,
-    accountOpened: AccountOpened,
-    balance: Balance,
-    withdrawalRecorded: WithdrawalRecorded,
-    accountClosed: AccountClosed,
-)
-```
-
-The constructor is never invoked.
-
-The class is not the Contract.
-
-Its parameter type positions nominate exact Fact surface declarations.
-
-Parameter names do not create Fact meaning.
-
-Source order does not create Fact meaning.
-
-Constructor identity does not create Fact meaning.
-
-Allocation does not create Fact meaning.
-
-Generated JVM shape does not create Fact meaning.
-
-Host class identity does not become Fact identity.
-
-Resolution and Lowering retain an order-independent, duplicate-free canonical Fact vocabulary.
-
-An equivalent restricted Java declaration may provide the same material.
-
-The vocabulary declaration contains no properties, methods, initialization, inheritance, callbacks, computed membership,
-package selectors, `KClass`, `Class`, reflection, or runtime discovery.
-
-Moving another declaration into the same package does not make it Fact.
-
-Only explicit vocabulary declaration changes Fact eligibility.
-
-The interface binds that vocabulary once:
+The enclosing interface declares one exact Fact vocabulary through direct selection in the IDL. Each entry names an
+exact
+Fact surface, with its Definition and Version resolved under the applicable laws. A separate host vocabulary class or
+named vocabulary declaration is not part of this authoring surface.
 
 ```text
 interface AccountService {
-    facts AccountFacts
+    facts {
+        DepositOperationInput
+        DepositRecorded
+        AccountOpened
+        Balance
+        WithdrawalRecorded
+        AccountClosed
+    }
     invariants AccountInvariants
 
     operation deposit(...)
@@ -402,20 +373,58 @@ interface AccountService {
 }
 ```
 
-Fact vocabulary membership declares which Fact kinds may be established in the core.
+Membership is explicit. Package selection, class-literal collections, computed membership and runtime discovery cannot
+add Fact kinds. Only explicit vocabulary selection changes membership; moving a declaration into the same package
+does not make it Fact.
 
-It does not grant universal participation authority.
+The vocabulary has no semantic order. Selecting the same exact Fact Definition more than once is unlawful, even when
+the source references use different names. Resolution must retain each selection occurrence until the applicable
+judgment; it must not silently remove duplicates. The established vocabulary is order-independent and duplicate-free.
+
+Fact vocabulary membership declares which Fact kinds may be established in the core. It does not grant universal
+participation authority.
 
 ---
 
 ## 9. Host Frontend Evidence
 
-A host declaration may provide evidence of a closed factual surface when its meaning can be fully interpreted under
-Section 6 and its use preserves that meaning under ADR-0073. Host category, class identity or an immutable-looking
-carrier does not determine eligibility.
+A host declaration provides evidence of a closed factual surface when its meaning can be fully interpreted under
+Section 6 and its use preserves that meaning under ADR-0073. The V1 Fact authoring surface uses the native data
+declaration of each supported language:
+
+- Kotlin: a `data class` with direct coordinates declared as primary-constructor `val` properties.
+- Java: a `record` under the supported Java language profile (Java 17 or later), with direct coordinates declared as
+  record components.
+
+For example, the same form of factual information may be authored in either language:
+
+```kotlin
+data class Balance(
+    val accountId: Long,
+    val amountMinor: Long,
+)
+```
+
+```java
+public record Balance(
+        long accountId,
+        long amountMinor
+) {
+}
+```
+
+The declaration expresses information, not an object model. Ordinary classes are not an alternative Fact authoring
+surface in V1. User-authored constructor bodies, additional constructors, default coordinate values, initialization
+blocks and additional data members are not admitted. The declaration must not define methods, custom accessors,
+delegation or explicit inheritance, including interface implementation. Companion objects and user-authored static
+members are outside this surface. The mere presence of language-generated members confers no behavioral authority.
+
+The same data-only authoring restrictions apply to user-defined data classes and records used as structured values
+within a Fact. Their complete constituent meaning must be resolved under Sections 6 and 7; a host declaration alone
+does not establish immutability or platform eligibility.
 
 Kontrakt does not require `CoreInt`, `KontraktText`, or a user-authored Value Object merely because information exists
-inside the core.
+inside the core. Fact selection requires no annotation or marker interface on the data declaration (Section 8).
 
 A domain-named host declaration remains frontend evidence. Kontrakt does not carry a Kotlin data class, Java record, or
 another domain object into the Contract Core as the Fact itself. A carrier used to express a structured value must not
@@ -428,12 +437,18 @@ determinant of informational sameness (Section 10). Source coordinates required 
 factual meaning unless explicitly declared as factual information. Candidate formation realizes the actual values
 under that resolved meaning (Section 5).
 
-Host constructors, methods, receivers, object identity, and class layout do not survive as Fact authority.
+The native constructor and coordinate access syntax may express and observe immutable data in a lawful realization.
+Construction alone establishes no Fact or change authority. A lawfully bound Operation realization may consume such
+data within the Core without becoming an independent Contract authority. The realization remains replaceable.
+
+The interpretation and qualification of language-generated data operations belong to the common Type Subsystem and
+the applicable operation laws. Fact imposes its own information restrictions but does not provide a separate set of
+data operations. Host constructors, methods, receivers, object identity, and class layout do not survive as Fact
+authority.
 
 A backend may realize the same canonical material through generated classes, primitive arrays, packed bytes, tables, or
-another deterministic layout.
-
-Those realizations are implementation.
+another deterministic layout. Host construction syntax does not require physical object allocation. These choices remain
+implementation.
 
 ---
 
@@ -665,8 +680,7 @@ If it returns to the machine, it is external material again.
 
 ## 19. Definition-Time Law
 
-At definition time, Kontrakt must resolve the exact Fact vocabulary symbol and every exact Fact surface symbol listed by
-that vocabulary.
+At definition time, Kontrakt must resolve each Fact surface selected directly by the interface under Section 8.
 
 Each admitted Fact surface must have complete resolved meaning under Section 6 before Visible HIR. The seal under
 ADR-0071 certifies completeness of the resolved candidate meaning and its required references, not Fact legality. Fact
@@ -684,6 +698,114 @@ mechanics as authority (Section 9).
 
 Fact vocabulary and Fact surfaces must be available in ContractImage-visible material before executable machine
 publication.
+
+### 19.1. Resolved Fact Definition Candidate
+
+Fact specializes the Resolved Contract HIR of ADR-0071. A Fact Definition Candidate expresses the complete resolved
+Definition meaning before Fact Definition Establishment. It identifies the exact Fact Authority and resolved Version
+candidate coordinate under their applicable laws, but establishes neither a Definition nor actual Fact authority.
+The IDL selection remains a separate Binding Candidate (Section 19.4).
+
+Two components determine the Fact Definition meaning:
+
+**Direct Factual Coordinate Surface**
+
+Identifies every declared direct factual coordinate by its nominal identity within the Definition. The surface preserves
+its complete composition, independently of declaration order or physical position.
+
+**Resolved Factual Value Meaning**
+
+Defines the completed value meaning of each direct coordinate under Section 6, including its constituent distinctions
+and relations. Any semantic basis that determines this meaning must be preserved. The meaning may be represented
+directly or through an exact producer-owned semantic reference that makes the completed meaning observable. A reference
+to an unresolved type or source declaration is insufficient.
+
+These components determine informational Definition meaning. Authority and Version identify the Definition under their
+owning laws; they are not factual coordinates. Selection-only context, formation, standing Invariant laws and Operation
+participation do not determine Fact Definition meaning. Fact requires no separate formation law, judgment expression,
+relation schema or occurrence requirement in its Definition Candidate. Common value meaning remains with its owner.
+
+The Candidate must retain the entire resolved surface, including a completed empty surface or any resolved multiplicity
+and conflicting coordinate declarations, where such material is expressible after source interpretation. The
+nonempty, unique-name requirement of Section 6 determines legality, not the ability to represent a completed violation.
+An unresolved coordinate or value meaning is not a completed violation and cannot be supplied by Establishment.
+
+### 19.2. Information Retention and Semantic Equality
+
+The complete Definition Candidate meaning must be observable through the Fact-owned Definition Candidate Projection
+under ADR-0071. Coverage includes every direct coordinate and its complete value meaning. Exact direct semantic
+references preserve the referenced meaning's ownership; they do not permit a consumer to reconstruct it from source,
+IDL selection or unresolved Type Subsystem material.
+
+Source qualification and interpretation must be completed at their owning boundaries under ADR-0079. Where a Fact-owned
+judgment requires additional resolved evidence, that evidence must remain legally observable at the judgment boundary.
+In particular, the information needed to enforce Section 7 must not be lost through structural representation or type
+alias resolution. Evidence does not become a Definition determinant merely because a judgment requires it. Host
+binding and diagnostic provenance remain separately owned where needed; removing them from informational Definition
+meaning does not authorize their loss from other required compiler observations.
+
+Fact Definition Meaning Equality compares the complete direct coordinate surface and the corresponding resolved value
+meanings under their owning laws. It preserves nominal distinctions, all meaning-determining relations and semantic
+bases, and any resolved multiplicity or collision in the Candidate surface. Direct coordinate declaration order and
+physical representation do not participate in this comparison. Constituent order and multiplicity remain governed by
+Section 6.3.
+
+Equal Definition meaning does not identify the same Candidate Reference or merge independent Definitions. It also
+does not establish equality of a broader Candidate observation that contains different required evidence. Whole-Fact
+sameness under Section 10 and current reuse qualification remain separate. Physical sharing of completed meaning is
+permitted when it preserves these distinctions and the applicable validity and security requirements.
+
+### 19.3. Typed Fact HIR Candidate References
+
+Fact owns the following reference domains within the common HIR protocol of ADR-0071:
+
+```text
+FactDefinitionCandidateRef
+ResolvedFactCoordinateRef
+FactIDLBindingCandidateRef
+```
+
+`FactDefinitionCandidateRef` identifies one exact current Fact Definition Candidate. `ResolvedFactCoordinateRef`
+identifies one direct factual coordinate through its exact `FactDefinitionCandidateRef` and nominal coordinate
+identity. The same coordinate name in different Definitions does not identify the same coordinate. Source position,
+physical index and nested value constituents do not determine this reference. A resolved coordinate collision must
+remain observable for the applicable judgment; no ambiguous coordinate name may be resolved by choosing an arbitrary
+occurrence.
+
+`FactIDLBindingCandidateRef` identifies one exact current IDL selection occurrence under Section 19.4. It is distinct
+from both the selected Definition Candidate Reference and the selecting `ContractInterfaceRef`, which belongs to the
+common HIR protocol.
+
+These are compiler-semantic references, not factual values or references between Facts. Fact owns the meaning of its
+Definition and coordinate references consumed by Lowering under ADR-0067 Section 11.1. A Candidate Reference is
+not an Established Definition Reference and establishes no Required Basis or actual Fact authority. The reference
+domains impose no particular encoding, physical field set or storage strategy.
+
+### 19.4. Fact IDL Binding Candidate and Vocabulary Selection
+
+Each direct selection in the interface's Fact vocabulary (Section 8) forms a distinct Fact IDL Binding Candidate
+whose target is one exact Fact Definition Candidate. The vocabulary is the complete selection relation of the interface,
+not an independent Definition or Contract authority. Different selections may designate the same Definition Candidate
+under the common Definition and Binding laws of ADR-0071.
+
+A Fact IDL Binding Candidate expresses the selecting interface, the Fact vocabulary role and the exact target
+`FactDefinitionCandidateRef`, preserving the identity of the selection occurrence. No additional binding-owned
+qualifier is required by the current Fact vocabulary law. The Binding does not copy the Definition meaning or absorb
+unrelated interface context.
+
+`FactIDLBindingCandidateRef` designates the Binding Candidate itself; `ContractInterfaceRef` identifies its selecting
+subject. This distinction does not require a self-reference field or a separately stored interface reference when the
+same exact relation is represented structurally.
+
+The entire vocabulary selection must be observable from the exact interface and its Fact role. For a present vocabulary,
+this observation includes every selected `FactIDLBindingCandidateRef`, rather than only one selected reference or a
+set of distinct Definition targets. Omission and explicit absence remain governed by the applicable Interface and
+common selection laws; unresolved selection is not explicit absence.
+
+The observation preserves each selection occurrence until the applicable judgment, including distinct occurrences with
+the same resolved target. Its semantic order is immaterial. The established vocabulary remains duplicate-free under
+Section 8. The complete selection observation does not introduce another Primary HIR subject, establish a Binding or
+grant participation authority.
 
 ---
 
@@ -725,8 +847,11 @@ participation authority or cross-Fact semantics that the Contract does not decla
 
 ## 21. Open in This Section
 
-The final host-language authoring restrictions for every individual Fact surface remain open where completed source
-interpretation, the law of Section 6 and platform ratification do not already decide them.
+The V1 Fact authoring surface is defined in Section 9. Support for a generic Fact declaration as a source of specialized
+Fact Definitions remains open; it is distinct from the use of fully resolved generic values under Section 6.1.
+
+The Version authoring surface remains with the Version Contract. Common value authoring and the qualification of
+language-generated data operations remain with their respective owners.
 
 The complete Operation authoring surface for existing-Fact participation, additional Fact changes, Operation Result
 Material, and Change Proposal binding is outside this ADR.
