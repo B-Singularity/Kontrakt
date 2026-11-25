@@ -807,6 +807,236 @@ the same resolved target. Its semantic order is immaterial. The established voca
 Section 8. The complete selection observation does not introduce another Primary HIR subject, establish a Binding or
 grant participation authority.
 
+### 19.5. Resolved Fact HIR Candidate Protocol
+
+Fact specializes the read-only Resolved HIR Candidate Protocol of ADR-0071. The reference domains of Section 19.3
+and the common `ContractInterfaceRef` support the following observations:
+
+```text
+Fact Definition Candidate Projection
+    exact FactDefinitionCandidateRef
+    complete Fact Definition Candidate meaning
+
+Fact IDL Binding Candidate Projection
+    exact FactIDLBindingCandidateRef
+    complete Fact IDL Binding Candidate meaning
+
+Fine-Grained Semantic Projections
+    Fact Candidate Coordinate Surface Projection
+    Fact Selected Coordinate Meaning Projection
+    Fact Vocabulary Selection Projection
+```
+
+The complete Definition Candidate Projection exposes the Authority and resolved Version candidate coordinate, the
+entire direct factual coordinate surface and the completed value meaning of each coordinate (Section 19.1). Required
+resolved evidence remains observable under Section 19.2. The complete Binding Candidate Projection exposes the
+selecting interface, Fact role and exact target of one selection occurrence under Section 19.4. Neither observation
+requires a redundant reference field or a copy of separately owned meaning.
+
+**Fact Candidate Coordinate Surface Projection**
+
+Exposes the entire direct coordinate surface of one exact `FactDefinitionCandidateRef`. It preserves each nominal
+coordinate, its exact `ResolvedFactCoordinateRef` when unambiguously referenceable, and any resolved multiplicity
+or collision required for judgment. This observation is complete for coordinate coverage without exposing the value
+meaning of every coordinate. Lowering may use it to determine coverage of its target surface under ADR-0067.
+
+Equality compares the nominal composition and multiplicity of the surface, independently of declaration order. A
+change confined to a coordinate's value meaning does not by itself change this observation. A completed empty or
+conflicting surface remains observable under Section 19.1; an ambiguous coordinate is not made exact by selection
+of an arbitrary occurrence.
+
+**Fact Selected Coordinate Meaning Projection**
+
+Exposes the exact coordinate designated by one `ResolvedFactCoordinateRef` and its complete resolved factual value
+meaning. The observation includes the distinctions, constituent relations and semantic bases required by Section 6.
+Equality preserves the selected coordinate and its meaning under their owning laws. A nested constituent is not
+another direct Fact coordinate. Lowering may consume this observation for the formation meaning of an individual
+mapping without acquiring unrelated coordinate meanings.
+
+**Fact Vocabulary Selection Projection**
+
+Observes the complete Fact selection of one exact `ContractInterfaceRef` at its Fact vocabulary role. A present
+selection exposes every `FactIDLBindingCandidateRef` occurrence under Section 19.4. The complete Binding Candidate
+Projection provides the exact target of each occurrence. Equality preserves the selecting subject, role and complete
+selection relation, including multiplicity but not declaration order. The observation is multi-selection, rather
+than the single-reference alternative used by single-selection roles. Explicit Absence follows the applicable
+selection law; an unresolved or unavailable selection cannot be treated as absence or as a completed smaller
+vocabulary.
+
+Each Projection is complete only for its declared observation. Complete Definition and Binding observations compare
+all meaning they expose, including required evidence where it is part of the observation. Fine-grained equality
+compares only the meaning of that observation, under Section 19.2 and ADR-0071. A consumer must preserve exact
+subject correspondence and current reference validity when comparing observations across generations. Equality alone
+does not establish current reuse eligibility. An omission from a narrower observation is not semantic absence;
+absence of a coordinate may be concluded only from an observation complete for that question.
+
+Projections create no additional Primary HIR subject or authority. Their logical distinction permits bulk access,
+shared immutable backing and fine-grained dependency tracking without requiring separate physical records or Query
+nodes. Observation coherence, availability, reference lifetime and Protocol evolution follow ADR-0071.
+
+### 19.6. Fact HIR Seal and Establishment Handoff
+
+A Fact Definition Candidate may become Visible HIR only when:
+
+- Its exact Fact Authority and resolved Version candidate coordinate are known.
+- The entire direct coordinate surface and all its value meanings are resolved under Sections 19.1 and 19.2.
+- Required source interpretation and qualification have completed at their owning boundaries under ADR-0079.
+- Every required semantic reference is exact and valid, and the required Protocol observations are complete within a
+  coherent HIR generation.
+
+Source Eligibility under Section 9 is a prerequisite to lawful HIR formation. A forbidden default, for example, must
+not be erased to produce an apparently eligible declaration. An unresolved type prevents completion. A resolved empty
+coordinate surface, when otherwise eligible for HIR, instead preserves the completed meaning for Fact Definition
+judgment. Seal verifies resolution and integrity rather than satisfaction of the Fact Definition law.
+
+A Binding Candidate must resolve its exact selecting interface, Fact role, selection occurrence and single Definition
+Candidate target. Its target must be referenceable under the common HIR seal and visibility laws. The entire vocabulary
+observation is complete only when all of its selection occurrences have been resolved and are legally observable.
+Completed repeated selections remain present for the applicable judgment; an unresolved selection must not be dropped
+from that observation.
+
+Under ADR-0071, independently sealed Definition or Binding Candidates may be visible within a coherent generation even
+when another independent Candidate fails to complete. A complete vocabulary observation requires its entire scope to
+be sealed; visibility of an individual selection does not establish completeness of that scope or authorize machine
+publication. Continuation requires valid inputs and a trustworthy compiler domain. Recovery or poison material,
+unknown required semantic extensions and failed visibility follow the common HIR laws.
+
+Fact Definition Establishment consumes legal HIR observations and the authoritative Version prerequisite under
+ADR-0063 and ADR-0053. The complete Definition Candidate Projection may be used, or a combination of producer-defined
+Fine-Grained Semantic Projections and required resolved evidence that supplies every observation necessary for the
+judgment. An incomplete input prevents legal entry. Establishment applies the Fact law to this meaning; it cannot
+recover a missing part through source, Type Subsystem interpretation, host behavior, IDL selection or compiler layout.
+
+Early static verification is permitted when the required meaning and legal judgment prerequisites are already
+available. Moving or eliminating a physical calculation cannot change its owning judgment, entry conditions or
+result attribution. ADR-0063 Section 4.7 and ADR-0071 govern this handoff.
+
+### 19.7. Fact Definition Establishment Judgment and Result
+
+The Fact Definition judgment determines whether one exact, complete Fact Definition Candidate satisfies the factual
+information law of Sections 4, 6 and 7. It judges the entire direct coordinate composition and the admissibility of
+its completed value meanings. These include constituent closure, the V1 acyclic schema requirement, exact factual
+distinctions and authority isolation. The judgment consumes the completed interpretation and qualification of the
+applicable value meanings under Sections 6 and 9, rather than repeating their owners' judgments.
+
+Legal entry requires the observations of Section 19.6 and the authoritative Version prerequisite. The Version law may
+establish the required binding or supply an already-established exact binding under ADR-0063 Section 6.3. A Fact IDL
+Binding Candidate or complete vocabulary selection is not an input to this Definition judgment. This independence
+does not authorize acquisition of unselected source declarations or establish actual factual material.
+
+The judgment has two Fact-owned semantic results:
+
+```text
+complete resolved Candidate
++ legal Fact Definition meaning
+    -> Established Fact Definition
+
+complete resolved Candidate
++ meaning that violates the Fact Definition law
+    -> Fact Definition Refusal
+```
+
+The minimum successful establishment unit is one entire Definition. Its coordinates are not independent authorities.
+Partial verification or parallel evaluation may support the judgment but cannot establish a subset of its Definition
+meaning as authoritative. An unsuccessful establishment creates no partial Definition authority, and material that
+has not been established cannot be published or reused as if it were established. Failure does not revoke independent
+established Definitions or an independently established Version Binding. Temporary backing and other physical
+resources may be discarded or recovered without altering these semantic results.
+
+A failed prerequisite prevents legal entry and retains its own result attribution. Source Eligibility, interpretation,
+HIR Seal and Version failures are not Fact Definition Refusal. A violation of the vocabulary selection law belongs to
+the selection judgment of Section 19.9. If compiler failure leaves the exact judgment result indeterminate, neither
+success nor refusal may be fabricated. ADR-0063 Section 4.7.2 and ADR-0074 govern the common unsuccessful-result and
+continuation boundaries.
+
+A subsequent failure to form or expose the Canonical Contract World does not undo an already-established Definition
+in the current compilation. Current Establishment, World visibility and durable Version-history publication remain
+distinct under ADR-0063 Sections 6.9 and 10.8. Retained material from unsuccessful compiler work is at most reuse
+evidence unless current validity and authority are established under the applicable laws. Failure atomicity does not
+prescribe a physical transaction, rollback algorithm or crash-recovery mechanism.
+
+### 19.8. Definition-Time Required Basis and Applicability Boundary
+
+Fact Definition Establishment owns no ADR-0063 Required Basis Law, Basis Resolution, Basis Binding, Complete Basis,
+separate Definition Applicability judgment, arbitration or Composition judgment. These categories are
+`NOT-APPLICABLE` to the current Fact Definition law. No Established Input, Lowering, Invariant or actual Fact is
+required for this judgment.
+
+A semantic basis that determines factual value meaning remains part of the resolved Definition meaning under
+Section 19.1. Compiler interpretation dependencies alone are not Contract Required Basis. Fact's own Version
+prerequisite follows ADR-0053 and ADR-0063 without introducing another Fact-owned Basis law. These distinctions concern
+Definition-time Establishment only; the independent judgments and composition needed for actual Fact establishment
+remain governed by Section 5.
+
+### 19.9. Fact Vocabulary Selection Legality
+
+The Fact vocabulary law of Section 8 applies to the complete selection relation of one exact interface. Its duplicate
+check is separate from the judgment of any individual Fact Definition. Repeated selections of the same exact
+Versioned Fact Definition are unlawful, regardless of source spelling or physical Candidate Reference encoding.
+Equal information structures of independently identified Definitions do not constitute a duplicate selection.
+
+The complete resolved selection preserves the occurrences required for that judgment under Sections 19.4–19.6.
+An unsuccessful vocabulary judgment concerns the selection relation, not the Definition meaning of any selected
+Fact. Successful selection legality alone does not establish a Definition, an authoritative interface binding or
+participation authority. The applicable Interface and Composition laws govern authoritative selection and its
+prerequisites. Fact introduces no independent vocabulary Definition, Version or Established Material family.
+
+### 19.10. Established Fact Definition Material
+
+Successful Fact Definition Establishment produces one complete Established Fact Definition. Its semantic surface
+contains:
+
+```text
+Established Fact Definition
+    exact EstablishedFactDefinitionRef
+    exact Owning Fact Authority Binding
+    exact Version Binding
+    complete Established Fact Definition Meaning
+    direct established relation to each direct factual coordinate
+    exact meaning-determining relations
+```
+
+The established meaning preserves the entire factual coordinate surface and the complete value meaning of every
+coordinate defined by Sections 6 and 19.1. It retains the exact semantic-law and constituent relations that determine
+those meanings. The completed meanings and their separately owned relations may be observed directly or through
+exact semantic references without loss, duplication of authority or renewed interpretation. No additional constraint,
+formation meaning or factual information is established merely by Definition Establishment.
+
+Fact owns the following Established Definition reference domains:
+
+```text
+EstablishedFactDefinitionRef
+EstablishedFactCoordinateRef
+```
+
+A Fact Authority owns one independently addressable Definition per Version. Its exact Authority and Version Binding
+therefore determine `EstablishedFactDefinitionRef`; no Authority-Local Definition Coordinate is required. The
+Owning Authority Binding is directly recoverable by a semantic consumer without inference from an interface, host
+declaration or physical containment. ADR-0063 Section 6 and ADR-0053 govern identity, conflicting meanings under one
+identity, and Version history.
+
+`EstablishedFactCoordinateRef` identifies one direct factual coordinate through its exact
+`EstablishedFactDefinitionRef` and nominal coordinate identity. This relation is part of the Definition's established
+meaning, not a separate coordinate authority. The coordinate has no independent Version; declaration order and
+physical location do not determine its identity. Lowering consumes the exact Established Fact Definition as its
+Required Basis under ADR-0067 Section 11.6 and uses the Fact-owned coordinate meaning without re-establishing it.
+
+The authoritative Definition Reference becomes legally observable only when the complete Definition and its required
+identity relations have been coherently established. A Candidate Reference cannot be promoted or retyped into an
+Established Reference. Distinct Candidates may correspond to the same established identity and meaning after lawful
+Establishment or currently qualified reuse under the owning laws. Neither an enduring one-to-one correspondence nor
+retention of the originating HIR is required. The Definition meaning and reference must remain interpretable
+independently of that HIR.
+
+Identity and meaning constitute the Definition's semantic material; the listed bindings and relations specify what
+must be observable, not a mandatory record layout. Shared immutable backing may represent both Candidate and
+Established meaning without transferring authority. Physical relocation, encoding or reclamation must preserve legal
+observation and reference validity under ADR-0063. Section 19.7 governs failure atomicity.
+
+Fact establishes no separate Definition Material for its vocabulary or direct coordinates. Interface selection,
+Formation, Invariant and participation remain with their respective owners; the Fact Definition need not retain a
+relation to every consumer. Actual Fact establishment under Section 5 is separate from Definition Establishment.
+
 ---
 
 ## 20. Optimization Boundary
