@@ -33,326 +33,269 @@ ADR-0049: Flow Contract Processing — Fact, Invariant, Publication, and Output 
 
 ## 1. Context
 
-Fact expresses the machine's own information. As described in `What Contract Is`, Section 12.1, Operations perform
-work while Facts describe what the machine knows. A Fact is established inside the Contract Core and remains immutable.
-Its meaning belongs to the machine, independently of external material or the path by which that information is formed.
+Fact expresses the machine's own information. As described in `What Contract Is`, Section 12.1,
+Operations perform work while Facts describe what the machine knows. Only lawfully established immutable
+Facts belong to the Contract Core as factual Contract material (Sections 4–5). Transient realization
+values may exist without acquiring that authority.
 
-A Fact is not limited to a final domain value. It is an immutable proposition upon which the machine may rely under
-its declared meaning.
-
-A Fact carries no hidden object or occurrence identity. A request, claim, measurement, report, or observation may itself
-be factual material, but declaring its occurrence does not make its content stronger than the Fact declaration permits.
-
-Only established Facts belong to the core as factual Contract material. Transient implementation values may exist
-during realization without acquiring Fact authority.
+A Fact need not express a final domain value. It may describe a claim or observation without establishing
+the truth of its content beyond the declared meaning. Its factual meaning belongs to the machine
+independently of external material and its formation path.
 
 ---
 
 ## 2. Problem
 
-Without an explicit Fact Contract, factual authority can collapse into whatever the implementation happens to store.
-A class may look immutable, a database row may persist, a DTO may cross a boundary, or an Operation may return an
-object. None of these conditions establishes factual authority. Object identity, allocation history, repeated delivery,
-custom equality, repository membership and backend layout are implementation mechanisms, not hidden factual meaning.
+Implementation mechanisms alone establish neither factual authority nor factual meaning. The machine
+needs an explicit factual surface whose meaning survives representation replacement.
 
-The machine needs an explicit factual surface that survives representation replacement without changing what it knows.
-An exact sameness law is also required: repeated establishment of identical information must not create hidden
-multiplicity.
-Occurrence, count, provenance or repetition must be expressed as factual material whenever they determine meaning.
+An exact sameness law must prevent repeated establishment of identical information from creating hidden
+multiplicity. Occurrence distinctions, including count, provenance and repetition, must be explicit
+whenever they determine factual meaning (Sections 10–12).
 
 ---
 
 ## 3. Decision Drivers
 
-Fact must be Contract material rather than a class, row, DTO, record, Value Object, entity, object graph, repository
-entry, message identity, or storage layout.
+Fact must be the explicit immutable information of the Contract Core, not an implementation object
+promoted to authority. Native host declarations provide source evidence without requiring proprietary
+wrappers (Sections 6 and 9). Vocabulary selection is explicit in the IDL (Section 8).
 
-Everything the Contract Core contains as factual material must be available as explicit immutable Fact material.
-
-A host declaration may nominate factual coordinates when completed source interpretation and platform ratification
-preserve their required meaning (Sections 6 and 9). Fact does not maintain its own inventory of value forms.
-
-Kontrakt must not require a proprietary wrapper merely to make a value look internal. The interface selects Fact
-surfaces directly in the IDL; no separate host vocabulary declaration is required (Section 8). Membership must be
-explicit. Package membership, directory placement, classpath discovery, reflection scanning, runtime collections,
-inheritance and neighboring source declarations must not add Fact kinds implicitly.
-
-Fact meaning must remain independent of physical representation. Sameness must preserve the complete information without
-depending on host equality or hashing. Fact owns neither independent object identity nor a restriction on the
-coexistence of different Facts. Sameness and derived physical keys must not synthesize currentness, supersession,
-history, topology or cross-Fact relations. Facts must not contain semantic references to other Facts.
-
-A backend may derive compact keys and use any deterministic storage layout, provided these mechanisms neither create
-nor erase factual distinctions.
+The design separates information from relations and authority over its use (Sections 7 and 14–18). Exact
+sameness preserves all declared distinctions independently of representation, including when compact
+physical keys are used (Sections 10–13 and 20).
 
 ---
 
 ## 4. Fact Meaning
 
-A Fact is an immutable factual proposition under one exact Versioned Fact Definition, expressed by its complete
-canonical factual material.
+A Fact is an immutable proposition expressed by complete canonical factual material under one exact
+Versioned Fact Definition.
 
 **Fact Contract**
 
-Declares what information may hold factual authority inside the Contract Core and requires its complete, immutable
-expression under the law of Section 6.
+Declares what information may hold factual authority inside the Contract Core and requires its complete,
+immutable expression (Section 6).
 
 **Established Fact**
 
-Information that holds authority under that Fact Contract after lawful establishment (Section 5).
+Information that holds authority under that Contract after lawful establishment (Section 5).
 
-Fact meaning is independent of its formation path. No Input, Output, Lowering or Operation declaration determines
-what a Fact means merely by supplying or consuming its values.
+No Input, Output, Lowering or Operation declaration determines Fact meaning merely by supplying or
+consuming its values. Fact carries no behavior and performs neither computation nor its own validation.
+It owns neither movement decisions nor Publication authority. Kontrakt performs Fact-owned judgments
+under the declared law.
 
-Fact carries no behavior. It does not perform computation, validate itself, decide movement or authorize Publication.
-Fact-owned judgments are performed by Kontrakt under the declared law; they are not methods of the factual value.
-
-Canonical factual material preserves every distinction that the Fact declares, including provenance or occurrence
-when these are themselves factual information. The coordinate surface and its resolved value meaning are governed by
-Section 6. Scope and Version remain explicit under their applicable laws. No universal runtime carrier schema is
-required.
-
-Canonical material is independent of physical representation. It preserves the complete information without requiring
-a particular byte encoding or applying Canonicalization to remove distinctions. Internal addresses, padding and unused
-storage are not factual material. Exact comparison and derived keys remain governed by Sections 10 and 13.
+Canonical factual material preserves every declared distinction (Section 6). Scope and Version remain
+explicit under their owning laws. Canonical material is representation-independent; it requires neither a
+universal runtime carrier nor a particular encoding. It does not apply Canonicalization to erase
+distinctions. Physical representation artifacts, including addresses, padding and unused storage, are not
+factual information (Sections 6.3 and 13).
 
 ---
 
 ## 5. Core Authority
 
-The machine owns its factual meaning independently of the boundary. Boundary presentation does not become Fact by
-being admitted or canonicalized. Lowering establishes a complete Fact Candidate set under ADR-0067, not Fact authority.
-Result-side formation may also supply proposed factual material under the applicable Operation and Change laws. The
-formation path does not change the Fact Definition or introduce a hidden factual distinction (Section 11).
+Boundary material does not become Fact through Admission or Canonicalization. Lowering establishes a
+complete Fact Candidate set under ADR-0067, not Fact authority. Result-side formation may likewise supply
+proposed factual material under the applicable Operation and Change laws. The formation path introduces
+no hidden factual distinction (Section 11).
 
-Completed Definition meaning, complete candidate material and Established Fact are distinct. A candidate must already
-express the information required by its exact Fact Definition before the applicable authority judgments begin. This
-completeness does not establish its legality or give it factual authority.
+Completed Definition meaning, complete candidate information and Established Fact are distinct. A
+candidate must express the information required by its exact Definition before judgment; completeness
+alone establishes neither legality nor authority.
 
 ### 5.1. Candidate Completion and Coherent Judgment
 
-A candidate must satisfy the information-completion boundary of Section 6.2. Its formation is owned by the applicable
-formation law, not by Fact. Missing information must not be supplied through implicit computation, lookup, default
-selection or normalization during Fact judgment.
+Formation belongs to its applicable owner. The candidate must satisfy Section 6.2 before judgment; Fact
+must not complete missing information through implicit computation, lookup, defaults or normalization.
 
-All required judgments must concern the same complete, stable candidate information. No mutation through a carrier or
-alias may change the information between judgment and establishment. Formation may use temporary internal mutation
-before that boundary, subject to ADR-0073. Physical sharing or deferred materialization of already determined
-information is permitted when it preserves the exact observation; it must not defer a decision about the information
-itself.
+All required judgments and establishment must concern the same complete, stable information. No carrier
+or alias may change it across that boundary. Subject to ADR-0073, formation may use temporary internal
+mutation beforehand. Physical sharing and deferred materialization of already determined information are
+permitted when they preserve exact observation; decisions about the information itself cannot be
+deferred.
 
 ### 5.2. Lawful Establishment
 
-Fact authority is established only after the required, separately owned judgments succeed under the applicable
-Composition. ADR-0067 Section 17 defines this boundary for Lowering and the subsequent Operation handoff. The
-applicable Fact judgments remain distinct from standing Invariant and movement judgments.
+Fact authority requires success of the separately owned judgments under the applicable Composition. Fact
+judgments remain distinct from standing Invariant and movement judgments (ADR-0067 Section 17; ADR-0069
+Section 16).
 
-When a complete candidate set or Change Proposal requires indivisible establishment, all required judgments must
-succeed before any part acquires Fact authority. Establishment of that set or proposal must then be indivisible.
-ADR-0069 Section 16 governs the standing judgments over a complete Change Proposal. These dependencies do not prescribe
-a physical execution order or impose one establishment unit on independent formations.
+Where a complete candidate set or Change Proposal requires indivisible establishment, all required
+judgments must succeed before any part acquires Fact authority. Establishment is then indivisible. This
+law prescribes neither physical execution order nor a common establishment unit for independent
+formations.
 
-A refused establishment places none of its proposed material in the Contract Core. A prerequisite failure that prevents
-entry does not create a Fact refusal. Result attribution, compiler failure and an indeterminate establishment result
-follow ADR-0063 Section 4.7.2 and ADR-0074. No successful establishment or refusal may be invented when the exact result
-cannot be established.
+Refusal places none of the proposed material in the Core. Failed prerequisites prevent legal entry
+without creating a Fact refusal. Neither success nor refusal may be invented when the exact result is
+indeterminate. Result attribution and compiler failure follow ADR-0063 Section 4.7.2 and ADR-0074.
 
 ### 5.3. Continuity and Physical Restoration
 
-An Established Fact retains its information. Subsequent processing cannot rewrite it; new information must be expressed
-as new factual material and lawfully established under the applicable change authority (Section 15). Immutability does
-not require permanent retention or a fixed physical representation.
+An Established Fact retains its information and cannot be rewritten by subsequent processing. New
+information must be expressed separately and lawfully established under the applicable change authority (Section 15).
+Immutability requires neither permanent retention nor fixed physical representation.
 
-Physical bootstrap, restoration, storage loading, cache loading and backend reconstruction may make an existing
-Established Fact available again. These are realization choices, not new sources of Fact authority. Restoration must
-preserve the exact established meaning and its authority under the applicable Version, World and validity laws.
-
-Physical existence, equal payload or a matching digest alone does not establish that material as an existing Fact.
-Unavailable or damaged material must not be silently completed or promoted to authority. An exact, valid restoration
-need not repeat the original establishment merely because the physical backing has changed. The detailed realization
-and restoration mechanism remains outside this ADR (Section 21).
+Restoration, including bootstrap or loading existing backing, may make an Established Fact available
+without repeating its original establishment. It creates no new Fact authority. It must preserve the
+exact established meaning and authority under the applicable Version, World and validity laws. Physical
+existence, equal payload or a matching digest alone is insufficient. Unavailable or damaged material must
+not be silently completed or promoted to authority. Restoration mechanisms remain realization decisions (Section 21).
 
 ### 5.4. Declared Immutability and Realization Guarantee
 
-The user declares immutable information through the authoring surface of Section 9. Mutable Fact declarations and
-uses that change a Fact's information are not admitted. A host language's immutable-looking declaration is evidence
-of this intent, not proof that its realization preserves the information. Kontrakt is responsible for constructing
-and verifying a machine that actually satisfies the declared Fact law.
+The user declares immutable information through Section 9. Mutable Fact declarations and uses that change
+factual information are not admitted. Host syntax expresses this intent but does not prove immutability.
+Kontrakt must construct and verify a machine that actually satisfies the Fact law.
 
-Definition Establishment determines the legality of the declared meaning. It does not establish the conformity of
-an execution realization. Compiler analysis, execution formation, optimization and backend realization must preserve
-the established Contract meaning and fulfill the obligations of Sections 5–7 and 10–13 in governed execution.
-These obligations do not require a separate runtime Candidate architecture, universal carrier, runtime Definition
-lookup or repeated dynamic interpretation of the Contract. The distinction between proposed information and
-Established Fact in Section 5 concerns authority, not a mandatory intermediate representation.
+Definition Establishment judges the declared meaning, not execution conformity. Compiler realization must
+fulfill Sections 5–7 and 10–13 in governed execution (Section 20.1). This requires neither a separate
+runtime Candidate architecture nor a universal carrier, runtime Definition lookup or repeated dynamic
+Contract interpretation. The distinction in Section 5 concerns authority, not an intermediate
+representation.
 
-The information of an Established Fact is immutable, including every constituent that belongs to it. Neither
-mutation through an alias nor replacement of that information by an observationally equivalent mutable state is
-permitted. Determinism and preservation of selected observations do not substitute for immutability. This law does
-not adopt abstract immutability as a substitute for immutable factual material.
+An Established Fact and all its constituents are immutable. Mutation through an alias or replacement by
+observationally equivalent mutable state is forbidden. Neither determinism nor preservation of selected
+observations substitutes for immutability; abstract immutability is not adopted as a substitute.
 
-The compiler may change its own working representations and use temporary mutation during formation as permitted by
-Section 5.1. Physical relocation, storage reuse and other representation changes remain implementation when they
-preserve the same immutable information, valid observations and authority boundaries. Reclaiming backing must not
-invalidate an observation that is still lawful. Sections 5.3, 13 and 20 govern these realization freedoms; they
-permit no change to an Established Fact itself.
+The compiler may change its own working representations. Section 5.1 permits temporary mutation during
+formation; Sections 5.3, 13 and 20 govern physical representation changes. Such changes must preserve the
+same immutable information, valid observations and authority boundaries. Backing reclamation must not
+invalidate a still-lawful observation.
 
-Source qualification and realization verification remain distinct from the declared Contract judgments over actual
-values. A calculation may be eliminated when its obligation is established under the applicable law and the same
-semantic result and failure attribution are preserved. Actual-value judgments that remain necessary must be realized
-by the generated machine. Verification under ADR-0073 Section 8.7 is not runtime mediation: unresolved realization
-closure cannot be replaced with continuous interception or repeated permission checks. When a proposed optimization
-cannot be shown to preserve the required meaning, it must not be used as an admitted realization.
+Source qualification and realization verification differ from Contract judgments over actual values. A
+calculation may be eliminated only when its obligation is established under the applicable law and its
+semantic result and failure attribution are preserved. The generated machine must realize any remaining
+necessary actual-value judgment. Verification is not runtime mediation (ADR-0073 Section 8.7): unresolved
+realization closure cannot be replaced by continuous interception or repeated permission checks. An
+optimization whose meaning preservation cannot be shown must not be admitted.
 
 ---
 
 ## 6. Fact Surface
 
-A declared Fact surface provides the complete factual coordinates and distinctions required by that information. Each
-Fact Definition must declare at least one direct factual coordinate. The direct surface is flat, finite and closed;
-each coordinate is identified by its declared name within that Definition. Duplicate coordinate names are unlawful.
-Declaration order and physical position do not determine coordinate meaning.
+The declared surface is the source evidence for canonical Fact material. Each Fact Definition must
+declare at least one direct factual coordinate. Its direct surface is flat, finite and closed. Their
+declared names identify them within the Definition; duplicates are unlawful. Declaration order and
+physical position do not determine meaning.
 
-Fact Kind does not substitute for a factual value or serve as a marker attached to another Fact. Neither the presence
-nor the absence of a Fact establishes State authority (Section 17).
+Fact Kind cannot substitute for a factual value or mark another Fact. Neither presence nor absence
+establishes State authority (Section 17). Additional identity, equality or hashing declarations are
+neither required nor admitted (Sections 10 and 13).
 
-The declared surface is the source evidence from which canonical Fact material is resolved. No additional identity,
-equality or hashing declaration is required or admitted as Fact meaning (Sections 10 and 13).
-
-Fact is not universally an entity, event, identifier, persisted record, message, or state snapshot.
-Those meanings exist only when the declared factual material says so.
+Whether a Fact describes an entity, event or other domain concept depends solely on its declared
+information.
 
 ### 6.1. Resolved Value Meaning
 
-Fact consumes completed source interpretation under ADR-0079 and the applicable value laws. The Type Subsystem resolves
-what each authored value means; Fact determines whether that meaning is lawful as the machine's own information.
-Successful interpretation alone establishes no Fact authority.
+Fact consumes completed source interpretation under ADR-0079. The Type Subsystem resolves value meaning;
+Fact judges its eligibility as the machine's information. Interpretation alone establishes no Fact
+authority.
 
-Each coordinate must have a complete resolved value meaning before Visible HIR. This includes the meaning of its
-constituents and relations and any semantic basis required to interpret them. A versioned or external semantic basis
-must be resolved under its owning law; ambient provider state cannot complete the meaning later. Runtime values may
-vary within that resolved meaning, but must not select or extend the schema, coordinate meanings or comparison law.
+Before Visible HIR, each coordinate must have complete value meaning, including constituent relations and
+all meaning-determining semantic bases. A versioned or external basis must be resolved under its owning
+law rather than completed later by ambient provider state. Runtime values may vary within the resolved
+meaning but cannot select or extend the schema, coordinate meanings or comparison law.
 
-Generic value forms are permitted when interpretation resolves their complete constituent meaning at compile time. An
-unresolved type argument or open value meaning that prevents this completion must not be admitted. Runtime type
-information cannot supply the missing Definition meaning.
+Generic values are permitted when their complete constituent meaning is resolved at compile time.
+Unresolved type arguments or open value meanings that prevent completion are inadmissible; runtime type
+information cannot complete the Definition.
 
-Fact does not maintain an independent inventory of value forms. A resolved meaning is eligible if it satisfies this
-ADR, regardless of its value family. Expansion of interpretation support does not by itself change an existing Fact
-Definition. Platform ratification and preservation remain subject to ADR-0073.
+A resolved meaning is eligible if it satisfies this ADR, regardless of value family. Fact maintains no
+separate inventory. Expansion of interpretation support does not by itself change an existing Definition.
+Platform ratification and preservation follow ADR-0073.
 
-Value domains and their limits follow the completed interpretation. Fact neither introduces an independent size or
-range limit nor relaxes a limit of that meaning. Standing integrity conditions on factual values belong to Invariant
-(Section 16). Resource obligations belong to Budget and Capacity under ADR-0051 and ADR-0052; compiler resource safety
-remains a separate realization obligation.
+Value domains and limits follow the completed interpretation; Fact adds or relaxes no size or range
+limit. Invariant owns standing integrity conditions (Section 16). Budget and Capacity own resource
+obligations under ADR-0051 and ADR-0052, distinct from compiler resource safety.
 
 ### 6.2. Constituent Closure and Information Completion
 
-The law applies to every constituent and meaning-determining relation of the resolved value. Nested constituents
-remain part of the containing Fact and do not become additional direct coordinates or independent Contract authorities.
-The value schema must be finite and closed. V1 requires an acyclic schema; semantic recursive types and mutually
-recursive value schemas are outside its scope. A complete relation value may describe cyclic relations, provided
-it contains no recursive value meaning or semantic reference to another Fact (Section 7).
+Every constituent and meaning-determining relation must satisfy the Fact law. Nested constituents belong
+to the containing Fact, not to additional direct coordinates or independent authorities. The value schema
+must be finite and closed. V1 requires acyclicity, excluding semantic recursion, including mutual
+recursion. A complete relation value may describe cycles without introducing recursive value meaning or
+references to other Facts (Section 7).
 
-Actual factual material must be complete and finite before judgment (Section 5.1). This concerns the information itself,
-not the cardinality of the possible domain. A complete descriptor may describe an infinite domain without containing
-an infinite collection. A live stream, pending computation or source of as-yet-undetermined constituents cannot serve
-as complete factual material.
+Actual information must be complete and finite before judgment (Section 5.1). Its possible domain need
+not be finite: a complete descriptor may describe an infinite domain without containing an infinite
+collection. Live streams, pending computations and other sources of undetermined constituents are not
+complete material.
 
-Presence is explicit in the direct coordinate declaration or the resolved constituent meaning. Required material must
-be present; absence is lawful only where the applicable meaning permits it. An absent coordinate is distinct from a
-present value that expresses absence, an empty value or a selected alternative with no payload. Unresolved material,
-failed formation, unavailable backing and absence of an Established Fact are not value absence. Fact does not fill a
-missing coordinate with a default.
+Presence is explicit in the declaration or resolved constituent meaning. Required material must be
+present; absence is lawful only where permitted. An absent coordinate, a present value expressing
+absence, an empty value and a selected alternative without payload are distinct. Unresolved material,
+failed formation, unavailable backing and absence of an Established Fact are not value absence.
 
-Complete factual material must satisfy the Closed Value, Authority Isolation, Resource and No Laundering laws of
-ADR-0073 (Sections 5.1–5.5). All constituents remain subject to Section 7. Physical immutability, host alias topology
-and a read-only wrapper are not sufficient evidence of semantic isolation. Section 5 governs the stability required
-through judgment and establishment.
+Fact supplies no missing coordinate by default. Complete material must satisfy ADR-0073 Sections 5.1–5.5,
+including Closed Value, Authority Isolation, Resource and No Laundering. All constituents remain subject
+to Section 7. Physical immutability, host alias topology or read-only wrappers alone do not establish
+semantic isolation.
 
 ### 6.3. Exact Observation and Value Distinctions
 
-Every factual distinction must support exact, deterministic observation. Fact consumes the resolved distinctions of
-the applicable value law, including its structural relations. Host equality, a user-defined comparator or ambient
-environment state cannot redefine those distinctions. An unsupported or incomplete observation cannot be
-approximated by a supported one.
+Every factual distinction must support exact, deterministic observation under its resolved value law.
+Host equality, custom comparators and ambient environment state cannot redefine these distinctions.
+Incomplete or unsupported observation must not be approximated.
 
-Where a resolved structure distinguishes members, tuples or keys, its discrimination must preserve the exact factual
-value distinctions of the corresponding constituents. Distinctions required by Fact must not be collapsed by a coarser
-comparison. Intrinsic or declared order and multiplicity must be preserved where they belong to the resolved meaning;
-physical storage or compiler processing order does not add factual meaning.
+Discrimination of members, tuples and keys must preserve the exact distinctions of their constituents.
+Intrinsic or declared order and multiplicity are preserved where meaningful; physical storage and
+processing order add no factual meaning.
 
-Fact does not perform implicit conversion, representative selection, deduplication of constituents or normalization.
-An explicitly formed value may be supplied by the owning formation authority; Fact need not reconstruct distinctions
-from that formation's earlier inputs. Platform preservation of the value presented to Fact remains subject to ADR-0073.
+Fact performs no implicit conversion, representative selection, constituent deduplication or
+normalization. The owning formation authority may supply explicitly formed values without requiring Fact
+to reconstruct earlier input distinctions. Platform preservation follows ADR-0073.
 
-Presence and selection retain their declared distinctions. Only the material belonging to a present value or selected
-alternative contributes its value distinctions. Unused storage must not be observed as factual information, including
-for comparison, derived keys, diagnostic evidence or Publication.
-
-This law fixes the preservation of value distinctions. Section 10 defines whole-Fact sameness, and Section 12 governs
-the repeated establishment of identical information without changing its constituent meaning. Exact comparison does
-not prescribe an encoding, full physical traversal or a particular access strategy (Sections 13 and 20).
+Presence and selection preserve their declared distinctions. Only material belonging to a present value
+or selected alternative contributes value distinctions. Unused storage must not be observed as factual
+information, including in comparison, derived keys, diagnostics or Publication. Whole-Fact sameness and
+repeated establishment are governed by Sections 10–12; implementation choices by Sections 13 and 20.
 
 ---
 
 ## 7. No Hidden Relations Between Facts
 
-Facts do not reference other Facts as semantic objects. A Fact must not include another Fact Definition or import its
-surface through a source relation. Inheritance, nesting or flattening a Fact declaration into a product cannot make
-that inclusion lawful. This restriction applies throughout the constituent structure (Section 6.2).
+Facts cannot include or semantically reference other Facts or include another Fact Definition. Importing
+its surface through inheritance, nesting or flattening does not circumvent this prohibition. This
+prohibition applies throughout the constituent structure, irrespective of interface or World selection.
+The compiler must resolve the actual declaration and Contract role; aliases and generic applications
+cannot conceal inclusion.
 
-A closed structured value interpreted under the applicable common value law may be used without creating another
-Fact authority. An ordinary data declaration may be reused as such a value in several Facts (Section 9). Neither a
-domain-named host type nor a user-defined object model supplies an independent Core value authority.
+A closed structured value under the common value law is permitted. An ordinary data declaration may serve
+as such a value in multiple Facts (Section 9), but neither host types nor object models create
+independent Core value authority.
 
-The compiler must resolve the actual declaration and its applicable Contract role when checking this boundary. A type
-alias or a generic application must not conceal the inclusion of another Fact. The prohibition does not depend on
-whether the two Facts are selected by the same interface or on World selection.
+A descriptive coordinate such as `accountId` does not establish its target's existence, identity, content
+or accessibility. Equality of coordinate values across Facts establishes no implicit relation or
+obligation, including:
 
-A factual coordinate such as `accountId` is factual material only. It may describe a target without establishing the
-target's existence, identity, content or accessibility.
+- Object or Fact references, joins, lookups and existence obligations.
+- Graph or ownership edges and automatic cross-Fact binding.
+- Invariant scope or Operation participation.
 
-The same coordinate value appearing in another Fact does not create:
+Another Contract may explicitly use an exposed coordinate as an operand and owns the resulting relation.
+A value lawfully obtained from a participating Fact may form part of a different Fact under the
+applicable formation law, provided the result is complete independently of continued access to the
+original. Participation requires separate authority (Section 15). Physical sharing under Section 20
+grants no further observation or participation authority.
 
-```text
-object relation
-Fact reference
-join
-lookup obligation
-existence obligation
-graph edge
-ownership edge
-automatic cross-Fact binding
-Invariant scope
-Operation participation
-```
+A descriptive value must not retain capability or resource authority over its denoted target, regardless
+of carrier (ADR-0073 Sections 5.3–5.5). This governs resolved meaning and lawful use, not a general
+ability to discover every possible external use of arbitrary values.
 
-Another Contract may explicitly use an exposed factual coordinate as an operand. That Contract owns the resulting
-relation, not Fact.
-
-A value lawfully obtained from a participating Fact may be expressed as part of a different Fact under the applicable
-formation law. The resulting information must be complete in its own right and must not depend on continued access to
-the original Fact. Participation is separately authorized under Section 15. Physical sharing of immutable backing is
-permitted under Section 20, but grants no additional observation or participation authority.
-
-A descriptive value must not retain capability or resource authority over its denoted target. This distinction follows
-ADR-0073 Sections 5.3–5.5, regardless of the carrier used. The law concerns the resolved meaning and its lawful use;
-it does not establish a general ability to discover every possible external use of arbitrary factual values.
-
-Currentness, cardinality across separately established Facts, supersession, grouping, continuity, history, population,
-sequence, interval relation and topology are not implicit properties of every Fact. When such meaning is required, it
-must belong to an applicable Operation, Change, State, Transition, another explicit Contract authority, or explicit
-factual material contained wholly within one Fact. The Fact Contract does not invent that owner.
+Fact supplies no implicit currentness, supersession, population or cardinality across Facts. Nor does it
+supply grouping, continuity, history, sequence, interval or topology relations. Such meaning must belong
+to an explicit applicable Contract authority (including Operation, Change, State or Transition) or
+factual material wholly within one Fact. Fact does not invent that owner.
 
 ---
 
 ## 8. Fact Vocabulary
 
-The enclosing interface declares one exact Fact vocabulary through direct selection in the IDL. Each entry names an
-exact
-Fact surface, with its Definition and Version resolved under the applicable laws. A separate host vocabulary class or
-named vocabulary declaration is not part of this authoring surface.
+The enclosing interface declares one exact vocabulary by directly selecting Fact surfaces in the IDL.
+Definition and Version are resolved under their applicable laws. No separate host vocabulary class or
+named vocabulary declaration is admitted.
 
 ```text
 interface AccountService {
@@ -372,30 +315,27 @@ interface AccountService {
 }
 ```
 
-Membership is explicit. Package selection, class-literal collections, computed membership and runtime discovery cannot
-add Fact kinds. Only explicit vocabulary selection changes membership; moving a declaration into the same package
-does not make it Fact.
+Only explicit selection changes membership. Package or directory placement, neighboring declarations,
+inheritance, class-literal collections, computed membership and discovery (including reflection or
+classpath scanning) cannot add kinds implicitly.
 
-The vocabulary has no semantic order. Selecting the same exact Fact Definition more than once is unlawful, even when
-the source references use different names. Resolution must retain each selection occurrence until the applicable
-judgment; it must not silently remove duplicates. The established vocabulary is order-independent and duplicate-free.
+Selection has no semantic order. Repeating the same exact Definition is unlawful, even under different
+source names. Each occurrence remains observable until judgment; the established vocabulary is
+duplicate-free (Sections 19.4 and 19.9).
 
-Fact vocabulary membership declares which Fact kinds may be established in the core. It does not grant universal
-participation authority.
+Membership declares the Fact kinds eligible for establishment in the Core, not universal participation
+authority (Section 15).
 
 ---
 
 ## 9. Host Frontend Evidence
 
-A host declaration provides evidence of a closed factual surface when its meaning can be fully interpreted under
-Section 6 and its use preserves that meaning under ADR-0073. The V1 Fact authoring surface uses the native data
-declaration of each supported language:
+Host declarations provide source evidence under Sections 6–7 and ADR-0073. V1 admits these native data
+declarations:
 
 - Kotlin: a `data class` with direct coordinates declared as primary-constructor `val` properties.
 - Java: a `record` under the supported Java language profile (Java 17 or later), with direct coordinates declared as
   record components.
-
-For example, the same form of factual information may be authored in either language:
 
 ```kotlin
 data class Balance(
@@ -412,50 +352,42 @@ public record Balance(
 }
 ```
 
-The declaration expresses information, not an object model. Ordinary classes are not an alternative Fact authoring
-surface in V1. User-authored constructor bodies, additional constructors, default coordinate values, initialization
-blocks and additional data members are not admitted. The declaration must not define methods, custom accessors,
-delegation or explicit inheritance, including interface implementation. Companion objects and user-authored static
-members are outside this surface. The mere presence of language-generated members confers no behavioral authority.
+Ordinary classes are not an alternative Fact authoring surface in V1. The declaration is data-only; the
+following are not admitted:
 
-The same data-only authoring restrictions apply to user-defined data classes and records used as structured values
-within a Fact. Their complete constituent meaning must be resolved under Sections 6 and 7; a host declaration alone
-does not establish immutability or platform eligibility.
+- User-authored constructor bodies, additional constructors, default coordinate values and initialization blocks.
+- Additional data members, methods, custom accessors and delegation.
+- Explicit inheritance, including interface implementation, companion objects and user-authored static members.
 
-Kontrakt does not require `CoreInt`, `KontraktText`, or a user-authored Value Object merely because information exists
-inside the core. Fact selection requires no annotation or marker interface on the data declaration (Section 8).
+These restrictions also apply to user-defined data classes and records used as structured values within a
+Fact. Their complete constituent meaning must satisfy Sections 6–7. Language-generated members provide no
+behavioral authority; host declaration alone proves neither immutability nor platform eligibility.
 
-A domain-named host declaration remains frontend evidence. Kontrakt does not carry a Kotlin data class, Java record, or
-another domain object into the Contract Core as the Fact itself. A carrier used to express a structured value must not
-import another Fact or its authority (Section 7).
+No proprietary scalar wrapper or user-authored Value Object is required merely because information
+belongs to the Core. Selection requires no annotation or marker interface on the declaration (Section 8).
 
-Resolution retains domain-neutral canonical Contract material. The resolved Fact kind identifies the exact Versioned
-Fact Definition, whose coordinates retain the value meanings and factual distinctions under Section 6. Applicable
-Contract World material is preserved for establishment and applicability under their owning laws, not as an additional
-determinant of informational sameness (Section 10). Source coordinates required for attribution remain separate from
-factual meaning unless explicitly declared as factual information. Candidate formation realizes the actual values
-under that resolved meaning (Section 5).
+Resolution retains domain-neutral canonical Contract material, not the authored object model. The exact
+Versioned Definition retains the value meaning and distinctions of Section 6; applicable Contract World
+material is preserved under the establishment and applicability laws, not as an additional sameness
+determinant (Section 10.1). Diagnostic and attribution source coordinates remain separately owned unless
+explicitly declared as factual material (Section 19.2).
 
-The native constructor and coordinate access syntax may express and observe immutable data in a lawful realization.
-Construction alone establishes no Fact or change authority. A lawfully bound Operation realization may consume such
-data within the Core without becoming an independent Contract authority. The realization remains replaceable.
+Native construction and coordinate access may express and observe immutable data in a lawful realization.
+Construction alone establishes no Fact or change authority. A lawfully bound Operation may consume this
+data in the Core without acquiring independent Contract authority. Qualification of language-generated
+data operations belongs to the common Type Subsystem and applicable operation laws; Fact supplies no
+separate operation set.
 
-The interpretation and qualification of language-generated data operations belong to the common Type Subsystem and
-the applicable operation laws. Fact imposes its own information restrictions but does not provide a separate set of
-data operations. Host constructors, methods, receivers, object identity, and class layout do not survive as Fact
-authority.
-
-A backend may realize the same canonical material through generated classes, primitive arrays, packed bytes, tables, or
-another deterministic layout. Host construction syntax does not require physical object allocation. These choices remain
-implementation.
+A host object is not itself the Fact in the Core. Host execution mechanics acquire no Fact authority.
+Construction syntax does not require physical object allocation, and the backend remains replaceable (Section 20).
 
 ---
 
 ## 10. Fact Sameness
 
-Fact sameness determines whether two complete factual materials express the same information. The resolved Fact kind
-identifies one exact Established Fact Definition under its owning Authority and Version (ADR-0053 Sections 3.1 and 3.5;
-ADR-0063 Section 6). It introduces no independent Fact identity or user-selected identity coordinate.
+Fact sameness compares complete information. Fact Kind identifies one exact Established Fact Definition
+under its Authority and Version (ADR-0053 Sections 3.1 and 3.5; ADR-0063 Section 6), not an independent
+Fact identity or user-selected identity coordinate.
 
 ```text
 same exact Versioned Fact Definition
@@ -463,21 +395,18 @@ same exact Versioned Fact Definition
 = same Fact
 ```
 
-Two different Authorities or Versions denote different Fact kinds even when their factual surfaces and actual values
-are identical. Version is part of the Definition binding, not an additional factual coordinate. The same Definition
-retains its identity across physical recompilation or relocation under ADR-0063.
+Different Authorities or Versions denote different kinds even if their surfaces and values match. Version
+binds the Definition, not a factual coordinate. Recompilation and relocation preserve Definition identity
+under ADR-0063.
 
-Sameness is a deterministic equivalence relation over complete lawful factual material: it is reflexive, symmetric
-and transitive. The comparison preserves every distinction of the declared coordinates and their constituents under
-Section 6.3. If necessary information is incomplete or unavailable, no sameness result may be inferred from that
-condition alone. In particular, failure to observe material does not establish that it differs.
+Sameness is a deterministic equivalence relation (reflexive, symmetric and transitive) over complete
+lawful material. Comparison preserves all distinctions under Section 6.3. Incomplete or unavailable
+information alone establishes neither sameness nor difference.
 
-User-defined `equals`, `hashCode`, identity selectors and custom comparison laws are not admitted on the Fact authoring
-surface. Host-generated methods have no Fact authority. Neither host equality nor another Contract's equivalence may
-merge different canonical factual material or divide identical material. Comparison must not normalize, convert or
-select a representative in order to establish sameness.
-
-For example:
+User-defined `equals`, `hashCode`, identity selectors and comparison laws are inadmissible.
+Host-generated methods have no Fact authority. Neither host equality nor another Contract's equivalence
+may merge distinct material or divide identical material. Section 6.3 excludes normalization, conversion
+and representative selection from comparison.
 
 ```text
 Balance(accountId = 42, currency = KRW, amountMinor = 1000)
@@ -486,32 +415,28 @@ Balance(accountId = 42, currency = KRW, amountMinor = 1000)
     -> the same Fact
 ```
 
-This assumes the same exact Versioned Fact Definition. Host object identity, allocation history, repeated construction,
-delivery and storage location do not determine the result. Fact sameness is an internal Contract law, not a separately
-authored comparison API.
+The example assumes the same exact Versioned Definition. Implementation identity and history, including
+repeated construction or delivery, do not determine sameness. This is an internal Contract law, not a
+separately authored comparison API.
 
 ### 10.1. World and Authority Boundary
 
-Informational sameness is independent of the surrounding Contract World, Governance selection and compiler World
-generation. Changes to other Contracts do not change the information expressed under an unchanged Fact Definition.
-Any meaning-determining basis of that Definition remains part of its exact resolved meaning.
+Informational sameness is independent of the surrounding Contract World, Governance selection and
+compiler World generation. Other Contracts' changes do not alter an unchanged Fact Definition's
+information; its own meaning-determining bases remain part of that Definition.
 
-Sameness does not establish that the information holds authority in a particular machine or may participate in a current
-application. Establishment and applicability retain their exact World and Scope bindings under their owning laws.
-World selection alone neither establishes nor removes Fact authority. The existence of identical information in another
-World or Scope grants no automatic authority, compatibility, conversion, reinterpretation or participation. Material
-from a different Version is not the same Fact and must enter any later processing under the applicable explicit laws.
-
-Repeated boundary occurrence and repeated establishment remain separate from information sameness (Sections 11–12).
+Sameness establishes neither authority in a machine nor current participation. Establishment and
+applicability retain their exact World and Scope bindings. World selection alone neither establishes nor
+removes Fact authority. Identical information in another World or Scope grants no automatic authority,
+compatibility, conversion, reinterpretation or participation. Different Versions are different Fact kinds
+and may enter subsequent processing only under applicable explicit laws.
 
 ---
 
 ## 11. Explicit Occurrence Distinction
 
-If receipt count, receipt time, source, submission identity, observation identity, or another occurrence distinction is
-factual meaning, that distinction must be explicit.
-
-For example:
+Any occurrence distinction that determines factual meaning must be explicit, including count, time,
+source or submission identity.
 
 ```text
 WithdrawalSubmitted(
@@ -529,210 +454,188 @@ WithdrawalSubmitted(
     -> different Facts
 ```
 
-The two Facts differ because declared factual material differs. A coordinate used to express occurrence has no special
-identity authority by virtue of its name or value domain. Its actual value must be supplied by the applicable formation
-law; Fact does not generate an occurrence identifier.
+The Facts differ because their declared material differs. An occurrence coordinate has no special
+identity authority; its value is supplied by the formation owner, not generated by Fact. If two
+occurrences must remain distinct while all coordinates are equal, the surface does not yet express the
+required distinction. Hidden implementation identity or history cannot supply the distinction (Section
+10).
 
-Kontrakt must not preserve occurrence through hidden message identity, host object identity, allocation history,
-delivery history, runtime reference, or storage identity.
-
-If two occurrences must remain distinct while every declared factual coordinate remains equal, the Fact surface does not
-yet express the required distinction.
-
-Fact owns no independent Established Occurrence Material under ADR-0063 Section 4.4.1. Occurrence distinctions that
-belong to factual information are expressed by the declared coordinates as above. The results of independent
-formation, standing judgments and Operation applications remain with their respective owners. Repeated applications
-are not given a hidden Fact Occurrence Identity, and this distinction introduces no separate runtime Material family
-or Occurrence Projection. Section 12 governs the information resulting from lawful establishment.
+Fact owns no independent Established Occurrence Material under ADR-0063 Section 4.4.1. Formation,
+standing judgments and Operation application results retain their respective owners. Repeated
+applications acquire no hidden Fact Occurrence Identity, separate runtime Material family or Occurrence
+Projection.
 
 ---
 
 ## 12. Set-Like Fact Semantics
 
-For Fact authority within the same established information context, repeated establishment of the same Fact under
-Section 10 does not create implicit multiplicity.
+Within the same established information context, repeated establishment of the same Fact under Section 10
+creates no implicit multiplicity.
 
 ```text
 { F, F } = { F }
 ```
 
-This is a Contract observation law, not a requirement for a particular set data structure or a prohibition on repeated
-lawful establishment. Storage duplicates and delivery duplicates do not create additional factual meaning. Information
-sameness does not merge independent authority scopes or grant authority in another scope (Section 10.1).
+This is an observation law, not a required set data structure or a ban on repeated lawful establishment.
+Storage or delivery duplicates add no meaning. Authority scopes remain independent (Section 10.1).
 
-A repeated formation or establishment may have its own occurrence and applicable judgments. Sameness alone neither
-refuses the repeated establishment nor permits the compiler to omit those judgments or their required observations.
-Other Contract obligations remain independent of the resulting informational multiplicity. Any reuse must satisfy
-Section 20.
+Repeated formation or establishment may have independent occurrences and judgments. Sameness alone
+neither refuses repeated establishment nor permits omission of judgments or required observations. Other
+Contract obligations remain independent of informational multiplicity; reuse follows Section 20.
 
-When count or repeated observation is factual meaning, it must be expressed explicitly (Section 11). Multiplicity and
-order belonging to a constituent value remain governed by Section 6.3; the set-like law does not alter them. Internal
-reference counts or incremental weights do not become factual occurrence counts and do not authorize removal of
-Established Facts.
+Explicit occurrence distinctions follow Section 11. Constituent order and multiplicity remain intact
+under Section 6.3. Internal reference counts or incremental weights neither become factual occurrence
+counts nor authorize removal of Established Facts.
 
 ---
 
 ## 13. Derived Identity and Physical Keys
 
-Kontrakt may derive physical keys from the canonical information under Section 10. A digest, HID, intern key or index
-key is derived representation material, not a logical identifier assigned to a Fact. No hash algorithm, canonical byte
-encoding or interned representation is required by Fact.
+Kontrakt may derive physical keys from Section 10's canonical information. These are representation
+material, not logical Fact identifiers. Fact prescribes no hash algorithm, canonical byte encoding or
+interned representation.
 
-Compact key equality establishes at most a candidate match. A comparison may reject sameness on key inequality only
-when the keys are valid and comparable under a common derivation basis that preserves equality of the information being
-compared. Keys produced under different derivation or encoding bases cannot establish factual difference merely by
-differing. A candidate match requires exact verification; the probability of a collision does not discharge this
-obligation. No key collision may merge different Facts.
+Compact key equality establishes at most a candidate match. Key inequality may reject sameness only when
+valid, comparable keys share a derivation basis that preserves informational equality. Keys from
+different derivation or encoding bases do not establish difference merely by differing. Candidate matches
+require exact verification regardless of collision probability; collisions must never merge different
+Facts.
 
-An exact comparison may use the resolved structure directly or exploit already verified immutable material. A physical
-reference can establish sameness only where its identity is known to denote the same exact information and its backing
-remains valid for the observation (Section 20). Neither a reused address nor an unverified handle provides such
-evidence.
+Comparison may use the resolved structure or previously verified immutable material. Physical reference
+identity suffices only when known to denote the same exact information with backing valid for the
+observation. Reused addresses or unverified handles are insufficient (Section 20).
 
-A change in the hash algorithm, physical encoding or key layout does not itself change Fact meaning or Version. The
-metadata identity design of ADR-0041 does not impose its encoding and HID suite on every runtime Fact. Section 20
-governs
-the security and reuse conditions of any derived representation.
+Changes to hashing, encoding or key layout do not themselves change meaning or Version. ADR-0041's
+metadata identity design imposes no encoding or HID suite on runtime Facts. Section 20 governs security
+and reuse.
 
 ---
 
 ## 14. No Fact-Owned Coexistence Restriction
 
-Fact expresses individual information. It does not declare unique coordinates or coordinate tuples, nor does it own a
-restriction on the coexistence of different Facts. Sharing some factual values is not a ground for refusing one Fact,
-merging it with another or replacing existing information. Section 12 governs identical information only.
+Fact declares no uniqueness law over factual coordinates or tuples and owns no restriction on coexistence
+of different Facts. Shared coordinate values are no ground for refusing, merging or replacing Facts.
+Section 12 applies only to identical information.
 
-The absence of a Fact-owned coexistence restriction does not establish the legality of a formation or change under
-other applicable Contracts. Fact grants no replacement, supersession, currentness or relationship authority (Sections
-7 and 15). No corresponding coexistence obligation is introduced into Invariant or another Contract by this decision.
+This does not establish legality under other applicable Contracts. Fact grants no authority over
+replacement, supersession, currentness or relations (Sections 7 and 15). No corresponding coexistence
+obligation is introduced into Invariant or another Contract.
 
 ---
 
 ## 15. Fact and Operation-Specific Change
 
-Fact defines factual material, not which Operation may consume or change a Fact or how a Change Proposal is formed.
-The selected Operation's explicit bindings own its factual participation and change meaning. Vocabulary membership
-alone grants none of those permissions.
+Fact defines information, not the means of forming a Change Proposal. The selected Operation's explicit
+bindings own its factual participation and change meaning. Fact vocabulary membership alone grants no
+permission to consume or change Facts.
 
-Declared Operation Result Material that is not established as Fact remains outside Fact authority. Calculated values
-do not become Facts merely because an Invariant might find them useful. Kontrakt must not synthesize a summary or
-aggregate Fact merely to expose calculated material to another Contract.
+Operation Result Material not established as Fact remains outside Fact authority. Calculated values do
+not become Facts merely because an Invariant could use them; Kontrakt must not synthesize summary or
+aggregate Facts to expose calculated material to another Contract.
 
 ---
 
 ## 16. Relationship to Invariant
 
-Fact declares what complete canonical factual material may hold authority. Invariant declares one standing integrity
-law over one exact Fact kind. The interface-level Invariant catalog declares those laws separately; the Fact surface
-does not list every Invariant that may apply.
+Invariant declares a standing integrity law over one exact Fact Kind. The interface-level catalog
+declares these laws separately; Fact surfaces do not list all applicable Invariants.
 
-Invariant may inspect declared factual coordinates under its own law, but does not create them, define Fact sameness
-or create cross-Fact relations. Its Fact-local integrity law does not impose a restriction on the coexistence of
-different Facts (Section 14).
+Invariant may inspect declared coordinates under its own law but neither creates them nor defines Fact
+sameness or cross-Fact relations. Its Fact-local law imposes no coexistence restriction on different
+Facts (Section 14).
 
 ---
 
 ## 17. Relationship to State and Transition
 
-Fact is information; State is an explicit machine condition for movement; Transition is declared movement between
-States. A Fact does not carry hidden lifecycle State, and a State label does not own Fact meaning.
+State expresses an explicit machine condition for movement; Transition declares movement between States.
+Fact carries no hidden lifecycle State, and State labels own no factual meaning.
 
-A Change Proposal may bind factual change and State movement that must be established together, but their authorities
-remain separate.
+A Change Proposal may bind factual change and State movement requiring joint establishment, without
+merging their authorities.
 
 ---
 
 ## 18. Relationship to Publication and Output
 
-Established Facts and Fact authority remain inside the Contract Core and grant no outward authority. Publication
-under ADR-0058 decides which authoritative exit material may cross the outward semantic boundary; Output Presentation
-under ADR-0059 declares the actual outward result shape.
+Established Facts and Fact authority remain inside the Contract Core and grant no outward authority.
+Publication under ADR-0058 determines which authoritative exit material may cross the outward semantic
+boundary; Output Presentation under ADR-0059 declares the outward result shape.
 
-A published presentation is not Fact. If it returns to the machine, it is external material again.
+A published presentation is not Fact. On return it is external material again.
 
 ---
 
 ## 19. Definition-Time Law
 
-At definition time, Kontrakt must resolve each Fact surface selected directly by the interface under Section 8.
+Kontrakt must resolve every Fact surface selected under Section 8. The HIR seal certifies complete
+resolved meaning and reference integrity, not Fact legality (Section 19.6). Definition Establishment
+applies the Fact law without reopening source interpretation (Section 19.7).
 
-Each admitted Fact surface must have complete resolved meaning under Section 6 before Visible HIR. The seal under
-ADR-0071 certifies completeness of the resolved candidate meaning and its required references, not Fact legality. Fact
-Definition judgment applies the owning law to that resolved meaning. It must not recover missing meaning by reopening
-the source or Type Subsystem.
+Hidden membership and unsupported host behavior are inadmissible under Sections 8–9. Open shape and
+unresolved distinctions prevent legal completion under Section 6; complete violations of the Fact law
+belong to its owning judgment. Platform-use and formation failures retain their own attribution (ADR-0063
+Section 4.7.2).
 
-The compiler must reject hidden membership, runtime discovery, unsupported host behavior, open shape, unresolved factual
-distinctions, and any source form whose complete factual meaning cannot be established. A missing interpretation or
-failed prerequisite prevents legal entry; a complete candidate that violates the Fact law is judged by the owning
-authority. ADR-0063 Section 4.7.2 governs the distinction. The applicable Platform-use and formation failures remain
-with their owners, rather than becoming a Fact refusal by implication.
-
-Source coordinates required for diagnostics must remain available through the appropriate separately owned provenance
-material (Sections 9 and 19.2). They do not participate in canonical factual meaning or sameness unless explicitly
-declared as factual information. Host execution mechanics do not acquire Contract authority.
-
-Executable machine formation and publication require complete, coherent observations of the necessary Established
-Fact Definitions through Sections 19.11–19.12 and of the vocabulary selection through its owning law.
+Diagnostic source coordinates must remain available through separately owned provenance (Sections 9 and
+19.2). Executable machine formation and publication require complete, coherent observations of the
+necessary Established Definitions (Sections 19.11–19.12) and vocabulary selection under its owning law.
 
 ### 19.1. Resolved Fact Definition Candidate
 
-Fact specializes the Resolved Contract HIR of ADR-0071. A Fact Definition Candidate expresses the complete resolved
-Definition meaning before Fact Definition Establishment. It identifies the exact Fact Authority and resolved Version
-candidate coordinate under their applicable laws, but establishes neither a Definition nor actual Fact authority.
-The IDL selection remains a separate Binding Candidate (Section 19.4).
+Fact specializes Resolved Contract HIR under ADR-0071. Its Definition Candidate identifies the exact Fact
+Authority and resolved Version candidate coordinate, and expresses the complete resolved Definition
+meaning without establishing Definition or actual Fact authority. IDL selection remains a separate
+Binding Candidate (Section 19.4).
 
-Two components determine the Fact Definition meaning:
+Two components determine informational Definition meaning:
 
 **Direct Factual Coordinate Surface**
 
-Identifies every declared direct factual coordinate by its nominal identity within the Definition. The surface preserves
-its complete composition, independently of declaration order or physical position.
+Identifies every direct coordinate by its nominal identity within the Definition. The complete
+composition is independent of declaration order and physical position.
 
 **Resolved Factual Value Meaning**
 
-Defines the completed value meaning of each direct coordinate under Section 6, including its constituent distinctions
-and relations. Any semantic basis that determines this meaning must be preserved. The meaning may be represented
-directly or through an exact producer-owned semantic reference that makes the completed meaning observable. A reference
-to an unresolved type or source declaration is insufficient.
+Provides the completed meaning of each direct coordinate under Section 6, including all
+meaning-determining semantic bases and constituent relations. It may be expressed directly or through an
+exact producer-owned reference that exposes the completed meaning; an unresolved type or source reference
+is insufficient.
 
-These components determine informational Definition meaning. Authority and Version identify the Definition under their
-owning laws; they are not factual coordinates. Selection-only context, formation, standing Invariant laws and Operation
-participation do not determine Fact Definition meaning. Fact requires no separate formation law, judgment expression,
-relation schema or occurrence requirement in its Definition Candidate. Common value meaning remains with its owner.
+Authority and Version identify the Definition under their owning laws, not as factual coordinates.
+Selection-only context, formation, standing Invariant and Operation participation do not determine its
+meaning. The Candidate requires no separate formation law, judgment expression, relation schema or
+occurrence requirement. Common value meaning retains its owner.
 
-The Candidate must retain the entire resolved surface, including a completed empty surface or any resolved multiplicity
-and conflicting coordinate declarations, where such material is expressible after source interpretation. The
-nonempty, unique-name requirement of Section 6 determines legality, not the ability to represent a completed violation.
-An unresolved coordinate or value meaning is not a completed violation and cannot be supplied by Establishment.
+The Candidate must preserve completed but unlawful surfaces, including empty surfaces, multiplicity and
+coordinate collisions expressible after source interpretation. Section 6 determines legality rather than
+representability. Unresolved coordinates or meanings are not completed violations and cannot be supplied
+by Establishment.
 
 ### 19.2. Information Retention and Semantic Equality
 
-The complete Definition Candidate meaning must be observable through the Fact-owned Definition Candidate Projection
-under ADR-0071. Coverage includes every direct coordinate and its complete value meaning. Exact direct semantic
-references preserve the referenced meaning's ownership; they do not permit a consumer to reconstruct it from source,
-IDL selection or unresolved Type Subsystem material.
+The Fact-owned Definition Candidate Projection exposes the complete meaning of Section 19.1 under
+ADR-0071. Direct semantic references preserve the referenced meaning's ownership and permit no
+reconstruction from source, IDL selection or unresolved Type Subsystem material.
 
-Source qualification and interpretation must be completed at their owning boundaries under ADR-0079. Where a Fact-owned
-judgment requires additional resolved evidence, that evidence must remain legally observable at the judgment boundary.
-In particular, the information needed to enforce Section 7 must not be lost through structural representation or type
-alias resolution. Evidence does not become a Definition determinant merely because a judgment requires it. Host
-binding and diagnostic provenance remain separately owned where needed; removing them from informational Definition
-meaning does not authorize their loss from other required compiler observations.
+Source qualification and interpretation must complete under ADR-0079. Additional resolved evidence
+required by a Fact judgment must remain legally observable, particularly the evidence needed to enforce
+Section 7 after structural representation or alias resolution. Such evidence is not necessarily a
+Definition determinant. Separately owned Host Binding and diagnostic provenance must remain available for
+their required observations even when excluded from informational meaning.
 
-Fact Definition Meaning Equality compares the complete direct coordinate surface and the corresponding resolved value
-meanings under their owning laws. It preserves nominal distinctions, all meaning-determining relations and semantic
-bases, and any resolved multiplicity or collision in the Candidate surface. Direct coordinate declaration order and
-physical representation do not participate in this comparison. Constituent order and multiplicity remain governed by
-Section 6.3.
+Fact Definition Meaning Equality compares both complete determinants in Section 19.1 under their owning
+laws, including resolved multiplicity or collisions. Direct declaration order and physical representation
+are immaterial; constituent order and multiplicity follow Section 6.3.
 
-Equal Definition meaning does not identify the same Candidate Reference or merge independent Definitions. It also
-does not establish equality of a broader Candidate observation that contains different required evidence. Whole-Fact
-sameness under Section 10 and current reuse qualification remain separate. Physical sharing of completed meaning is
-permitted when it preserves these distinctions and the applicable validity and security requirements.
+Equal Definition meaning does not identify the same Candidate Reference, merge independent Definitions or
+establish equality of broader observations containing different required evidence. Whole-Fact sameness (Section 10) and
+current reuse qualification (Section 20) are separate. Physical sharing is permitted
+only while preserving these distinctions, validity and security.
 
 ### 19.3. Typed Fact HIR Candidate References
 
-Fact owns the following reference domains within the common HIR protocol of ADR-0071:
+Fact owns these compiler-semantic reference domains under ADR-0071:
 
 ```text
 FactDefinitionCandidateRef
@@ -740,52 +643,48 @@ ResolvedFactCoordinateRef
 FactIDLBindingCandidateRef
 ```
 
-`FactDefinitionCandidateRef` identifies one exact current Fact Definition Candidate. `ResolvedFactCoordinateRef`
-identifies one direct factual coordinate through its exact `FactDefinitionCandidateRef` and nominal coordinate
-identity. The same coordinate name in different Definitions does not identify the same coordinate. Source position,
-physical index and nested value constituents do not determine this reference. A resolved coordinate collision must
-remain observable for the applicable judgment; no ambiguous coordinate name may be resolved by choosing an arbitrary
+`FactDefinitionCandidateRef` designates one exact current Definition Candidate.
+`ResolvedFactCoordinateRef` designates one direct coordinate by its exact owner reference and nominal
+identity. Neither source position, physical index nor a nested constituent determines that identity.
+Collisions must remain observable; an ambiguous name cannot be resolved by arbitrarily selecting an
 occurrence.
 
-`FactIDLBindingCandidateRef` identifies one exact current IDL selection occurrence under Section 19.4. It is distinct
-from both the selected Definition Candidate Reference and the selecting `ContractInterfaceRef`, which belongs to the
-common HIR protocol.
+`FactIDLBindingCandidateRef` designates one exact current selection occurrence (Section 19.4). It is
+distinct from its target Definition Candidate Reference and the common selecting `ContractInterfaceRef`.
 
-These are compiler-semantic references, not factual values or references between Facts. Fact owns the meaning of its
-Definition and coordinate references consumed by Lowering under ADR-0067 Section 11.1. A Candidate Reference is
-not an Established Definition Reference and establishes no Required Basis or actual Fact authority. The reference
-domains impose no particular encoding, physical field set or storage strategy.
+These references are neither factual values nor references between Facts. Lowering consumes the
+Fact-owned Definition and coordinate meanings under ADR-0067 Section 11.1. Candidate references establish
+neither a Definition, Required Basis nor actual Fact authority. Their logical domains prescribe no
+physical layout or encoding.
 
 ### 19.4. Fact IDL Binding Candidate and Vocabulary Selection
 
-Each direct selection in the interface's Fact vocabulary (Section 8) forms a distinct Fact IDL Binding Candidate
-whose target is one exact Fact Definition Candidate. The vocabulary is the complete selection relation of the interface,
-not an independent Definition or Contract authority. Different selections may designate the same Definition Candidate
-under the common Definition and Binding laws of ADR-0071.
+Each direct vocabulary selection forms a distinct Fact IDL Binding Candidate targeting one exact
+Definition Candidate. The complete selection relation belongs to the interface, not an independent
+Definition or Contract authority. Multiple selections may designate the same target before judgment under
+ADR-0071.
 
-A Fact IDL Binding Candidate expresses the selecting interface, the Fact vocabulary role and the exact target
-`FactDefinitionCandidateRef`, preserving the identity of the selection occurrence. No additional binding-owned
-qualifier is required by the current Fact vocabulary law. The Binding does not copy the Definition meaning or absorb
-unrelated interface context.
+A Binding Candidate expresses its selection occurrence through:
 
-`FactIDLBindingCandidateRef` designates the Binding Candidate itself; `ContractInterfaceRef` identifies its selecting
-subject. This distinction does not require a self-reference field or a separately stored interface reference when the
-same exact relation is represented structurally.
+- The exact selecting interface (`ContractInterfaceRef`).
+- The Fact vocabulary role.
+- The exact target `FactDefinitionCandidateRef`.
 
-The entire vocabulary selection must be observable from the exact interface and its Fact role. For a present vocabulary,
-this observation includes every selected `FactIDLBindingCandidateRef`, rather than only one selected reference or a
-set of distinct Definition targets. Omission and explicit absence remain governed by the applicable Interface and
-common selection laws; unresolved selection is not explicit absence.
+No further binding-owned qualifier is required. The Binding neither copies Definition meaning nor absorbs
+unrelated interface context. Its own `FactIDLBindingCandidateRef` designates the occurrence; the logical
+distinction from its selecting interface requires neither a self-reference field nor redundant storage.
 
-The observation preserves each selection occurrence until the applicable judgment, including distinct occurrences with
-the same resolved target. Its semantic order is immaterial. The established vocabulary remains duplicate-free under
-Section 8. The complete selection observation does not introduce another Primary HIR subject, establish a Binding or
-grant participation authority.
+The exact interface and role must expose every selected Binding Candidate Reference, not merely a single
+reference or a set of distinct targets. The observation preserves multiplicity until judgment,
+independently of declaration order. Omission and explicit absence follow the Interface and common
+selection laws; unresolved selection is not absence. Section 8 governs established vocabulary legality.
+Complete selection observation establishes neither a Binding nor participation authority and introduces
+no additional Primary HIR subject.
 
 ### 19.5. Resolved Fact HIR Candidate Protocol
 
-Fact specializes the read-only Resolved HIR Candidate Protocol of ADR-0071. The reference domains of Section 19.3
-and the common `ContractInterfaceRef` support the following observations:
+Fact specializes the read-only Resolved HIR Candidate Protocol of ADR-0071 using Section 19.3's reference
+domains and the common `ContractInterfaceRef`:
 
 ```text
 Fact Definition Candidate Projection
@@ -802,104 +701,97 @@ Fine-Grained Semantic Projections
     Fact Vocabulary Selection Projection
 ```
 
-The complete Definition Candidate Projection exposes the Authority and resolved Version candidate coordinate, the
-entire direct factual coordinate surface and the completed value meaning of each coordinate (Section 19.1). Required
-resolved evidence remains observable under Section 19.2. The complete Binding Candidate Projection exposes the
-selecting interface, Fact role and exact target of one selection occurrence under Section 19.4. Neither observation
-requires a redundant reference field or a copy of separately owned meaning.
+The complete Definition Candidate Projection exposes the exact Authority, resolved Version candidate
+coordinate and both determinants of Section 19.1, with required evidence under Section 19.2. The complete
+Binding Candidate Projection exposes the selection occurrence defined by Section 19.4. Neither requires
+redundant reference fields or copies of separately owned meaning.
 
 **Fact Candidate Coordinate Surface Projection**
 
-Exposes the entire direct coordinate surface of one exact `FactDefinitionCandidateRef`. It preserves each nominal
-coordinate, its exact `ResolvedFactCoordinateRef` when unambiguously referenceable, and any resolved multiplicity
-or collision required for judgment. This observation is complete for coordinate coverage without exposing the value
-meaning of every coordinate. Lowering may use it to determine coverage of its target surface under ADR-0067.
+Exposes the entire direct surface of one exact `FactDefinitionCandidateRef`. Each nominal coordinate has
+its exact `ResolvedFactCoordinateRef` where unambiguously referenceable. Completed multiplicity and
+collisions remain observable under Section 19.1. This projection provides Lowering's coverage observation
+without exposing every value meaning (ADR-0067).
 
-Equality compares the nominal composition and multiplicity of the surface, independently of declaration order. A
-change confined to a coordinate's value meaning does not by itself change this observation. A completed empty or
-conflicting surface remains observable under Section 19.1; an ambiguous coordinate is not made exact by selection
-of an arbitrary occurrence.
+Equality compares nominal composition and multiplicity, not declaration order. A change confined to value
+meaning does not by itself change this observation. Empty or conflicting surfaces remain observable;
+ambiguity follows Section 19.3.
 
 **Fact Selected Coordinate Meaning Projection**
 
-Exposes the exact coordinate designated by one `ResolvedFactCoordinateRef` and its complete resolved factual value
-meaning. The observation includes the distinctions, constituent relations and semantic bases required by Section 6.
-Equality preserves the selected coordinate and its meaning under their owning laws. A nested constituent is not
-another direct Fact coordinate. Lowering may consume this observation for the formation meaning of an individual
-mapping without acquiring unrelated coordinate meanings.
+Exposes one exact `ResolvedFactCoordinateRef` and its complete resolved value meaning under Section 6.
+Equality preserves the selected coordinate and that meaning. Lowering may consume an individual mapping's
+required meaning without observing unrelated coordinates. Nested constituents are not direct Fact
+coordinates.
 
 **Fact Vocabulary Selection Projection**
 
-Observes the complete Fact selection of one exact `ContractInterfaceRef` at its Fact vocabulary role. A present
-selection exposes every `FactIDLBindingCandidateRef` occurrence under Section 19.4. The complete Binding Candidate
-Projection provides the exact target of each occurrence. Equality preserves the selecting subject, role and complete
-selection relation, including multiplicity but not declaration order. The observation is multi-selection, rather
-than the single-reference alternative used by single-selection roles. Explicit Absence follows the applicable
-selection law; an unresolved or unavailable selection cannot be treated as absence or as a completed smaller
-vocabulary.
+Observes the complete selection of one exact `ContractInterfaceRef` at the Fact role (Section 19.4). It
+exposes every `FactIDLBindingCandidateRef` occurrence; the Binding Candidate Projection supplies each
+target. Equality preserves selecting subject, role and the complete relation, including multiplicity but
+not declaration order. This is a multi-selection observation. Neither unresolved nor unavailable
+selection is Explicit Absence or a completed smaller vocabulary.
 
-Each Projection is complete only for its declared observation. Complete Definition and Binding observations compare
-all meaning they expose, including required evidence where it is part of the observation. Fine-grained equality
-compares only the meaning of that observation, under Section 19.2 and ADR-0071. A consumer must preserve exact
-subject correspondence and current reference validity when comparing observations across generations. Equality alone
-does not establish current reuse eligibility. An omission from a narrower observation is not semantic absence;
-absence of a coordinate may be concluded only from an observation complete for that question.
+**Observation and Reuse**
 
-Projections create no additional Primary HIR subject or authority. Their logical distinction permits bulk access,
-shared immutable backing and fine-grained dependency tracking without requiring separate physical records or Query
-nodes. Observation coherence, availability, reference lifetime and Protocol evolution follow ADR-0071.
+Completeness and equality apply to each projection's declared observation, including evidence exposed by
+complete observations. Comparison across generations requires exact subject correspondence and current
+reference validity. Equality alone does not establish reuse eligibility (Section 20). An omission from a
+narrower observation is not semantic absence; only an observation complete for that question can
+establish coordinate absence.
+
+Projections introduce no new Primary HIR subject or authority. Bulk access, shared immutable backing and
+fine-grained dependencies are permitted without separate records or Query nodes. Coherence, availability,
+reference lifetime and Protocol evolution follow ADR-0071.
 
 ### 19.6. Fact HIR Seal and Establishment Handoff
 
 A Fact Definition Candidate may become Visible HIR only when:
 
 - Its exact Fact Authority and resolved Version candidate coordinate are known.
-- The entire direct coordinate surface and all its value meanings are resolved under Sections 19.1 and 19.2.
-- Required source interpretation and qualification have completed at their owning boundaries under ADR-0079.
-- Every required semantic reference is exact and valid, and the required Protocol observations are complete within a
-  coherent HIR generation.
+- Its entire surface and value meanings are resolved under Sections 19.1–19.2.
+- Required source interpretation and qualification have completed under ADR-0079.
+- Required semantic references are exact and valid, and required Protocol observations are complete within a coherent
+  generation.
 
-Source Eligibility under Section 9 is a prerequisite to lawful HIR formation. A forbidden default, for example, must
-not be erased to produce an apparently eligible declaration. An unresolved type prevents completion. A resolved empty
-coordinate surface, when otherwise eligible for HIR, instead preserves the completed meaning for Fact Definition
-judgment. Seal verifies resolution and integrity rather than satisfaction of the Fact Definition law.
+Source Eligibility (Section 9) precedes lawful HIR formation. A forbidden default cannot be erased to
+manufacture eligibility. An unresolved type prevents completion; an otherwise eligible, resolved empty
+surface remains available for Fact judgment. Seal certifies resolution and integrity, not satisfaction of
+Fact law.
 
-A Binding Candidate must resolve its exact selecting interface, Fact role, selection occurrence and single Definition
-Candidate target. Its target must be referenceable under the common HIR seal and visibility laws. The entire vocabulary
-observation is complete only when all of its selection occurrences have been resolved and are legally observable.
-Completed repeated selections remain present for the applicable judgment; an unresolved selection must not be dropped
-from that observation.
+A Binding Candidate must resolve its complete selection occurrence under Section 19.4, including one
+legally referenceable target under ADR-0071. Complete vocabulary observation requires every occurrence to
+be resolved and legally observable. Repeated completed selections remain; unresolved selections cannot be
+dropped.
 
-Under ADR-0071, independently sealed Definition or Binding Candidates may be visible within a coherent generation even
-when another independent Candidate fails to complete. A complete vocabulary observation requires its entire scope to
-be sealed; visibility of an individual selection does not establish completeness of that scope or authorize machine
-publication. Continuation requires valid inputs and a trustworthy compiler domain. Recovery or poison material,
-unknown required semantic extensions and failed visibility follow the common HIR laws.
+Independent sealed Definition or Binding Candidates may be visible within a coherent generation despite
+unrelated completion failure, under ADR-0071. Individual visibility neither completes the vocabulary nor
+authorizes machine publication. The entire vocabulary observation requires its scope to be sealed.
+Continuation requires valid inputs and a trustworthy compiler domain; recovery or poison material,
+unknown required semantic extensions and failed visibility follow common HIR law.
 
-Fact Definition Establishment consumes legal HIR observations and the authoritative Version prerequisite under
-ADR-0063 and ADR-0053. The complete Definition Candidate Projection may be used, or a combination of producer-defined
-Fine-Grained Semantic Projections and required resolved evidence that supplies every observation necessary for the
-judgment. An incomplete input prevents legal entry. Establishment applies the Fact law to this meaning; it cannot
-recover a missing part through source, Type Subsystem interpretation, host behavior, IDL selection or compiler layout.
+Definition Establishment requires legal HIR observations and the authoritative Version prerequisite (ADR-0063 and
+ADR-0053). A complete Definition Candidate Projection, or producer-defined Fine-Grained
+Semantic Projections with required evidence, must supply every observation needed for judgment.
+Incomplete input prevents entry; Establishment cannot recover missing meaning through source, Type
+Subsystem interpretation, host behavior, IDL selection or layout.
 
-Early static verification is permitted when the required meaning and legal judgment prerequisites are already
-available. Moving or eliminating a physical calculation cannot change its owning judgment, entry conditions or
-result attribution. ADR-0063 Section 4.7 and ADR-0071 govern this handoff.
+Early static verification is permitted when required meaning and legal prerequisites are available.
+Moving or eliminating a calculation must preserve judgment ownership, entry conditions and result
+attribution (ADR-0063 Section 4.7; ADR-0071).
 
 ### 19.7. Fact Definition Establishment Judgment and Result
 
-The Fact Definition judgment determines whether one exact, complete Fact Definition Candidate satisfies the factual
-information law of Sections 4, 6 and 7. It judges the entire direct coordinate composition and the admissibility of
-its completed value meanings. These include constituent closure, the V1 acyclic schema requirement, exact factual
-distinctions and authority isolation. The judgment consumes the completed interpretation and qualification of the
-applicable value meanings under Sections 6 and 9, rather than repeating their owners' judgments.
+Fact Definition judgment applies Sections 4, 6 and 7 to one exact complete Candidate, including its
+entire coordinate composition and the admissibility of completed value meanings. It consumes completed
+interpretation and qualification rather than repeating those owners' judgments.
 
-Legal entry requires the observations of Section 19.6 and the authoritative Version prerequisite. The Version law may
-establish the required binding or supply an already-established exact binding under ADR-0063 Section 6.3. A Fact IDL
-Binding Candidate or complete vocabulary selection is not an input to this Definition judgment. This independence
-does not authorize acquisition of unselected source declarations or establish actual factual material.
+Legal entry follows Section 19.6. The Version law establishes or supplies an existing exact binding under
+ADR-0063 Section 6.3. Neither a Binding Candidate nor complete vocabulary selection is required for this
+judgment; this independence authorizes neither acquisition of unselected source nor actual Fact
+establishment.
 
-The judgment has two Fact-owned semantic results:
+The two Fact-owned results are:
 
 ```text
 complete resolved Candidate
@@ -911,109 +803,103 @@ complete resolved Candidate
     -> Fact Definition Refusal
 ```
 
-The minimum successful establishment unit is one entire Definition. Its coordinates are not independent authorities.
-Partial verification or parallel evaluation may support the judgment but cannot establish a subset of its Definition
-meaning as authoritative. An unsuccessful establishment creates no partial Definition authority, and material that
-has not been established cannot be published or reused as if it were established. Failure does not revoke independent
-established Definitions or an independently established Version Binding. Temporary backing and other physical
-resources may be discarded or recovered without altering these semantic results.
+The minimum successful establishment unit is the entire Definition, not independent coordinate
+authorities. Partial verification or parallel evaluation may support judgment but cannot establish a
+subset of the meaning as authoritative. Failure creates no partial authority or entitlement to publish or
+reuse unestablished material as established. Independent established Definitions and Version Bindings are
+not revoked. Temporary backing may be recovered or discarded without changing semantic results.
 
-A failed prerequisite prevents legal entry and retains its own result attribution. Source Eligibility, interpretation,
-HIR Seal and Version failures are not Fact Definition Refusal. A violation of the vocabulary selection law belongs to
-the selection judgment of Section 19.9. If compiler failure leaves the exact judgment result indeterminate, neither
-success nor refusal may be fabricated. ADR-0063 Section 4.7.2 and ADR-0074 govern the common unsuccessful-result and
-continuation boundaries.
+Failed prerequisites prevent entry and retain their owners' attribution; Source Eligibility,
+interpretation, HIR Seal and Version failures are not Fact Definition Refusal. Vocabulary violation
+belongs to Section 19.9. If compiler failure makes the exact result indeterminate, neither success nor
+refusal may be fabricated (ADR-0063 Section 4.7.2; ADR-0074).
 
-A subsequent failure to form or expose the Canonical Contract World does not undo an already-established Definition
-in the current compilation. Current Establishment, World visibility and durable Version-history publication remain
-distinct under ADR-0063 Sections 6.9 and 10.8. Retained material from unsuccessful compiler work is at most reuse
-evidence unless current validity and authority are established under the applicable laws. Failure atomicity does not
-prescribe a physical transaction, rollback algorithm or crash-recovery mechanism.
+Subsequent World failure does not undo a Definition established in the current compilation.
+Establishment, visibility and durable Version-history publication are distinct (ADR-0063 Sections 6.9 and
+10.8; Section 19.12). Retained material from unsuccessful work is at most reuse evidence unless current
+validity and authority are established. Failure atomicity prescribes no physical transaction, rollback or
+crash-recovery mechanism.
 
 ### 19.8. Definition-Time Required Basis and Applicability Boundary
 
-Fact Definition Establishment owns no ADR-0063 Required Basis Law, Basis Resolution, Basis Binding, Complete Basis,
-separate Definition Applicability judgment, arbitration or Composition judgment. These categories are
-`NOT-APPLICABLE` to the current Fact Definition law. No Established Input, Lowering, Invariant or actual Fact is
-required for this judgment.
+The following ADR-0063 categories are `NOT-APPLICABLE` to Fact Definition Establishment:
 
-A semantic basis that determines factual value meaning remains part of the resolved Definition meaning under
-Section 19.1. Compiler interpretation dependencies alone are not Contract Required Basis. Fact's own Version
-prerequisite follows ADR-0053 and ADR-0063 without introducing another Fact-owned Basis law. These distinctions concern
-Definition-time Establishment only; the independent judgments and composition needed for actual Fact establishment
-remain governed by Section 5.
+- Required Basis Law, Basis Resolution, Basis Binding and Complete Basis.
+- Separate Definition Applicability, arbitration and Composition judgments.
+
+No Established Input, Lowering, Invariant or actual Fact is required. Compiler interpretation
+dependencies alone are not Contract Required Basis. Meaning-determining semantic bases belong to the
+resolved Definition (Section 19.1), and the Version prerequisite follows ADR-0053 and ADR-0063 without
+introducing a Fact-owned Basis law. Actual Fact establishment remains subject to Section 5.
 
 ### 19.9. Fact Vocabulary Selection Legality
 
-The Fact vocabulary law of Section 8 applies to the complete selection relation of one exact interface. Its duplicate
-check is separate from the judgment of any individual Fact Definition. Repeated selections of the same exact
-Versioned Fact Definition are unlawful, regardless of source spelling or physical Candidate Reference encoding.
-Equal information structures of independently identified Definitions do not constitute a duplicate selection.
+Section 8's duplicate check applies to one exact interface's complete selection relation, separately from
+individual Definition judgment. Repeating the same exact Versioned Definition is unlawful regardless of
+spelling or physical Candidate Reference encoding. Equal structures of independently identified
+Definitions are not duplicates. The judgment consumes the complete selection under Sections 19.4–19.6.
 
-The complete resolved selection preserves the occurrences required for that judgment under Sections 19.4–19.6.
-An unsuccessful vocabulary judgment concerns the selection relation, not the Definition meaning of any selected
-Fact. Successful selection legality alone does not establish a Definition, an authoritative interface binding or
-participation authority. The applicable Interface and Composition laws govern authoritative selection and its
-prerequisites. Fact introduces no independent vocabulary Definition, Version or Established Material family.
+Failure concerns selection, not the meaning of selected Definitions. Successful selection legality alone
+establishes neither a Definition, authoritative interface binding nor participation. Interface and
+Composition laws own authoritative selection and its prerequisites. Fact introduces no independent
+vocabulary Definition, Version or Established Material family.
 
 ### 19.10. Established Fact Definition Material
 
-Successful Fact Definition Establishment produces one complete Established Fact Definition. Its semantic material
-has two components:
+Successful Definition Establishment produces one complete Established Fact Definition with two
+components:
 
 **Identity**
 
-The exact `EstablishedFactDefinitionRef` identifies the Definition under its Owning Fact Authority Binding and
-Version Binding.
+The exact `EstablishedFactDefinitionRef` identifies the Definition under its Owning Fact Authority
+Binding and Version Binding.
 
 **Meaning**
 
-The complete Established Fact Definition Meaning preserves the entire factual coordinate surface and the complete
-value meaning of every coordinate defined by Sections 6 and 19.1, including the direct established relation to
-each coordinate. It retains the exact semantic-law and constituent relations that determine
-those meanings. The completed meanings and their separately owned relations may be observed directly or through
-exact semantic references without loss, duplication of authority or renewed interpretation. No additional constraint,
-formation meaning or factual information is established merely by Definition Establishment.
+Preserves both complete determinants of Section 19.1, including the direct established relation to each
+coordinate and all exact meaning-determining semantic-law and constituent relations. Separately owned
+meanings and relations may be observed directly or through exact semantic references without loss,
+duplication of authority or renewed interpretation. Definition Establishment introduces no additional
+constraint, formation meaning or actual factual information.
 
-Fact owns the following Established Definition reference domains:
+Fact owns these Established reference domains:
 
 ```text
 EstablishedFactDefinitionRef
 EstablishedFactCoordinateRef
 ```
 
-A Fact Authority owns one independently addressable Definition per Version. Its exact Authority and Version Binding
-therefore determine `EstablishedFactDefinitionRef`; no Authority-Local Definition Coordinate is required. The
-Owning Authority Binding is directly recoverable by a semantic consumer without inference from an interface, host
-declaration or physical containment. ADR-0063 Section 6 and ADR-0053 govern identity, conflicting meanings under one
-identity, and Version history.
+One Fact Authority owns one independently addressable Definition per Version. The exact Authority and
+Version Binding determine `EstablishedFactDefinitionRef`; no Authority-Local Definition Coordinate is
+required. The Owning Authority Binding is directly recoverable without inference from an interface, host
+declaration or physical containment. ADR-0063 Section 6 and ADR-0053 govern identity conflicts and
+Version history.
 
-`EstablishedFactCoordinateRef` identifies one direct factual coordinate through its exact
-`EstablishedFactDefinitionRef` and nominal coordinate identity. This relation is part of the Definition's established
-meaning, not a separate coordinate authority. The coordinate has no independent Version; declaration order and
-physical location do not determine its identity. Lowering consumes the exact Established Fact Definition as its
-Required Basis under ADR-0067 Section 11.6 and uses the Fact-owned coordinate meaning without re-establishing it.
+`EstablishedFactCoordinateRef` identifies a direct coordinate through its exact
+`EstablishedFactDefinitionRef` and nominal identity. This is a Definition-owned relation, not a separate
+coordinate authority or Version. Order and physical location do not determine identity. Lowering consumes
+the exact Definition as Required Basis under ADR-0067 Section 11.6 and uses its coordinate meaning
+without re-establishing it.
 
-The authoritative Definition Reference becomes legally observable only when the complete Definition and its required
-identity relations have been coherently established. A Candidate Reference cannot be promoted or retyped into an
-Established Reference. Distinct Candidates may correspond to the same established identity and meaning after lawful
-Establishment or currently qualified reuse under the owning laws. Neither an enduring one-to-one correspondence nor
-retention of the originating HIR is required. The Definition meaning and reference must remain interpretable
-independently of that HIR.
+The authoritative Reference becomes legally observable only after the entire Definition and required
+identity relations are coherently established. Candidate references cannot be promoted or retyped into
+Established References. Distinct Candidates may correspond to the same established identity and meaning
+after lawful Establishment or currently qualified reuse. Neither enduring one-to-one correspondence nor
+retention of originating HIR is required; Established meaning and references must be interpretable
+independently of it.
 
-These bindings and relations specify what must be observable from the Definition's identity and meaning, not a
-mandatory record layout. Shared immutable backing may represent both Candidate and
-Established meaning without transferring authority. Physical relocation, encoding or reclamation must preserve legal
-observation and reference validity under ADR-0063. Section 19.7 governs failure atomicity.
+These observability requirements prescribe no record layout. Shared immutable backing may represent
+Candidate and Established meaning without transferring authority. Relocation, encoding and reclamation
+must preserve legal observation and reference validity under ADR-0063; Section 19.7 governs atomicity.
 
-Fact establishes no separate Definition Material for its vocabulary or direct coordinates. Interface selection,
-Formation, Invariant and participation remain with their respective owners; the Fact Definition need not retain a
-relation to every consumer. Actual Fact establishment under Section 5 is separate from Definition Establishment.
+Fact establishes no separate Definition Material for vocabulary or coordinates. Interface selection,
+Formation, Invariant and participation retain their owners; Definitions need not retain relations to
+every consumer. Actual Fact establishment follows Section 5.
 
 ### 19.11. Established Fact Semantic Protocol
 
-Fact specializes the Established Semantic Protocol of ADR-0063 Section 11. The two typed Established reference
-domains of Section 19.10 designate the Definition and its direct coordinates. The projection catalog is:
+Fact specializes the Established Semantic Protocol of ADR-0063 Section 11 using the reference domains of
+Section 19.10:
 
 ```text
 Established Fact Definition Projection
@@ -1026,156 +912,135 @@ Fine-Grained Established Fact Projections
 
 **Established Fact Definition Projection**
 
-Exposes the complete Established Fact Definition designated by one exact `EstablishedFactDefinitionRef`. This
-includes its owning Authority and Version, complete Definition Meaning and all direct established relations of
-Section 19.10. Equality preserves the entire observation under the respective owning laws. A consumer must not
-recover any part of this meaning by reinterpreting HIR, source or Host Binding.
+Exposes one exact `EstablishedFactDefinitionRef` and the entire Definition of Section 19.10, including
+Authority, Version, complete Meaning and direct established relations. Equality preserves the whole
+observation. Consumers must not recover meaning by reinterpreting HIR, source or Host Binding.
 
 **Established Fact Coordinate Surface Projection**
 
-Exposes the entire direct factual coordinate surface of one exact `EstablishedFactDefinitionRef`, including the
-exact `EstablishedFactCoordinateRef` of each coordinate. The surface is nonempty and contains no duplicate coordinate
-names under Section 6. The observation is complete for coordinate coverage; it need not expose every coordinate's
-value meaning. Equality compares the exact Definition and the full nominal coordinate composition and its relations,
-independently of declaration order and physical representation. Lowering may consume this surface to judge coverage
-under ADR-0067; Fact does not perform the mapping judgment.
+Exposes the entire direct surface of one exact Definition, with each `EstablishedFactCoordinateRef`.
+Established legality guarantees the nonempty, duplicate-free surface of Section 6. The projection is
+complete for coverage without exposing every value meaning. Equality preserves the exact Definition,
+nominal composition and relations independently of order or representation. Lowering owns the mapping
+coverage judgment under ADR-0067.
 
 **Established Fact Selected Coordinate Meaning Projection**
 
-Exposes the coordinate designated by one exact `EstablishedFactCoordinateRef` and its complete resolved factual
-value meaning, including the constituent distinctions and meaning-determining relations of Sections 6 and 19.10.
-Equality preserves the selected coordinate and its value meaning. Nested constituents remain part of that meaning,
-not separately referenceable direct Fact coordinates. Lowering may consume this projection to judge a mapping's
-formation meaning. Execution Formation may use the completed meaning to select a lawful representation without
-reinterpreting the authored type.
+Exposes one exact `EstablishedFactCoordinateRef` and its complete value meaning under Sections 6 and
+19.10. Equality preserves both. Nested constituents are not separately referenceable direct coordinates.
+Lowering may consume the projection to judge a mapping's formation meaning. Execution Formation may use
+it to select a lawful representation without reinterpreting authored types.
 
 **Direct Established Relation Projection**
 
-The common projection of ADR-0063 Section 11.4 exposes the exact direct relations preserved by Section 19.10.
-It preserves their source, relation and target distinctions without creating a new relation or authority. Fact
-requires no separate graph model or inferred inverse ownership. Vocabulary selection belongs to the applicable
-Interface and Composition laws; the HIR vocabulary selection projection of Section 19.5 is not an Established Fact
-Projection.
+The common ADR-0063 Section 11.4 projection observes the exact source, relation and target of Section
+19.10's direct relations. It creates no relation, authority, graph model or inferred inverse ownership.
+Vocabulary selection retains its Interface and Composition owners; Section 19.5's vocabulary projection
+is HIR-only.
 
-Each projection is complete only for its declared observation. An omission from a narrower projection is not
-semantic absence. A complete coordinate surface may establish the absence of a direct coordinate, but an invalid
-reference, unavailable backing or failed observation cannot establish that absence. Observation coherence,
-availability and failure attribution follow ADR-0063 Sections 11.5–11.7 and ADR-0074.
+**Observation and Reuse**
 
-Semantic equality follows the exact identity and meaning exposed by each projection. Equal value meanings do not
-make distinct Versioned Definition or coordinate references equal. A calculation concerned only with a common value
-meaning may be reused under its own current-validity law without equating the broader Established observations.
-Reuse of a complete surface also requires evidence of its current closure, not just the validity of the previously
-observed members.
+Completeness is relative to each projection. A narrower omission does not establish semantic absence. A
+complete surface may establish coordinate absence; invalid references, unavailable backing and failed
+observations cannot. Coherence, availability and attribution follow ADR-0063 Sections 11.5–11.7 and
+ADR-0074.
 
-Compiler consumers select existing legal observations according to their own requirements. Analysis, verification,
-execution formation and generated API formation may derive their own products; those products are not new Fact
-Projections. Additional Host Binding or provenance requirements remain with their owners. The Protocol does not
-introduce an Occurrence Projection, runtime Fact Candidate Projection or other runtime material family. It imposes
-no runtime interface calls, separate physical records, allocations, Query nodes or mandatory hash calculations.
-Bulk access, fine-grained observation and shared immutable backing may realize the same semantic boundaries under
-ADR-0063 Section 11.
+Equality preserves the exact exposed identity and meaning. Equal value meanings do not equate distinct
+Versioned Definitions or coordinate references. Calculations observing only common value meaning may be
+reused under current-validity law without equating broader observations. Complete surface reuse requires
+evidence of current closure, not merely validity of previously observed members.
+
+Consumers select existing legal observations; their derived compiler products are not Fact Projections.
+Additional Host Binding and provenance requirements retain their owners. No Occurrence or runtime
+Candidate Projection or other runtime material family is introduced. The Protocol requires neither
+runtime interface calls nor separate allocations, records, Query nodes or mandatory hashing. Bulk and
+fine-grained access may share immutable backing under ADR-0063 Section 11.
 
 ### 19.12. Canonical Contract World Placement
 
-The Canonical Contract World of ADR-0063 Section 10 makes complete Established Fact Definitions legally observable
-to compiler consumers through Section 19.11. Each Definition's authoritative identity, complete meaning and required
-direct established relations must be coherent before this handoff. HIR Candidates, actual runtime factual values and
-occurrence-specific material do not become part of the Definition-world substrate. Source provenance remains adjacent
-material; downstream compiler products retain their own ownership.
+The Canonical Contract World (ADR-0063 Section 10) exposes complete Established Fact Definitions through
+Section 19.11. Each Definition's identity, meaning and required direct relations must be coherent. HIR
+Candidates, runtime factual values and occurrence-specific material are outside this Definition-world
+substrate. Provenance remains adjacent; downstream products retain their owners.
 
-World visibility does not establish a Fact Definition again or create a new Contract authority. The compiler's
-Canonical Contract World is distinct from the Policy-owned Contract World. Co-location or linking establishes no
-Policy membership, vocabulary selection, Fact relation or other Contract-owned binding. A lawfully established
-selection or composed relation is observed under its owning law, not inferred from the presence of Definitions.
+Visibility creates no new authority and does not re-establish Definitions. The compiler's World is
+distinct from the Policy-owned Contract World. Co-location or linking establishes neither Policy
+membership nor vocabulary selection, Fact relations or other Contract bindings. Established selections
+and composed relations are observed under their owning laws.
 
-World assembly, linking and physical representation changes preserve the identity and complete meaning of each
-unchanged Established Fact Definition. The compiler's World generation, physical placement or aggregate identity does
-not determine that Definition's identity or the sameness of actual Facts (Section 10.1). Direct relations retain the
-states defined by their owning laws. An unresolved required Definition relation prevents lawful visibility;
-absence of a future application is not an incomplete Definition.
+Assembly, linking and representation changes preserve unchanged Definitions' identity and meaning.
+Compiler World generation, placement and aggregate identity do not determine Definition identity or
+actual Fact sameness (Section 10.1). Direct relations retain their owning states; unresolved required
+relations prevent visibility, whereas absence of a future application is not an incomplete Definition.
 
-Independent complete Definitions may become visible without waiting for unrelated compiler work when the required
-consumer closure is coherent under ADR-0063 Section 10.7. Partial World coverage may be lawful; partial Established
-Fact Definition meaning is not. Consumers must obtain their own complete, current and coherent required observations
-before entering their work. Physical assembly may combine validated backing without exposing an inconsistent view.
+Independent complete Definitions may become visible without unrelated work when consumer closure is
+coherent (ADR-0063 Section 10.7). Partial World coverage may be lawful; partial Established Definition
+meaning is not. Consumers require complete, current, coherent observations before entry. Physical
+assembly may combine validated backing without exposing inconsistency.
 
-World formation or observation failure is compiler-owned. It prevents dependent work from entering when required
-meaning is unavailable, but does not revoke an independently established Definition in the current compilation.
-Current Definition Establishment, World visibility and durable Version-history publication remain distinct under
-Section 19.7 and ADR-0063 Sections 6.9 and 10.8. Retained backing does not confer authority on a later invocation
-without current qualification. Physical storage, linking and reclamation mechanisms remain replaceable realization.
+World formation or observation failure belongs to the compiler and prevents dependent entry where
+required meaning is unavailable. Independent establishment is preserved under Section 19.7, which also
+distinguishes current authority from durable publication. Retained backing requires current qualification
+on later invocations. Storage, linking and reclamation mechanisms remain replaceable.
 
 ---
 
 ## 20. Optimization Boundary
 
-A backend may choose any representation compatible with the complete canonical Fact material and deterministic legal
-observation. Direct comparison, SIMD, indexing and immutable sharing may accelerate Section 10 without changing the
-information it distinguishes. Section 13 governs the use of derived keys. No particular serialization, interning,
-storage layout or comparison algorithm is required.
+Any representation compatible with complete canonical material and deterministic legal observation is
+permitted. Comparison may be accelerated without changing distinctions (Sections 10 and 13); no
+particular serialization, interning, storage layout or algorithm is required.
 
-The realization must preserve the stability required by Section 5 throughout comparison and use. Sharing, relocation
-and physical reclamation must not cause a reference to observe different information, or permit a stale reference to
-establish sameness. Selection among equivalent valid physical backings is implementation; acquisition or scheduling
-order cannot establish factual meaning or authority.
+Realization must preserve Section 5's stability throughout comparison and use. Sharing, relocation or
+reclamation must neither change information observed by a valid reference nor let a stale reference
+establish sameness. Equivalent valid backing may be selected physically; acquisition, routing, iteration
+and scheduling order cannot determine meaning, authority or Contract observations.
 
-Exact comparison must remain sound in the presence of collisions. Resource safety is a separate realization obligation:
-collision verification alone does not protect against adversarial comparison or lookup cost. Applicable Budget and
-Capacity obligations remain with their owners. A resource or compiler failure must not be converted into an invented
-sameness result or a Fact refusal. Routing and physical iteration order must not determine a Contract observation.
+Comparison must remain exact in the presence of collisions (Section 13). Collision verification alone
+does not protect against adversarial comparison or lookup costs. Resource safety is separate, with Budget
+and Capacity obligations retained by their owners. Resource or compiler failure must not become an
+invented sameness result or Fact refusal.
 
-Physical sharing and derived representation material remain subject to the applicable security boundary. Sameness does
-not authorize sharing across independent trust boundaries, and a sharing optimization must preserve information and
-authority isolation, including against unauthorized inference through observable reuse behavior. Internal keys, handles
-and cache observations have no automatic outward or diagnostic authority. Their disclosure remains subject to the
-applicable Publication and diagnostic laws. Concrete isolation, comparison and resource-protection mechanisms remain
-realization decisions.
+Sameness grants no cross-trust-boundary sharing authority. Sharing and derived representations must
+preserve information and authority isolation, including against unauthorized inference through observable
+reuse behavior. Internal keys, handles and cache observations confer no automatic outward or diagnostic
+authority; disclosure follows the applicable Publication and diagnostic laws.
 
-A matching Fact may support reuse of its material, but it does not establish the current validity of an earlier
-judgment, establishment or participation. Reuse must satisfy the exact observation and current-validity requirements
-of ADR-0063 Section 11.7 and ADR-0075 Sections 13 and 22. The optimized path must preserve the legal observation of
-the deterministic clean path. These requirements do not prescribe a universal cache key or introduce new factual
-coordinates.
-
-Derived structures remain implementation. They may not add Fact relations, Fact multiplicity, Fact currentness,
-participation authority or cross-Fact semantics that the Contract does not declare.
+Matching information may support material reuse, not the current validity of earlier judgment,
+establishment or participation. Reuse requires exact observations and current validity under ADR-0063
+Section 11.7 and ADR-0075 Sections 13 and 22. Optimized paths must preserve the deterministic clean
+path's legal observations. No universal cache key or new factual coordinate follows from this law.
+Derived structures may not introduce undeclared Fact relations, multiplicity, currentness, participation
+authority or other cross-Fact semantics (Sections 7, 12 and 15).
 
 ### 20.1. Compiler Conformance and Independent Verification
 
-The optimization boundary applies throughout the realization of the Fact Contract, not only to actual value
-comparison. The compiler must preserve the required semantic observations, authority boundaries and result
-attribution at each of the following seams:
+Conformance extends beyond value comparison to the entire compiler realization. Each seam must preserve
+required observations, authority boundaries and result attribution:
 
-- Source interpretation and HIR formation preserve complete resolved meaning, precise references and the evidence
-  required by the owning judgments (Sections 6, 9 and 19.1–19.6).
-- Definition Establishment preserves judgment ownership, the complete authoritative identity and failure atomicity
-  (Sections 19.7–19.10).
-- World visibility, linking and Established Protocol realization preserve the complete Definition and its legal
-  observations (Sections 19.11–19.12).
-- Execution formation, optimization and backend realization preserve the runtime obligations of Sections 5–7 and
-  10–13, including immutability, exact factual distinctions, independent judgments and indivisible establishment.
+- Source interpretation and HIR formation: Sections 6, 9 and 19.1–19.6, including evidence required by owning judgments.
+- Definition Establishment: Sections 19.7–19.10, including complete authority and failure atomicity.
+- World visibility, linking and Established Protocol: Sections 19.11–19.12.
+- Execution formation, optimization and backend: runtime obligations of Sections 5–7 and 10–13.
 
-No optimization may weaken those obligations. A fused execution or reused computation must preserve the owning
-judgments and their required meaning and failure boundaries; physical scheduling cannot supply semantic distinctions.
-The freedom to choose a representation does not permit changing the information of an Established Fact (Section 5.4).
+Fusion and reuse must preserve independent judgments, their required meaning and failure boundaries. No
+optimization may weaken these obligations or change Established information (Section 5.4).
 
-Conformance must support both comparison with the deterministic clean path and independent verification against the
-Fact Contract itself, as required by ADR-0071 and ADR-0075. Agreement between two realization paths is insufficient
-when they share a defect in interpretation or judgment. A verification product checks conformity; it does not create
-Fact authority or replace an owning judgment. This requirement imposes no mandatory duplicate computation during
-governed execution.
+Conformance must support comparison with the deterministic clean path and independent verification
+against the Fact Contract (ADR-0071; ADR-0075). Agreement between two defective paths is insufficient.
+Verification products check conformity rather than create Fact authority or replace owning judgments.
+This verification requirement imposes no mandatory duplicate computation during governed execution.
 
-Conformance must cover the exact reference kinds and current validity of observations as well as value equality and
-complete observation closure. In particular, a stale or wrong-kind handle, corrupted backing, poisoned cache or
-partial publication must not supply authoritative material. The collision, resource and isolation laws above also
-apply to the HIR and Established Protocol realizations. Compiler failure, absence, non-entry and Contract refusal
-retain their distinct meanings and owners.
+Verification covers exact reference kinds, current validity, value equality and complete observation
+closure. Stale or wrong-kind handles, corrupted backing, poisoned caches and partial publication must not
+supply authoritative material. The collision, resource and isolation laws of Section 20 also govern HIR
+and Established Protocol realization. Compiler failure, absence, non-entry and Contract refusal retain
+their distinct meanings and owners.
 
-Semantic correctness, security conformity and performance are separate verification concerns. A valid semantic result
-does not establish resource safety, information isolation or efficiency. Compiler Design owns the specific algorithms,
-verification methods, storage choices and performance measurements. V1 and V2 may use different realization strategies
-provided they preserve the same Contract meaning and satisfy the applicable current-validity and security requirements.
+Semantic correctness, security conformity and performance are distinct verification concerns. A correct
+result establishes neither resource safety, information isolation nor efficiency. Compiler Design owns
+realization choices, verification methods and performance measurements. V1 and V2 may differ in
+realization while preserving Contract meaning and satisfying current-validity and security requirements.
 
 ---
 
@@ -1197,15 +1062,11 @@ backend carrier shape remain realization decisions.
 
 ## 22. Consequences
 
-The Contract Core contains explicit immutable factual meaning rather than implementation objects promoted to authority.
-The vocabulary is finite and explicit. Host source declarations remain convenient frontend evidence without becoming
-runtime Contract identity, and backend representation remains replaceable.
+The Core holds explicit immutable information rather than implementation objects promoted to authority.
+The finite, explicit vocabulary and native authoring surface allow representation replacement without
+changing meaning or identity (Sections 8–9).
 
-Fact sameness is deterministic and independent of user-defined equality, object identity, allocation history and
-storage. Repeated identical establishment creates no hidden multiplicity; occurrence distinctions remain possible
-when declared as factual material.
-
-Fact owns no user-declared uniqueness or other coexistence restriction on different information. Informational sameness
-does not itself confer authority across Worlds or scopes. Cross-Fact relations remain explicit responsibilities of the
-Contract that actually needs them.
+Exact sameness and set-like semantics preserve information without hidden multiplicity (Sections 10–12).
+Coexistence, cross-Fact relations and participation are not implicit consequences of factual authority (Sections 7 and
+14–15).
 
