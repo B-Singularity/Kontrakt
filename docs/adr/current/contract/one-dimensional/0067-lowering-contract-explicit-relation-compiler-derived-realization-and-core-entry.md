@@ -134,8 +134,9 @@ Core-owned Fact targets. Operation Fact participation is not a Lowering mapping.
 
 ```text
 interface scope:
-    one closed `facts` vocabulary
-    one standing `invariants` declaration
+    `facts : invariants`
+        closed Fact vocabulary
+        standing Invariant selections for each Fact
 
 boundary side:
     selected Input presentation
@@ -183,7 +184,7 @@ complete candidate of each fixed kind.
 
 Two separate relations qualify use of the Definition:
 
-- The enclosing interface's `facts` vocabulary neither creates nor reselects its targets.
+- The enclosing interface's Fact vocabulary (`facts : invariants`) neither creates nor reselects its targets.
 - The selected Operation supplies the IDL Binding context and declares its Fact parameters independently. Neither its
   parameter list nor its current signature determines or silently changes those targets.
 
@@ -228,7 +229,7 @@ obligation.
 
 The Lowering Contract contains no user implementation callback and no business algorithm.
 
-The enclosing interface declares `facts` and `invariants`.
+The enclosing interface declares its standing Core bindings through `facts : invariants` (ADR-0046 Section 12).
 
 The Operation manifest selects a Lowering Definition by name from the definitions declared in the Lowering DSL. Each
 relation in that definition uses `source -> target : method`. The selected Operation identifies the pipeline Binding,
@@ -240,11 +241,10 @@ interface DepositContract {
     governance    DepositGovernance
     budget        DepositBudget
     capacity      DepositCapacity
-    facts {
-        DepositCommand
+    facts : invariants {
+        DepositCommand  : ValidDepositCommand
         DepositRecorded
     }
-    invariants    DepositInvariants
 
     operation deposit(command: DepositCommand): DepositRecorded {
         manifest {

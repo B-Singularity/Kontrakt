@@ -68,9 +68,9 @@ explicit authoring positions for applicable Contract roles. These slots do not b
 semantic owning scope.
 
 Not every Contract is operation-local. `Policy`, `Governance`, `Budget`, and `Capacity` are bound at the enclosing
-interface scope under their own laws because they coordinate the interface's closed Operation set. `Facts` and
-`Invariants` are also declared at the enclosing interface scope as standing Core vocabulary and law. Their exact scope
-and applicability remain owned by their current ADRs.
+interface scope under their own laws because they coordinate the interface's closed Operation set. The
+`facts : invariants` block declares the standing Core vocabulary and law at that same scope (ADR-0046 Section 12).
+Their exact scope and applicability remain governed by their owning ADRs.
 
 This matters because Kontrakt has two bad roads in front of it.
 
@@ -193,7 +193,9 @@ Decision: rejected.
 
 The operation manifest provides an authoring position for applicable roles. The enclosing interface provides
 positions for its standing Core and shared roles. Resolution preserves each selection at the semantic scope set by its
-owning Contract law, which also controls the permitted source declaration.
+owning Contract law, which also controls the permitted source declaration. A shared authoring position may express
+independent role selections and their explicit association, as in `facts : invariants`. It does not compose their
+Definitions or transfer authority between them.
 
 After explicit selection, Kontrakt may acquire, resolve, establish, verify, reject, and realize the material under that
 role. No implementation callback is needed merely because the Contract requires executable work.
@@ -261,11 +263,10 @@ interface CalculateContract {
     governance    DefaultGovernance
     budget        DefaultBudget
     capacity      DefaultCapacity
-    facts {
-        CalculateCommand
+    facts : invariants {
+        CalculateCommand  : ValidCalculateCommand
         CalculateRecorded
     }
-    invariants    CalculateInvariants
 
     operation calculate(command: CalculateCommand): CalculateRecorded {
         manifest {
@@ -295,8 +296,8 @@ State-Machine Axis surface. It is not a runtime schedule or proof that every rol
 preserves the selection at the owning scope, which may instead be the Interaction or enclosing Interface.
 
 `Policy`, `Governance`, `Budget`, and `Capacity` are not ordinary operation-local pipeline slots. Their applicable
-bindings are made at the enclosing interface scope under their current laws. `Facts` and `Invariants` are also standing
-interface-scope declarations rather than per-Operation implementation hooks.
+bindings are made at the enclosing interface scope under their current laws. Fact and Invariant are standing
+interface-scope roles selected through `facts : invariants`, not per-Operation implementation hooks.
 
 Input is not Input because a DTO says so. Publication is not Publication because a response object says so. A Transition
 is not a Transition because a method rewrites a status field. Lowering is not Lowering because a helper happens to

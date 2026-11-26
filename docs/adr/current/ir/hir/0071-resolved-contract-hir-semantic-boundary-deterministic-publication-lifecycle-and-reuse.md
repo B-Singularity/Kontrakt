@@ -363,6 +363,10 @@ A Binding Candidate preserves only the exact selection occurrence, selected slot
 Reference, and any qualifier required by the binding law. It neither copies nor inherits Definition identity.
 Surrounding context does not become Binding meaning merely because it is accessible.
 
+A shared IDL authoring position does not merge role selections. In `facts : invariants` (ADR-0046 Section 12),
+resolution preserves the distinct selections and their declared subject association under the owning laws. The
+Invariant selection does not become a qualifier of the Fact Binding Candidate (ADR-0068 Section 19.4).
+
 Definition Candidate meaning remains complete independently of consumer-specific projections.
 
 A semantic coordinate belongs to both Definition Candidate and Binding Candidate meaning only when it independently
@@ -1654,11 +1658,10 @@ interface DepositContract {
     governance    DepositGovernance
     budget        DepositBudget
     capacity      DepositCapacity
-    facts {
-        DepositCommand
+    facts : invariants {
+        DepositCommand  : ValidDepositCommand
         DepositRecorded
     }
-    invariants    DepositInvariants
 
     operation deposit(command: DepositCommand): DepositRecorded {
         manifest {

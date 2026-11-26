@@ -14,7 +14,8 @@
 > were cross-checked again before this revision.
 >
 > Translation rule: this English edition preserves every substantive checklist family and decision from the Korean
-> re-audited edition. New items added during this pass are explicitly additive; they do not replace or compress the prior
+> re-audited edition. New items added during this pass are explicitly additive; they do not replace or compress the
+> prior
 > material.
 
 ---
@@ -2888,7 +2889,7 @@ owning ADR is not closed.
 |  2 | Admission                       | ADR-0065             | TBD        | TBD                  | TBD                  | OPEN AUDIT                 |
 |  3 | Canonicalization                | ADR-0066             | TBD        | TBD                  | TBD                  | OPEN AUDIT                 |
 |  4 | Lowering                        | ADR-0067             | TBD        | TBD                  | TBD                  | OPEN AUDIT                 |
-|  5 | Fact                            | ADR-0068             | TBD        | TBD                  | TBD                  | OPEN AUDIT                 |
+|  5 | Fact                            | ADR-0068             | DEFINED    | DEFINED              | DEFINED              | DEFINED; OPEN DEPENDENCIES |
 |  6 | Invariant                       | ADR-0069             | TBD        | TBD                  | TBD                  | OPEN AUDIT                 |
 |  7 | State                           | ADR-0050 family      | TBD        | TBD                  | TBD                  | OPEN AUDIT                 |
 |  8 | State Transition                | ADR-0050 family      | TBD        | TBD                  | TBD                  | OPEN AUDIT                 |
@@ -2903,6 +2904,18 @@ owning ADR is not closed.
 | 17 | Budget                          | ADR-0051             | TBD        | TBD                  | TBD                  | OPEN AUDIT                 |
 | 18 | Capacity                        | ADR-0052             | TBD        | TBD                  | TBD                  | OPEN AUDIT                 |
 | 19 | Governance                      | ADR-0056             | TBD        | TBD                  | TBD                  | OWNER-SPECIFIC OPEN ITEMS  |
+
+The Fact row records the defined Fact-owned HIR, Definition Establishment and Established Semantic Protocol in
+ADR-0068 Sections 19.1–19.12, together with the information and compiler conformance laws in Sections 4–18 and 20.
+The `facts : invariants` block declares the complete Fact vocabulary and its standing Invariant selections (ADR-0046
+Section 12; ADR-0068 Sections 8 and 16). Fact-owned HIR meaning remains independent of the associated
+Invariant selections. The Invariant-specific audit remains open.
+The independent Fact Occurrence bundle is NOT-APPLICABLE; the absence of a separate Occurrence does not remove the
+runtime obligations of Section 5. Definition-time Required Basis, applicability and composition follow Section 19.8
+and their respective owners. Section 21 retains the OPEN items, including generic Fact declarations, Version and
+common value authoring, language-generated data operation qualification, Operation participation and change, and
+physical realization. The common compiler-result and type architecture dependencies remain subject to their owning
+ADRs. DEFINED is a document-level classification, not implementation verification or a completed common Closure Gate.
 
 ### Control Row — Interface Surface Contract
 

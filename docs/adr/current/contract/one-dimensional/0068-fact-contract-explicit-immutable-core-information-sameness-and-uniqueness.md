@@ -293,21 +293,21 @@ factual material wholly within one Fact. Fact does not invent that owner.
 
 ## 8. Fact Vocabulary
 
-The enclosing interface declares one exact vocabulary by directly selecting Fact surfaces in the IDL.
-Definition and Version are resolved under their applicable laws. No separate host vocabulary class or
-named vocabulary declaration is admitted.
+The enclosing interface declares one exact, complete Fact vocabulary in the `facts : invariants` block (ADR-0046 Section
+12). Each row selects one Fact Definition and, when applicable, its standing Invariants.
+A row without an Invariant list selects no Invariant for that Fact. Definition and Version are resolved
+under their owning laws. No separate host vocabulary class or named vocabulary declaration is admitted.
 
 ```text
 interface AccountService {
-    facts {
+    facts : invariants {
         DepositOperationInput
         DepositRecorded
         AccountOpened
-        Balance
+        Balance : NonNegativeBalance
         WithdrawalRecorded
         AccountClosed
     }
-    invariants AccountInvariants
 
     operation deposit(...)
     operation withdraw(...)
@@ -315,7 +315,9 @@ interface AccountService {
 }
 ```
 
-Only explicit selection changes membership. Package or directory placement, neighboring declarations,
+Every Fact kind eligible for establishment in the Core must be selected here, whether or not it appears
+in an Operation signature. Only explicit selection changes membership. Neither references in other Contracts
+nor implementation use add kinds implicitly. Package or directory placement, neighboring declarations,
 inheritance, class-literal collections, computed membership and discovery (including reflection or
 classpath scanning) cannot add kinds implicitly.
 
@@ -537,8 +539,9 @@ aggregate Facts to expose calculated material to another Contract.
 
 ## 16. Relationship to Invariant
 
-Invariant declares a standing integrity law over one exact Fact Kind. The interface-level catalog
-declares these laws separately; Fact surfaces do not list all applicable Invariants.
+Invariant declares a standing integrity law over one exact Fact Kind. The IDL selects the applicable
+laws beside their subject Fact (Section 8). This association does not make Invariant part of Fact
+Definition meaning; Fact source declarations remain independent of those laws.
 
 Invariant may inspect declared coordinates under its own law but neither creates them nor defines Fact
 sameness or cross-Fact relations. Its Fact-local law imposes no coexistence restriction on different
@@ -670,9 +673,11 @@ A Binding Candidate expresses its selection occurrence through:
 - The Fact vocabulary role.
 - The exact target `FactDefinitionCandidateRef`.
 
-No further binding-owned qualifier is required. The Binding neither copies Definition meaning nor absorbs
-unrelated interface context. Its own `FactIDLBindingCandidateRef` designates the occurrence; the logical
-distinction from its selecting interface requires neither a self-reference field nor redundant storage.
+No further binding-owned qualifier is required. Invariant selections on the same IDL row do not become
+Fact Binding meaning; their association is resolved under its owning law (ADR-0046 Section 12). The
+Binding neither copies Definition meaning nor absorbs unrelated interface context. Its own
+`FactIDLBindingCandidateRef` designates the occurrence; the logical distinction from its selecting
+interface requires neither a self-reference field nor redundant storage.
 
 The exact interface and role must expose every selected Binding Candidate Reference, not merely a single
 reference or a set of distinct targets. The observation preserves multiplicity until judgment,
@@ -772,7 +777,8 @@ Fact Vocabulary Selection Projection
 ```
 
 Each `B1`–`B6` denotes a distinct exact `FactIDLBindingCandidateRef`. The selection observation is
-complete for this interface; the example expands only the `Balance` Binding Candidate. It illustrates
+complete for this interface; the example expands only the `Balance` Binding Candidate. The associated
+Invariant selection in Section 8 is outside these Fact-owned observations. The example illustrates
 semantic observations rather than a physical HIR layout. Required evidence remains observable under
 Section 19.2.
 
