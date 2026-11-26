@@ -732,6 +732,50 @@ target. Equality preserves selecting subject, role and the complete relation, in
 not declaration order. This is a multi-selection observation. Neither unresolved nor unavailable
 selection is Explicit Absence or a completed smaller vocabulary.
 
+The following example uses the `AccountService` vocabulary in Section 8 and the `Balance` declaration
+in Section 9. Assume completed source qualification and value interpretation. `F1` denotes an illustrative
+resolved Version candidate coordinate; the reference labels below designate exact references, not source names
+or physical handles.
+
+```text
+Fact Definition Candidate Projection
+    FactDefinitionCandidateRef C
+    Authority Balance
+    resolved Version candidate coordinate F1
+    accountId -> complete signed 64-bit integer meaning
+    amountMinor -> complete signed 64-bit integer meaning
+
+Fact Candidate Coordinate Surface Projection
+    Definition C
+    accountId -> ResolvedFactCoordinateRef A
+    amountMinor -> ResolvedFactCoordinateRef M
+
+Fact Selected Coordinate Meaning Projection
+    coordinate M
+    complete signed 64-bit integer meaning
+
+Fact IDL Binding Candidate Projection
+    FactIDLBindingCandidateRef B4
+    selecting ContractInterfaceRef I (AccountService)
+    role facts
+    target FactDefinitionCandidateRef C
+
+Fact Vocabulary Selection Projection
+    selecting ContractInterfaceRef I
+    role facts
+    B1 (DepositOperationInput selection)
+    B2 (DepositRecorded selection)
+    B3 (AccountOpened selection)
+    B4 (Balance selection)
+    B5 (WithdrawalRecorded selection)
+    B6 (AccountClosed selection)
+```
+
+Each `B1`–`B6` denotes a distinct exact `FactIDLBindingCandidateRef`. The selection observation is
+complete for this interface; the example expands only the `Balance` Binding Candidate. It illustrates
+semantic observations rather than a physical HIR layout. Required evidence remains observable under
+Section 19.2.
+
 **Observation and Reuse**
 
 Completeness and equality apply to each projection's declared observation, including evidence exposed by
@@ -937,6 +981,46 @@ The common ADR-0063 Section 11.4 projection observes the exact source, relation 
 19.10's direct relations. It creates no relation, authority, graph model or inferred inverse ownership.
 Vocabulary selection retains its Interface and Composition owners; Section 19.5's vocabulary projection
 is HIR-only.
+
+The following example observes `Balance` after lawful Definition Establishment under Section 19.7.
+Assume the authoritative Version Binding corresponding to `F1` is available. As in the HIR example,
+the reference labels designate exact references. They do not specify their encoding or promote Candidate
+References into Established References.
+
+```text
+Fact Definition Establishment
+    complete sealed Balance Candidate C
+    authoritative Version Binding F1
+    legal Fact Definition meaning
+        -> Established Fact Definition
+
+Established Fact Definition Projection
+    EstablishedFactDefinitionRef E
+    Owning Fact Authority Binding Balance
+    Version Binding F1
+    accountId -> complete signed 64-bit integer meaning
+    amountMinor -> complete signed 64-bit integer meaning
+    direct established relation to coordinate EA
+    direct established relation to coordinate EM
+
+Established Fact Coordinate Surface Projection
+    Definition E
+    accountId -> EstablishedFactCoordinateRef EA
+    amountMinor -> EstablishedFactCoordinateRef EM
+
+Established Fact Selected Coordinate Meaning Projection
+    coordinate EM
+    complete signed 64-bit integer meaning
+
+Direct Established Relation Projection
+    source E
+    relation direct coordinate
+    target EM
+```
+
+The established observation preserves the same Definition meaning. It establishes no actual `Balance`
+value or authoritative interface selection. The example specifies neither an Established Material layout
+nor a runtime representation.
 
 **Observation and Reuse**
 
