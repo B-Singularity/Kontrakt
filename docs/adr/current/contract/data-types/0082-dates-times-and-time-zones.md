@@ -818,7 +818,7 @@ meaning.
 
 Same-instant comparison supplies no authority over Input Presentation Sameness or another owner's judgment:
 
-- Fact uniqueness belongs to ADR-0068.
+- Fact Sameness belongs to ADR-0068, which defines no Fact-owned restriction on coexistence of different Facts.
 - Collection key identity belongs to ADR-0081.
 - Canonicalization equivalence belongs to ADR-0066.
 

@@ -25,7 +25,7 @@ Accepted
 
 `/0067-lowering-contract-explicit-relation-compiler-derived-realization-and-core-entry.md`
 
-- `/0068-fact-contract-explicit-immutable-core-information-sameness-and-uniqueness.md`
+- `/0068-fact-contract-explicit-immutable-core-information-sameness-and-vocabulary.md`
 - `/0069-invariant-contract-fact-local-standing-integrity-law.md`
 - `/0074-compiler-result-explicit-unsuccessful-result-recovery-and-observation-boundary.md`
 - `/kontrakt-compiler-total-architecture-map-design-draft.md`
@@ -356,7 +356,8 @@ IDL B ── Binding Candidate B ──┘
 
 Multiple IDL contexts may select the same authored declaration. They may share a Definition Candidate only when the
 owning 1D law determines that their contextual differences do not affect Definition meaning. Each selection retains its
-distinct Binding Candidate.
+distinct Binding Candidate. A role that permits multiple selections retains each selection occurrence at that scope,
+including repeated selections of the same exact target, until its owning law judges the complete relation.
 
 A Binding Candidate preserves only the exact selection occurrence, selected slot or role, target Definition Candidate
 Reference, and any qualifier required by the binding law. It neither copies nor inherits Definition identity.
@@ -610,8 +611,9 @@ Definition determinants govern HIR formation. They become visible semantic mater
 by the owning law, not as generic determinant metadata.
 
 Each applicable 1D role, including Input and Output, has exactly one observable selection state at its owning scope and
-role coordinate: a selected IDL Binding Candidate Reference or Explicit Absence. Absence means non-selection, not
-permission to omit the role, and does not require a universal absence field.
+role coordinate. Its owning law defines whether a present selection contains one exact IDL Binding Candidate Reference
+or a complete multi-selection relation. Explicit Absence means non-selection, not permission to omit the role, and
+does not require a universal absence field.
 
 ---
 
@@ -792,13 +794,16 @@ HIR meaning without introducing new judgments or reconstructing missing meaning.
 Their equality remains producer-owned. They do not create another source of HIR meaning or require a particular Query
 architecture.
 
-Each applicable 1D role's selection must be observable from its owning HIR subject and exact role coordinate as either:
+Each applicable 1D role's complete selection must be observable from its owning HIR subject and exact role coordinate.
+A single-selection role exposes the selected IDL Binding Candidate Reference. A multi-selection role exposes every
+exact Binding Candidate Reference occurrence in the complete selection relation, preserving the multiplicity and any
+ordering distinctions defined by the owning law. For example, the Fact Vocabulary Selection Projection in ADR-0068
+preserves each occurrence without giving declaration order semantic meaning. A role may instead expose **Explicit
+Absence** under the applicable selection law.
 
-- The selected IDL Binding Candidate Reference.
-- **Explicit Absence.**
-
-Missing or unresolved selection is not Explicit Absence. This observation does not determine whether omission is legal
-or establish Contract material.
+Missing, unresolved or unavailable selection is not Explicit Absence and cannot be observed as a completed smaller
+selection. This observation does not determine whether omission, cardinality or repeated selection is legal, or
+establish Contract material.
 
 ### Protocol Visibility and Authority
 
@@ -1649,7 +1654,10 @@ interface DepositContract {
     governance    DepositGovernance
     budget        DepositBudget
     capacity      DepositCapacity
-    facts         DepositFacts
+    facts {
+        DepositCommand
+        DepositRecorded
+    }
     invariants    DepositInvariants
 
     operation deposit(command: DepositCommand): DepositRecorded {

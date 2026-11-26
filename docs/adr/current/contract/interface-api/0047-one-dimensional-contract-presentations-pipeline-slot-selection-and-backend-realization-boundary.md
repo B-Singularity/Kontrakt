@@ -220,11 +220,13 @@ binds it at the role and scope where its owning law applies.
 Kontrakt acquires only material reachable from those explicit selections and from references lawfully owned by them.
 Unreferenced user material is ignored as Contract source.
 
-Every applicable 1D role, including Input and Output, resolves to an exact selected binding or Explicit Absence at
-its owning scope. Absence records non-selection; its legality belongs to the applicable declaration and composition
-laws. It is not a missing Binding Candidate, failed lookup, incomplete resolution, or satisfied Required Basis.
-No default or inferred Contract fills an absent role. A named default applies only when explicitly selected under its
-owning law.
+Every applicable 1D role, including Input and Output, resolves to a complete selection state at its owning scope under
+its owning law. Single-selection roles resolve to one exact selected binding or Explicit Absence. The Fact role
+selects each Fact Definition directly under ADR-0068; resolution preserves every selection occurrence until the
+applicable judgment. Absence records non-selection; its legality belongs to the applicable declaration and
+composition laws. It is not a missing Binding Candidate, failed lookup, incomplete resolution, or satisfied Required
+Basis. No default or inferred Contract fills an absent role. A named default applies only when explicitly selected
+under its owning law.
 
 The source grammar of the selected declaration remains owned by its current per-Contract ADR. This ADR does not require
 Lowering, Publication, Invariant, Admission, Policy, or another one-dimensional Contract to share one physical authoring
@@ -259,7 +261,10 @@ interface CalculateContract {
     governance    DefaultGovernance
     budget        DefaultBudget
     capacity      DefaultCapacity
-    facts         CalculateFacts
+    facts {
+        CalculateCommand
+        CalculateRecorded
+    }
     invariants    CalculateInvariants
 
     operation calculate(command: CalculateCommand): CalculateRecorded {

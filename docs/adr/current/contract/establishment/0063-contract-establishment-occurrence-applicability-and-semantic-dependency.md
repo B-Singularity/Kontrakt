@@ -361,11 +361,15 @@ Semantic Projections when those projections expose every observation required by
 partial physical reads without creating consumer-specific HIR meaning. An observation omitted by a narrower projection
 is not semantic absence; absence is usable only when the producer-owned HIR meaning represents it explicitly.
 
-Under ADR-0071, each applicable 1D role is observed at its owning HIR subject and role coordinate as either an exact
-selected IDL Binding Candidate Reference or Explicit Absence. An absent role has no selected Binding Candidate and does
-not acquire a Definition, Occurrence, or Judgment through that absence. Its legality and effect on a dependent
-judgment's
-Required Basis remain with the owning law.
+Under ADR-0071, each applicable 1D role is observed at its owning HIR subject and role coordinate through its complete
+selection state. A single-selection role exposes one exact selected IDL Binding Candidate Reference or Explicit
+Absence. A multi-selection role exposes the complete selection relation defined by its owning law or Explicit Absence
+where applicable. The observation retains every selection occurrence, including multiplicity required for the owning
+judgment; it does not collapse distinct selections merely because they have the same target. An incomplete, unresolved
+or unavailable selection is not Explicit Absence or a completed smaller selection.
+
+An absent role has no selected Binding Candidate and does not acquire a Definition, Occurrence, or Judgment through
+that absence. Its legality and effect on a dependent judgment's Required Basis remain with the owning law.
 
 An IDL Binding Candidate Projection is consumed only when the owning judgment requires the pre-authority selection
 relation represented by that Binding Candidate. It does not supply or reconstruct the target Definition Candidate

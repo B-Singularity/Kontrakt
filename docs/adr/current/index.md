@@ -34,7 +34,7 @@ provide Accepted authority.
 | [ADR-0065](contract/one-dimensional/0065-admission-contract-continuation-judgment.md)                                                  | Admission Contract, Explicit Continuation Judgment, and Deterministic Evaluation Boundary                       | Accepted |
 | [ADR-0066](contract/one-dimensional/0066-canonicalization-contract-stable-representative-and-canonical-bytes.md)                       | Canonicalization Contract, Stable Representative, Canonical Bytes, and Explicit Omission                        | Accepted |
 | [ADR-0067](contract/one-dimensional/0067-lowering-contract-explicit-relation-compiler-derived-realization-and-core-entry.md)           | Lowering Contract, Explicit Source-to-Operation Relation, Compiler-Derived Realization, and Core Entry Boundary | Accepted |
-| [ADR-0068](contract/one-dimensional/0068-fact-contract-explicit-immutable-core-information-sameness-and-uniqueness.md)                 | Fact Contract, Explicit Immutable Core Information, Sameness, Uniqueness, and Vocabulary                        | Accepted |
+| [ADR-0068](contract/one-dimensional/0068-fact-contract-explicit-immutable-core-information-sameness-and-vocabulary.md)                 | Fact Contract, Explicit Immutable Core Information, Sameness, and Vocabulary                                    | Accepted |
 | [ADR-0069](contract/one-dimensional/0069-invariant-contract-fact-local-standing-integrity-law.md)                                      | Invariant Contract, Fact-Local Standing Integrity Law, Deterministic Judgment, and Establishment Gate           | Accepted |
 
 ### Establishment

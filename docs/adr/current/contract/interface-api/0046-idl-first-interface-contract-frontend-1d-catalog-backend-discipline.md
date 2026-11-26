@@ -299,8 +299,11 @@ for that Operation occurrence. Returning a host value does not establish Fact, S
 authority. The returned material is candidate result material until the applicable Contract authorities judge it.
 
 The IDL declares a closed set of interface operations and their Interaction surfaces. Each applicable 1D role,
-including Input and Output, has an exact selected binding or Explicit Absence at its owning scope. Interaction and
-Operation subjects remain identifiable independently of those selections. Complete selection makes the declared
+including Input and Output, has a complete selection state at its owning scope, governed by its own selection law.
+A single-selection role has one exact selected binding or Explicit Absence. The Fact role selects the complete
+interface-level vocabulary directly under ADR-0068, retaining every selection occurrence until the applicable
+judgment. Interaction and Operation subjects remain identifiable independently of those selections. Complete selection
+makes the declared
 boundary visible but does not make every combination legal or executable. Each selected Contract, Operation parameter,
 and declared outward result must satisfy its applicable dependency and completeness laws. The laws requiring a role
 determine whether its absence is legal.
@@ -381,7 +384,10 @@ A simple IDL may declare:
 
 ```text
 interface CalculateContract {
-    facts         CalculateFacts
+    facts {
+        CalculateCommand
+        CalculateRecorded
+    }
     invariants    CalculateInvariants
 
     operation calculate(command: CalculateCommand): CalculateRecorded {
@@ -742,7 +748,10 @@ A small `.kontrakt` interface may begin by declaring the external boundary and t
 
 ```text
 interface CalculateContract {
-    facts CalculateFacts
+    facts {
+        CalculateCommand
+        CalculateRecorded
+    }
 
     operation calculate(command: CalculateCommand): CalculateRecorded {
         manifest {
@@ -767,7 +776,10 @@ interface CalculateContract {
     governance    DefaultGovernance
     budget        DefaultBudget
     capacity      DefaultCapacity
-    facts         CalculateFacts
+    facts {
+        CalculateCommand
+        CalculateRecorded
+    }
     invariants    CalculateInvariants
 
     operation calculate(command: CalculateCommand): CalculateRecorded {
@@ -796,9 +808,9 @@ side is the fixed operation-slot vocabulary and the right side is the Contract m
 `flow` is a readable grouping, not judgment order or transition authority. This is one selected-role example, not a
 minimum required selection set; each selected Contract retains its own Version under ADR-0053.
 
-`facts CalculateFacts` declares the Fact vocabulary eligible for establishment in the interface's explicit Core.
-`invariants CalculateInvariants` declares the standing laws that govern applicable Facts in that same Core. Neither
-declaration is repeated through an operation-manifest slot.
+The `facts` block selects each Fact Definition eligible for establishment in the interface's explicit Core. It does
+not name a separate vocabulary declaration. `invariants CalculateInvariants` declares the standing laws that govern
+applicable Facts in that same Core. Neither declaration is repeated through an operation-manifest slot.
 
 The Lowering relation declares permitted source-to-Operation-coordinate formation under the Lowering Contract. It does
 not ask the user for a `CalculateLowering` implementation. Kontrakt resolves the relation and the backend realizes the
@@ -853,8 +865,9 @@ application code calls. Kontrakt backend realization connects them through the e
 The v1 parser covers only the IDL interface contract subset.
 
 It reads Interface, Interaction, and Operation declarations and signatures; role selections, including absent Input
-and Output; selected shared `Policy`, `Governance`, `Budget`, and `Capacity` references; selected interface-scoped
-`Facts` and `Invariants` references; selected axis entries; slot occupancy; and source references and locations.
+and Output; selected shared `Policy`, `Governance`, `Budget`, and `Capacity` references; each direct interface-level
+Fact selection and the selected `Invariants` reference; selected axis entries; slot occupancy; and source references
+and locations.
 
 Resolution preserves complete role selection at each owning scope: exact selected Binding Candidate relations or
 Explicit Absence. It cannot infer absence from failed lookup, incomplete resolution, or a missing Binding Candidate.

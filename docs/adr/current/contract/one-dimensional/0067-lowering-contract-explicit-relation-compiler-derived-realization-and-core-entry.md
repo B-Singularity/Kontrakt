@@ -17,7 +17,7 @@ ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 - `../../../../the-most-important-thing/what-contract-is.md`
 - ADR-0070: Realization Axis, Core Realization Closure, and JVM-Ahead Optimization
 - ADR-0069: Invariant Contract, Fact-Local Standing Integrity Law, Deterministic Judgment, and Establishment Gate
-- ADR-0068: Fact Contract, Explicit Immutable Core Information, Sameness, and Uniqueness
+- ADR-0068: Fact Contract, Explicit Immutable Core Information, Sameness, and Vocabulary
 - ADR-0066: Canonicalization Contract, Stable Representative, Canonical Bytes, and Explicit Omission
 - ADR-0065: Admission Contract, Continuation Judgment
 - ADR-0064: Input Contract, Explicit Boundary Presentation
@@ -240,7 +240,10 @@ interface DepositContract {
     governance    DepositGovernance
     budget        DepositBudget
     capacity      DepositCapacity
-    facts         DepositFacts
+    facts {
+        DepositCommand
+        DepositRecorded
+    }
     invariants    DepositInvariants
 
     operation deposit(command: DepositCommand): DepositRecorded {
@@ -1758,7 +1761,9 @@ The following design decisions remain open or belong to separate work:
 | Authoring            | Exact Fact-qualified target spelling; supported mapping-method inventory; additional authoring, if needed, for nontrivial one-to-one representation refinement.                                                            |
 | Compiler realization | Internal Lowering representation and physical Mapping selector encoding; frontend execution architecture (including validator placement and scheduling); query architecture, cache granularity and incremental algorithms. |
 | Backend realization  | Helper decomposition, JVM ABI, carrier materialization, allocation strategy, and encoding of declared Lowering refusal.                                                                                                    |
-| Other authority      | Fact-owned HIR Protocol internals, Binding Establishment, and detailed refusal Material and Failure observations.                                                                                                          |
+| Other authority      | Binding Establishment and detailed refusal Material and Failure observations.                                                                                                                                              |
+
+The Fact-owned HIR Protocol is defined in ADR-0068 Sections 19.3–19.6; Lowering consumes it under Section 11.
 
 The DSL remains `source -> target : method`, with explicit callable references and arguments under Section 7. No open
 decision may weaken the established law, including its prohibitions on runtime implementation discovery, user-supplied

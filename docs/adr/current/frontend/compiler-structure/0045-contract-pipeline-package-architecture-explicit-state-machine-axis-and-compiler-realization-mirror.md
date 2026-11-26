@@ -963,8 +963,10 @@ Fact contract vocabulary is deliberately small:
 ```text
 meaning
 shape
-uniqueness
 ```
+
+Fact Sameness belongs to the Fact meaning defined in ADR-0068. Fact owns no declared uniqueness or restriction on
+coexistence of different Facts.
 
 `fact.contract.identity` is not introduced. Identity derivation, comparison, indexing, and collision handling are
 realization machinery.
@@ -1378,8 +1380,7 @@ io
     ├── fact
     │   ├── contract
     │   │   ├── meaning
-    │   │   ├── shape
-    │   │   └── uniqueness
+    │   │   └── shape
     │   ├── material
     │   │   └── immutable
     │   └── diagnostics

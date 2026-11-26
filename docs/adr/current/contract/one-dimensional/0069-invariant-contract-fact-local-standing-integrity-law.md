@@ -49,8 +49,8 @@ It is not the law for how one Operation computes its result.
 
 Operation-specific obligations remain in the complete Operation Contract.
 
-Invariant owns only Fact-local integrity that remains after Fact sameness, Fact-owned uniqueness, State and Transition
-movement, Policy, Budget, Capacity, Governance, Publication, and Operation-specific formation keep their own authority.
+Invariant owns only Fact-local integrity. Fact Sameness, State and Transition movement, Policy, Budget, Capacity,
+Governance, Publication, and Operation-specific formation retain their own authority.
 
 ---
 
@@ -94,7 +94,7 @@ Invariant does not grant Fact meaning.
 
 Invariant does not define Fact changes.
 
-Invariant does not own Fact sameness or Fact-owned uniqueness.
+Invariant does not own Fact Sameness or impose a restriction on the coexistence of different Facts.
 
 Invariant does not authorize State movement.
 
@@ -119,7 +119,14 @@ Facts and Invariants share the enclosing interface's explicit core scope.
 
 ```text
 interface AccountService {
-    facts AccountFacts
+    facts {
+        DepositOperationInput
+        DepositRecorded
+        AccountOpened
+        Balance
+        WithdrawalRecorded
+        AccountClosed
+    }
     invariants AccountInvariants
 
     operation deposit(...)
@@ -407,15 +414,12 @@ This ADR decides only that an implicit cross-Fact judgment is not Invariant.
 
 ---
 
-## 12. Fact Uniqueness Is Not Invariant
+## 12. Fact Sameness and Coexistence Are Outside Invariant
 
-Declared uniqueness belongs to Fact.
-
-Invariant does not restate or recheck that law.
-
-Declared uniqueness forbids conflicting coexistence under the Fact law.
-
-It does not silently grant supersession, replacement, currentness change, or a relation between Facts.
+Fact Sameness belongs to ADR-0068. Invariant does not restate or recheck it. Fact owns no declared uniqueness or
+other restriction on the coexistence of different Facts, and this decision introduces no such obligation into
+Invariant. Sharing some factual values does not grant supersession, replacement, currentness change, or a relation
+between Facts.
 
 The decisive test for an Invariant is:
 
@@ -575,14 +579,16 @@ The user does not declare or observe a Change Proposal.
 When the complete Operation Contract causes Kontrakt to form one proposal internally, Kontrakt resolves every proposed
 Fact independently under its declared Fact kind and canonical factual material.
 
-For each proposed Fact, Kontrakt applies Fact-owned sameness and uniqueness and every interface-level Invariant declared
-for that exact Fact kind.
+For each proposed Fact, Kontrakt applies the Fact-owned judgments required by ADR-0068 and every interface-level
+Invariant declared for that exact Fact kind. Fact Sameness governs informational equality and multiplicity under
+ADR-0068; neither identical information nor shared factual values alone justify refusal or remove an independent
+judgment obligation.
 
 ```text
 one complete internally formed Change Proposal
     -> each proposed Fact material
         -> resolved Fact kind and complete canonical factual material
-        -> applicable Fact-owned sameness and uniqueness judgments
+        -> applicable Fact-owned judgments under ADR-0068
         -> every interface-level Invariant declared for that Fact kind
             -> all preserved
                 -> proposed Fact remains eligible for indivisible establishment
@@ -695,8 +701,8 @@ They do not become another authored Invariant.
 No collection scan, group index, aggregate counter, interval structure, history traversal, or graph algorithm is
 required or authorized by this Invariant Contract.
 
-Backend machinery used for Fact storage or Fact-owned uniqueness belongs to those separate concerns and may not enlarge
-Invariant meaning.
+Backend machinery used for Fact storage or Sameness belongs to those separate concerns and may not enlarge Invariant
+meaning.
 
 ---
 
