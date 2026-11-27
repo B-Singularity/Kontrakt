@@ -153,9 +153,27 @@ host types, or an inferred synonym. The frontend resolves the required value mea
 judgment under the common Type and SDK laws. Helper parameters follow the exact authored call; their names do not
 independently select Fact coordinates.
 
-The Invariant Definition contains the required observations and the integrity law, not the particular Fact Definition
-used during source interpretation or selected in the IDL. Source coordinates for attribution remain distinct from the
-law's meaning. The same Definition may therefore be selected for different Facts under Section 4.
+The Factual Observation Requirement Law defines the factual information required by the integrity judgment. It is
+independent of the particular Fact Definition used during source interpretation or selected in the IDL. Source
+coordinates for attribution remain distinct from the law's meaning. The same Definition may therefore be selected
+for different Facts under Section 4. Section 19.1 defines the complete Definition meaning.
+
+Several independent conditions may require the same named coordinate. They address one factual coordinate, not
+independent values that happen to have the same name. The requirement law retains the resolved meaning of each
+declared requirement and its relation to the condition that declares it. Equal requirements may share a representation;
+that sharing must not erase a declaration's meaning or its use in the judgment. A physical observation of the same
+coordinate may also serve several conditions.
+
+For example, conditions requiring `amount: Long` may independently constrain its lower and upper bounds. Both
+judge the same factual amount. Neither the number of conditions nor the number of physical reads determines how
+many coordinates the Fact must provide.
+
+Different resolved requirements for one name remain distinct where their meanings differ. The requirement law does
+not infer a common type, intersect the declared types into a replacement requirement, or arbitrarily select one of
+them. The provided coordinate must satisfy every requirement under the common Type and Composition laws. A
+nullable and a non-null requirement, for example, must be judged against the offered value meaning under those laws.
+A presence test in one independent condition does not make a nullable coordinate admissible as a non-null operand
+of another (Section 5.3). A lawful observation relation does not authorize an implicit transformation of the Fact.
 
 A legal application must supply every required observation from the same complete canonical candidate Fact. A matching
 name alone does not establish compatibility. The applicable Fact law, resolved value meaning and existing Composition
@@ -169,9 +187,18 @@ value does not contribute to the judgment. The declaration therefore still requi
 selected Fact. Section 5.4 governs the diagnostic for an unused requirement; removing a physical read or calculation
 must not remove the declared requirement.
 
-A condition may observe only part of the factual material. This does not permit an incomplete candidate to enter
-judgment. Nested observations retain the meaning of constituents owned by that Fact, and no host carrier or reference
-to the whole Core becomes an additional operand. Judgment and establishment remain subject to Sections 10 and 16.
+The complete declared requirement and the observations needed to compute the judgment serve different purposes.
+A condition may use only part of the declared value, but the required value meaning must still be provided lawfully.
+For a structured value, a nested read retains the resolved constituent relation within that value. A collection
+predicate retains the member observations and the collection meaning on which it depends, including membership,
+multiplicity, order or presence distinctions where relevant. These meanings follow ADR-0068 Section 6 and the
+common Type and SDK laws. Nested constituents are not additional direct Fact coordinates, and neither a host
+carrier nor a reference to the whole Core becomes an additional operand.
+
+A narrower observation may suffice for a particular computation or comparison without weakening the complete
+requirement. This allows shared reads and fine-grained reuse where the relevant meaning and its validity are
+preserved. It does not permit an incomplete candidate to enter judgment or replace the obligation to supply every
+declared requirement. Judgment and establishment remain subject to Sections 10 and 16.
 
 ### 5.3. Independent Conditions and Authored Evaluation
 
@@ -182,16 +209,65 @@ Each must satisfy the applicable completion law. A compiler may optimize their r
 
 ### 5.4. Integrity Law Legality and Declaration Diagnostics
 
-The complete integrity law of an Invariant must be satisfiable over its required observation domain. A law whose
-unsatisfiability is established is inadmissible and must produce a compilation error. This includes an explicitly
-false law, a contradiction within one condition and a contradiction between independent conditions. The same rule
-applies to the combined integrity obligations selected for a Fact (Section 19). Failure to establish satisfiability
-or unsatisfiability must not be reported as proof of a contradiction.
+The complete integrity law of an Invariant must be satisfiable over its required observation domain. A Definition
+may be established only after satisfiability has been established. The corresponding obligation for the combined
+laws selected for a Fact is defined in Section 19.3. Neither obligation is a substitute for the totality, determinism
+and termination requirements of Section 14.
+
+#### 5.4.1. Definition-Local Satisfiability
+
+The Definition is satisfiable if at least one lawful assignment of its required factual observations makes its
+complete integrity judgment true. This is a property of the reusable Definition, independent of a particular
+Fact Kind or a formation path. The domain includes all declared requirements, even those not used in the
+calculation. Observations of the same named coordinate must describe the same factual value under lawful
+observation relations. Constituent and collection observations retain the relations of the value from which they
+are obtained (Section 5.2). Treating those observations as independent variables may change the judgment's domain
+and is not a sound analysis of the Definition.
+
+A lawful assignment must satisfy the observation requirements and the applicable resolved value laws. The
+compiler may establish satisfiability with a witness whose admissibility and complete judgment are independently
+verified, or with another sound argument that establishes existence in the legal domain. No particular Fact
+Definition, actual Fact occurrence, Lowering or Operation reachability is required for this conclusion.
+
+#### 5.4.2. Analysis Conclusions and Legality
+
+Satisfiability analysis has three relevant conclusions:
+
+| Conclusion                   | Consequence                                                                            |
+|------------------------------|----------------------------------------------------------------------------------------|
+| Satisfiability established   | The satisfiability prerequisite is met; all other owning obligations still apply.      |
+| Unsatisfiability established | The law is inadmissible and must produce a compilation error.                          |
+| Neither established          | The prerequisite remains unmet; the Definition or application must not be established. |
+
+An explicitly false law, a contradiction within one condition and a contradiction between independent conditions
+are inadmissible when unsatisfiability is established. The absence of a witness found by a search is not evidence
+that no witness exists. An inconclusive, unsupported or interrupted analysis remains a compiler-owned result
+under ADR-0074 and ADR-0075. It does not establish a Contract-law violation or a runtime Invariant refusal. A
+compiler analysis establishes evidence for the owning judgment; it neither establishes Definition authority nor
+replaces that judgment. The detailed Establishment result and handoff boundaries remain open (Section 22).
+
+The analysis must retain the exact resolved calculation and value meaning. For instance, fixed-width integer
+arithmetic cannot be replaced by mathematical integer arithmetic where overflow changes the result. An analysis
+may reason over an approximation only when the claimed conclusion follows soundly for the legal domain and
+judgment. Unsatisfiability of a sound over-approximation of the satisfying assignments may establish actual
+unsatisfiability. A witness from a restricted domain may establish satisfiability if it is legal and its complete
+judgment is verified. A model in an enlarged domain or failure to find a witness in a restricted search does not
+alone justify the corresponding conclusion about the actual law.
+
+#### 5.4.3. Declaration Diagnostics
 
 Kontrakt must provide compile-time diagnostics for established semantic redundancy, subsumption, tautologies and
-other unnecessary or ineffective declarations. An explicitly true law imposes no integrity restriction; the compiler
+other unnecessary or ineffective declarations. A condition is tautological when it holds throughout the legal
+domain; subsumption establishes that satisfying one condition entails another. Redundancy establishes that a
+condition adds no restriction to the conjunction. These conclusions concern the exact judgment domain, not the
+appearance of the source expressions. An explicitly true law imposes no integrity restriction; the compiler
 must explain this and guide the author toward removing or correcting it. Unused declared observations are diagnosed
 without weakening the requirements of Section 5.2.
+
+Unlike satisfiability, exhaustive discovery of these diagnostic relations is not an Establishment prerequisite.
+Failure to establish an additional redundancy or tautology does not prevent an otherwise lawful Definition or
+application from being established. An established relation must still be diagnosed; a compiler may not silently
+remove a condition or requirement on the strength of that relation.
 
 For example, over the resolved `Int` domain, the following independent conditions express the same restriction:
 
@@ -216,6 +292,24 @@ and a useful direction for correction. Where applicable, they identify the relat
 domain on which the conclusion depends. The compiler must not infer the intended correction or silently remove
 conditions, selections or independent Contract authority. Diagnostic realization follows the existing diagnostic
 architecture (ADR-0060 and ADR-0061); the obligation does not prescribe an analysis algorithm or diagnostic format.
+
+#### 5.4.4. Analysis Realization and Reuse
+
+The compiler owns the choice of analysis, its evidence and its resource limits. These do not determine the
+Invariant's meaning. A solver, witness, proof or intermediate analysis result may be retained as a compiler
+product, subject to its own validity law. Neither the availability of a particular solver nor its internal
+representation is a Definition determinant.
+
+Analysis must preserve the compiler's determinism and result-attribution laws. Reproducible work limits may be
+used with a fixed analysis configuration; physical elapsed-time limits may interrupt work but cannot establish a
+semantic conclusion. Exhausted resources and unsupported analysis retain their compiler-owned attribution.
+Parallel analysis must not turn a worker's completion order into a determinant of Contract legality.
+
+Reuse requires the exact determining meaning and applicable validity context. A retained witness may be checked
+against a changed law and domain instead of repeating a search; it cannot prove the changed law merely because it
+was valid for the previous one. Reused unsatisfiability evidence and diagnostic conclusions likewise require a
+sound current justification. The common compiler product and preservation laws apply to clean, incremental and
+parallel computation. No particular analysis algorithm, evidence format or persistent store is mandated here.
 
 ---
 
@@ -618,24 +712,111 @@ At definition time, Kontrakt resolves each exact Invariant declaration and its I
 ADR-0047. Source interpretation must produce the complete integrity law and required factual observations under
 Sections 5 and 13–15, without making the selected Fact a determinant of the reusable Invariant Definition.
 
+### 19.1. Definition Meaning and Semantic Equality
+
+Two components determine the Invariant Definition meaning.
+
+**Integrity Judgment Law**
+
+Defines the complete judgment that determines whether a candidate Fact satisfies the Invariant. It preserves the
+meaning of every declared independent condition and the qualified computation on which that condition depends.
+Closed constants, helper computations and meaning-determining operations contribute their resolved meaning rather
+than their host execution mechanism. Evaluation and completion follow Sections 5.1, 5.3 and 13–14. The law
+retains declared conditions even when an analysis establishes redundancy (Section 5.4).
+
+**Factual Observation Requirement Law**
+
+Defines the factual information required by the judgment under Section 5.2. It preserves the complete declared
+requirements, their resolved value meanings and their relations to the judgment. Requirements that do not affect
+the Boolean result remain part of this meaning.
+
+Any semantic basis that determines either component is preserved as part of that component under its owning law.
+It may be observed through an exact producer-owned reference to completed meaning; an unresolved source or type
+reference does not supply that meaning. No additional determinant is introduced merely because the frontend
+consulted another compiler product. The selected Fact Definition, its Version, the selecting Interface and the
+particular IDL association remain outside Invariant Definition meaning. Source attribution, qualification and
+analysis evidence, solver configuration and derived realizations are also distinct from that meaning. Required
+compiler evidence remains available under its own law.
+
+Invariant owns semantic equality for its Definition meaning. Two Definition meanings are equal only when both
+complete determinants are equal under their owning laws. Common source refinement may eliminate source-only
+differences, including names of condition methods or helpers and declaration order where they do not determine
+meaning. It must retain authored evaluation wherever it is significant. Neither the original host syntax nor a
+particular IR structure prescribes semantic equality.
+
+Equal Boolean results, even an established equivalence over the entire observation domain, do not alone establish
+Definition Meaning Equality. Two declarations may impose the same restriction yet differ in their declared
+conditions or observation requirements. An optimization may share their computation when preservation is
+established; it cannot thereby identify the two Definition meanings. A resolved but unlawful law or requirement
+remains visible for its owning judgment rather than being repaired by refinement.
+
+Definition Meaning Equality is distinct from reference identity, Version equality, equality of application or
+judgment results, and current reuse validity. Interning, fingerprints and physical sharing may accelerate the
+comparison and realization of meaning but cannot establish these relations independently of their owning laws.
+
+### 19.2. Definition Identity and Version
+
+ADR-0053 owns Invariant Authority continuity and Version semantics. ADR-0063 owns the common Definition identity
+and reference law. One Invariant Authority owns one independently addressable Definition per Contract Version in
+the flat declaration model of Section 5.1. No additional Authority-Local Definition Coordinate is needed.
+
+```text
+exact Invariant Contract Authority
++
+exact Contract Version
+    -> exact versioned Invariant Definition
+```
+
+The condition methods, helpers and observation requirements do not own independent Contract Versions. The
+resolved pre-authority Candidate and Established Definition remain distinct under ADR-0063 and ADR-0071.
+Selection by another Fact or another Interface does not change the Definition identity. The Invariant-specific
+reference domains and protocol are left to the HIR and Establishment design (Section 22).
+
+A Contract-visible change to either determinant follows the Version law when the Authority continues. Adding an
+explicitly required observation is such a change even if the Boolean judgment is unchanged. Source-only and
+realization-only changes do not require a new Version when canonical Contract meaning remains identical under
+ADR-0053. Changes to analysis evidence or strategy do not themselves change that meaning. Equal Definition meaning
+does not merge distinct Authorities or Versions; conflicting meaning at the same Authority and Version is governed
+by ADR-0053 and ADR-0063. Renames and continuity follow the same owning Version law.
+
+### 19.3. Fact-Scoped Application and Joint Satisfiability
+
 The exact selected Fact association and its observation requirements are judged under the existing Composition law.
 Relation information is acquired and prepared under ADR-0077, using the exact producer-owned semantic observations
 of the selected Fact (Section 5.2). CRI neither selects the law nor owns the judgment of its applicability or
 integrity. Kontrakt derives stable Fact-kind and coordinate dependency indexes from the resolved selections and
 requirements without giving these indexes Contract authority.
 
-All Invariants selected for the same Fact must be jointly satisfiable over the factual
-meaning of that Fact. If the combined obligations are established to be unsatisfiable, the application is inadmissible
-and must produce a compilation error, even when every selected Definition is independently lawful. For example,
-selecting one law requiring `amount > 0L` and another requiring `amount < 0L` for the same `amount` coordinate of one
-Fact makes their joint application impossible. This does not make either independent Definition inadmissible in
-isolation.
+The joint law concerns the complete selection of Invariants for one exact Fact. It is satisfiable if at least one
+complete factual value permitted by that Fact Definition lawfully supplies every selected Invariant's declared
+observations and satisfies every selected integrity judgment. The domain is the Fact's permitted factual meaning,
+not merely the observation domain of an individual Definition. The independently applicable laws must observe the
+same value, including its constituent and coordinate relations. Neither Lowering's formation range nor the values
+reachable through an Operation determine this domain.
 
-The Definition legality and diagnostic obligations of Section 5.4 also govern analysis of the combined obligations:
-established contradictions require errors, while established redundancy or subsumption must be explained without
-silently removing a selected Contract. A conclusion must be based on the exact selected laws and factual meaning,
-not on incomplete information or a failed analysis. The precise judgment and result boundaries follow the existing
-owning laws; their detailed Invariant specification remains open (Section 22).
+Joint satisfiability must be established before the application of that complete selection can be established.
+Individual Definition satisfiability is not sufficient. If the combined obligations are established to be
+unsatisfiable, the application is inadmissible and must produce a compilation error, even when every selected
+Definition is independently lawful. For example, selecting one law requiring `amount > 0L` and another requiring
+`amount < 0L` for the same `amount` coordinate of one Fact makes their joint application impossible. This does not
+make either independent Definition inadmissible in isolation. Even one selected Invariant may be unsatisfiable
+within the narrower domain offered by the selected Fact despite being satisfiable independently.
+
+The conclusions and diagnostic obligations of Section 5.4 apply to the combined obligations. Established
+contradictions require errors; established redundancy or subsumption must be explained without silently removing
+a selected Contract. An inconclusive analysis prevents the application from being established, but is not proof
+that the selection violates the law. No application result may be inferred from an incomplete selection or an
+incomplete observation requirement.
+
+The analysis is distinct from judging whether an actual candidate Fact satisfies the selected laws (Section 16).
+Its evidence is a compiler product, not Fact authority or an independently established Invariant Definition.
+Current reuse must account for the complete selection, the relevant factual meaning and the selected Definition
+meanings under the applicable validity laws. Equality of an observed coordinate or reuse of an individual
+Definition's witness does not establish joint satisfiability of a changed selection. A narrower observation may
+avoid recomputing an unaffected analysis when its exact determinants are preserved; it cannot replace the
+complete applicability requirements. The precise judgment, applicability and result boundaries remain open (Section 22).
+
+### 19.4. Common HIR and Establishment Boundary
 
 The common Resolved Contract HIR and Seal law (ADR-0071) and Contract Establishment law (ADR-0063) apply. A complete
 resolved Candidate is not itself established authority. Only established meaning may become part of the Canonical
@@ -686,9 +867,11 @@ evolve. The authoring boundary is fixed: one flat Contract with one complete int
 required factual observations and closed computation. Every application is selected by the IDL and judged from one
 complete canonical candidate Fact.
 
-The detailed observation requirement cases not settled by Section 5, the Invariant-specific HIR and semantic protocol,
-Definition Establishment, applicability and established material, and the required compiler conformance detail remain
-open. The common laws continue to apply. No additional Material family or Version API decision is introduced.
+Sections 5 and 19 define the factual observation requirements, Definition meaning and identity, and the satisfiability
+prerequisites for Definition and application legality. The Invariant-specific HIR and semantic protocol, detailed
+IDL Binding and Composition, Definition Establishment and result handoff, applicability and established material,
+and the required compiler conformance detail remain open. The common laws continue to apply. No additional
+Material family or Version API decision is introduced.
 
 No future syntax may silently add another Fact, a population or history of separately established Facts, proposal,
 Operation-specific material, hidden lookup, Fact mutation, escaping callback or backend evaluation state without a
@@ -715,3 +898,10 @@ The closed Invariant surface gives the compiler opportunities for static dischar
 generated tests and direct diagnostic attribution.
 
 ---
+
+## 24. Migration History
+
+This ADR was extracted from the Invariant-owned material of ADR-0049, preserving its latest Accepted Invariant law
+as of the 2026-08-05 revision. The extraction did not intentionally introduce a new Invariant authority or change the
+accepted Invariant meaning. ADR-0049 remains the owner of the shared Change Proposal and indivisible-establishment
+relation in which Invariant participates.
