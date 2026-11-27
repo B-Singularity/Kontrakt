@@ -114,8 +114,14 @@ association. The shared authoring position neither composes their Definitions no
 In particular, Invariant selection does not become Fact Binding meaning (ADR-0068 Section 19.4).
 
 The IDL selection supplies the declared association; it does not by itself establish the legality of that association.
-The existing selection and Composition laws govern its resolution and judgment. No name, type resemblance, package
-placement, inheritance, annotation, or runtime discovery adds an Invariant implicitly.
+Each Invariant selection targets one exact Invariant Definition and identifies the exact Fact selection in the enclosing
+interface (Section 19.5). The complete selection for that Fact is the scope of its standing-law Composition.
+Repeating the same exact Versioned Invariant Definition for the same Fact selection is unlawful. Reusing that
+Definition for another Fact is permitted. Independently identified Invariants with equal meaning are not duplicate
+selections; established redundancy is diagnosed under Section 5.4.
+
+The existing selection and Composition laws govern resolution and judgment (Section 19.9). No name, type resemblance,
+package placement, inheritance, annotation, or runtime discovery adds an Invariant implicitly.
 
 Whenever complete canonical candidate material of a selected Fact Kind may receive Fact authority in the applicable
 Core, every standing law selected for that Fact applies. It is not repeated or selected inside an Operation manifest.
@@ -177,9 +183,10 @@ of another (Section 5.3). A lawful observation relation does not authorize an im
 
 A legal application must supply every required observation from the same complete canonical candidate Fact. A matching
 name alone does not establish compatibility. The applicable Fact law, resolved value meaning and existing Composition
-law determine whether the observation is legal. At definition time, the required information about the selected Fact
+law determine whether the observation is legal. During composition, the required information about the selected Fact
 is obtained through its producer-owned semantic protocol (ADR-0068 Sections 19.5 and 19.11), not by reconstructing
-Fact meaning inside Invariant. Kontrakt must not supply missing information, infer a coordinate relation or implicitly
+Fact meaning inside Invariant. Compatibility must hold throughout the Fact's permitted domain (Section 19.9.3). Kontrakt
+must not supply missing information, infer a coordinate relation or implicitly
 convert or normalize the Fact to make the judgment applicable (ADR-0068 Sections 5.1 and 6).
 
 Every explicitly declared observation parameter of an independent condition remains a requirement, even when its
@@ -244,7 +251,7 @@ are inadmissible when unsatisfiability is established. The absence of a witness 
 that no witness exists. An inconclusive, unsupported or interrupted analysis remains a compiler-owned result
 under ADR-0074 and ADR-0075. It does not establish a Contract-law violation or a runtime Invariant refusal. A
 compiler analysis establishes evidence for the owning judgment; it neither establishes Definition authority nor
-replaces that judgment. The detailed Establishment result and handoff boundaries remain open (Section 22).
+replaces that judgment. Sections 19.7–19.9 define the Establishment handoff and the attribution of these conclusions.
 
 The analysis must retain the exact resolved calculation and value meaning. For instance, fixed-width integer
 arithmetic cannot be replaced by mathematical integer arithmetic where overflow changes the result. An analysis
@@ -770,7 +777,8 @@ exact Contract Version
 The condition methods, helpers and observation requirements do not own independent Contract Versions. The
 resolved pre-authority Candidate and Established Definition remain distinct under ADR-0063 and ADR-0071.
 Selection by another Fact or another Interface does not change the Definition identity. The Invariant-specific
-reference domains and protocol are left to the HIR and Establishment design (Section 22).
+Candidate reference domains and HIR Protocol are defined in Sections 19.5–19.6. The established semantic protocol
+remains open (Section 22).
 
 A Contract-visible change to either determinant follows the Version law when the Authority continues. Adding an
 explicitly required observation is such a change even if the Boolean judgment is unchanged. Source-only and
@@ -814,15 +822,452 @@ Current reuse must account for the complete selection, the relevant factual mean
 meanings under the applicable validity laws. Equality of an observed coordinate or reuse of an individual
 Definition's witness does not establish joint satisfiability of a changed selection. A narrower observation may
 avoid recomputing an unaffected analysis when its exact determinants are preserved; it cannot replace the
-complete applicability requirements. The precise judgment, applicability and result boundaries remain open (Section 22).
+complete applicability requirements. Section 19.9 defines the Composition judgment, its Required Basis and the
+conditions for establishing the application.
 
 ### 19.4. Common HIR and Establishment Boundary
 
 The common Resolved Contract HIR and Seal law (ADR-0071) and Contract Establishment law (ADR-0063) apply. A complete
 resolved Candidate is not itself established authority. Only established meaning may become part of the Canonical
 Contract World under the applicable owning law. Legal consumption follows ADR-0075. Host source mechanics must be
-erased before authority begins. The detailed Invariant HIR, Establishment and established semantic observations remain
-open (Section 22).
+erased before authority begins.
+
+### 19.5. Typed Invariant HIR References and Selection
+
+Invariant owns two Primary HIR Candidate kinds: the Definition Candidate and the IDL Binding Candidate. Their
+reference domains under ADR-0071 are:
+
+```text
+InvariantDefinitionCandidateRef
+InvariantIDLBindingCandidateRef
+```
+
+`InvariantDefinitionCandidateRef` designates one exact current Definition Candidate. Its Authority and resolved
+Version candidate coordinate follow Section 19.2. Neither equal Definition meaning nor a shared representation
+identifies distinct Candidates. Conflicting identity claims are handled by the common Resolution and Version laws.
+
+`InvariantIDLBindingCandidateRef` designates one exact current Invariant selection occurrence. Each selection
+expresses the following relation:
+
+- The selecting `ContractInterfaceRef` and the Invariant role.
+- The subject `FactIDLBindingCandidateRef`, identifying the Fact selection within that interface.
+- The target `InvariantDefinitionCandidateRef`.
+
+The subject is the Fact selection, not merely its name or target Definition. Fact owns that reference domain under
+ADR-0068 Section 19.3. The selecting context must agree with the subject's owning interface; a reference to a
+Fact selection in a different interface cannot be repaired by substituting a similarly named Fact. The Binding
+Candidate neither copies Definition meaning nor adds the Invariant selection to Fact Binding meaning. Context that
+is already supplied through the exact subject need not be stored again.
+
+Every selection occurrence remains distinct before judgment, including repeated selections targeting the same
+Definition. The complete relation is observed for one exact Fact Binding Candidate, independently of list order.
+A row without Invariant selections expresses absence under Section 4 and the common selection law. Unresolved or
+unavailable selection is not Explicit Absence. This relation introduces no third Primary Candidate.
+
+**Observation Requirement Selector**
+
+A requirement addresses a nominal factual coordinate within one exact Invariant Definition Candidate. The Definition
+reference and coordinate name suffice to select the complete group of declared requirements for that coordinate.
+Invariant introduces neither a separate Requirement Reference Domain nor independent condition or helper reference
+domains. It owns the requirements, not the Fact coordinates that may satisfy them. Source locations, method names
+and physical ordinals do not establish the selector's identity. The selector must not designate a requirement in
+another Definition. Internal dense handles or other access paths remain replaceable implementations under ADR-0071.
+
+### 19.6. Resolved Invariant HIR Candidate Protocol
+
+Invariant specializes the read-only Resolved HIR Candidate Protocol of ADR-0071 using the reference domains in
+Section 19.5 and the common and Fact-owned references that section identifies.
+
+```text
+Invariant Definition Candidate Projection
+    exact InvariantDefinitionCandidateRef
+    complete Invariant Definition Candidate meaning
+
+Invariant IDL Binding Candidate Projection
+    exact InvariantIDLBindingCandidateRef
+    complete Invariant IDL Binding Candidate meaning
+
+Fine-Grained Semantic Projections
+    Invariant Factual Observation Requirement Surface Projection
+    Invariant Selected Factual Observation Requirement Meaning Projection
+    Invariant Selection Projection
+```
+
+**Invariant Definition Candidate Projection**
+
+Exposes the Authority, resolved Version candidate coordinate and both complete determinants of Section 19.1.
+Required interpretation and qualification evidence remains legally observable, distinct from Definition meaning.
+Exact references to completed producer-owned meaning may supply these observations without copying it. An unresolved
+reference, source expression or later Type calculation cannot supply missing Candidate meaning.
+
+The Integrity Judgment Law preserves the distinction between independent conditions and the evaluation within each
+condition. It retains exact helper computation, meaningful evaluation order, guards and partial-operation semantics
+under Sections 5.1, 5.3 and 13–14. Erasing host invocation mechanics or sharing a helper must not remove those
+relations. In particular, conjoining two independent conditions cannot manufacture a guard that neither condition
+established within its own computation. Source-only differences may be erased under Section 19.1; declaration
+multiplicity and the relations that determine the complete law remain observable.
+
+The Factual Observation Requirement Law retains every declared requirement and its relation to the declaring
+condition, including unused requirements. The relation identifies the condition within the complete resolved law;
+it does not give a method name, source order or an independent condition its own Contract identity. Equal requirement
+meanings may share backing without losing their multiplicity or condition relations (Section 5.2).
+
+**Invariant IDL Binding Candidate Projection**
+
+Exposes the exact selection occurrence and its complete meaning under Section 19.5. Equality preserves the selecting
+context, role, exact Fact association and target relation. A change confined to the target's meaning does not by
+itself change the selection relation, provided the exact references and their correspondence remain valid. Separate
+selections are not merged because they have equal target meanings.
+
+**Invariant Factual Observation Requirement Surface Projection**
+
+Exposes the complete nominal coordinate range required by one exact `InvariantDefinitionCandidateRef`. Each name is
+observed once at this surface: the number of conditions requiring the same coordinate does not change which factual
+coordinate must be provided. This projection supplies the coverage observation without exposing every requirement's
+value meaning or the judgment body.
+
+Equality compares the nominal coordinate set, not source order, value meaning or the number of declarations requiring
+a coordinate. Adding a requirement for an existing name may leave this observation unchanged while changing the
+Selected Requirement Meaning. A complete empty surface is distinguishable from incomplete or unavailable material;
+it does not itself establish Definition legality.
+
+**Invariant Selected Factual Observation Requirement Meaning Projection**
+
+Exposes the complete group of declared requirements selected by one exact Definition Candidate and nominal coordinate
+under Section 19.5. It retains each resolved required value meaning, multiplicity and the relation to the declaring
+condition. Distinct requirements for the same name are not replaced by an inferred common type. Nested constituent,
+presence and collection requirements follow Section 5.2 and the applicable common value laws. Calculation relations
+between supplied values belong to the Integrity Judgment Law unless they determine the required observation meaning
+itself.
+
+Equality preserves the selected coordinate and its complete group of requirement meanings and condition relations,
+independently of source-only ordering or naming. A change in the judgment body alone need not change this observation
+when its requirements and relevant relations are preserved. Observation of one group does not establish the completeness
+of the entire requirement surface or the absence of another group.
+
+**Invariant Selection Projection**
+
+Observes the complete selection for one exact `FactIDLBindingCandidateRef` at the Invariant role. It exposes every
+`InvariantIDLBindingCandidateRef` occurrence; the Binding Candidate Projection supplies each association and target.
+Equality preserves the exact subject, role and complete selection relation, including multiplicity but not
+non-semantic list order. Duplicate selections remain observable until judgment under Section 19.9.1. Incomplete
+selection is neither absence nor a complete smaller selection. A separate interface-wide Invariant selection
+projection is not required to observe the entire vocabulary: consumers may obtain the Fact vocabulary and each
+required Fact-scoped selection under their owning protocols.
+
+The following example uses the `Balance` selection in Section 4. Assume completed source interpretation of an
+Invariant requiring `amountMinor` as a signed 64-bit integer and judging it non-negative. The labels designate exact
+references; `V1` is an illustrative resolved Version candidate coordinate. The example describes logical observations,
+not an IR instruction vocabulary or storage layout.
+
+```text
+Invariant Definition Candidate Projection
+    InvariantDefinitionCandidateRef D
+    Authority NonNegativeBalance
+    resolved Version candidate coordinate V1
+    Integrity Judgment Law
+        amountMinor >= 0L
+    Factual Observation Requirement Law
+        amountMinor -> complete signed 64-bit integer meaning
+
+Invariant Factual Observation Requirement Surface Projection
+    Definition D
+    amountMinor
+
+Invariant Selected Factual Observation Requirement Meaning Projection
+    Definition D
+    coordinate amountMinor
+    complete signed 64-bit integer meaning
+    relation to the declaring condition
+
+Invariant IDL Binding Candidate Projection
+    InvariantIDLBindingCandidateRef B
+    selecting ContractInterfaceRef I (AccountService)
+    role invariants
+    subject FactIDLBindingCandidateRef F (Balance selection)
+    target InvariantDefinitionCandidateRef D
+
+Invariant Selection Projection
+    subject F
+    role invariants
+    B
+```
+
+The complete observations retain required evidence even where the example omits its detail. None supplies a
+Compatibility or Satisfiability conclusion. Those are separately owned judgments or analysis results, not HIR
+projections. This Protocol does not require separate projections for an isolated condition, helper, Integrity Judgment
+Law or Requirement-to-Fact mapping. A new observation requires a legal consumer demand under the common Protocol law.
+
+**Observation Equality, Reuse and Visibility**
+
+Completeness and equality apply to the declared observation of each projection. Complete Candidate observations
+include any required evidence they expose; evidence equality is distinct from Definition Meaning Equality.
+Cross-generation
+comparison requires exact subject correspondence and current reference validity. An equal projection is not sufficient
+by itself for current reuse.
+
+A consumer judging complete requirement coverage observes the whole Requirement Surface and every needed Selected
+Requirement Meaning, together with the required offered meaning from Fact. Observing only previously known coordinates
+cannot establish that no new requirement has been added. The same rule applies to complete Fact-scoped Selection:
+validity of the previously observed Binding references alone cannot establish that the current selection is unchanged.
+
+A narrower observation may prevent unnecessary recomputation when a different part of the Definition changes. Such reuse
+must preserve the exact Version, selection and validity obligations of the current consumer. Bulk access, shared
+backing,
+internal coordinate indexing and fine-grained dependency recording may realize these observations without separate
+physical records or Query nodes. Reference lifetime, coherent visibility, required extensions, Protocol evolution and
+representation preservation follow ADR-0071. An unknown required extension or stale reference cannot be treated as a
+complete observation or absence. The Protocol creates no authority, and no new global equality or persistence law.
+
+### 19.7. Invariant HIR Seal and Establishment Handoff
+
+The Seal certifies completed interpretation and representation integrity, not satisfaction of Invariant law. A
+Definition Candidate may become Visible HIR only when:
+
+- Its exact Authority and resolved Version candidate coordinate are known.
+- Both complete determinants are resolved and preserve the meaning required by Sections 5, 13–15 and 19.1.
+- The responsible source interpretation and qualification producers have supplied their required legal results.
+- Required references are exact and valid, and all required Protocol observations are complete in a coherent generation.
+
+Required qualification is not performed by the Invariant HIR Producer in place of its owning producer. An unresolved
+callable or a computation whose required eligibility or completion cannot be established prevents lawful formation.
+A forbidden initializer cannot be erased to manufacture qualification. An eligible and completely interpreted law
+whose contradiction is established remains a Candidate for the owning judgment; satisfiability is not a Seal
+condition.
+
+A Binding Candidate must resolve the complete selection occurrence of Section 19.5, with its exact selecting context,
+role, subject and target legally referenceable. Its Definition need not yet be established. Seal does not decide
+Observation Compatibility, selection legality, Joint Satisfiability or authoritative Binding.
+
+The complete Selection Projection requires all Invariant selections of the exact Fact Binding to be resolved and
+legally observable. It preserves completed duplicates. Independent sealed Candidates may remain visible despite an
+unrelated completion failure under ADR-0071. If one required selection is incomplete, the other completed Candidates
+may be observed where independently legal, but the whole selection cannot be exposed as complete or consumed for Joint
+Satisfiability. These are three logical completeness scopes, not additional Candidate kinds or mandatory physical Seal
+stages. Recovery material, failed publication and mixed generations follow the common HIR laws; an older generation
+cannot silently stand in for the current complete result.
+
+Definition Establishment requires legal HIR observations and the authoritative Version prerequisite under ADR-0063
+and ADR-0053. The complete Definition Candidate Projection, or producer-defined fine-grained observations with the
+required evidence, supplies every observation necessary for entry and judgment. Missing interpretation cannot be
+recovered by Establishment through source, Type Subsystem, host behavior or layout. A failed prerequisite retains
+its owning result; if the Seal judgment does not enter, no additional Seal rejection is invented. An actual failed
+Seal judgment belongs to HIR. Neither is an Invariant Definition Refusal. Section 19.8 defines that result.
+
+The common independent conformance seam of ADR-0071 Section 19.1 applies to these observations. In particular, an
+implementation must preserve declared requirement multiplicity, independent condition relations, the complete
+Fact-scoped selection and its distinction from absence across clean, optimized and reused formation. Non-semantic
+source changes or physical relocation cannot change these observations; incomplete, stale or conflicting material
+cannot acquire visibility by representation alone.
+
+### 19.8. Invariant Definition Establishment Judgment and Result
+
+The Invariant Definition Judgment applies its own Definition laws to one complete resolved Candidate. It does not
+require an IDL Binding Candidate, a selected Fact, a complete Interface selection or an actual Fact Candidate.
+This independence does not authorize acquisition of unselected source or grant authority to a runtime value.
+
+Each contributing judgment remains the responsibility of its owner. Declaration resolution, Type interpretation,
+SDK and Source Qualification, HIR Seal and Version Establishment supply their legally consumable results under
+ADR-0075. Invariant consumes those results and the completed meaning rather than performing or re-establishing those
+judgments itself. It judges its own obligations, including the flat integrity law, the declared factual requirements
+and the completion obligations of Sections 5 and 13–15 to the extent assigned to Invariant. Legal consumption neither
+transfers authority nor requires a second qualification or verification by Invariant. The owners of analysis results
+likewise retain responsibility for the correctness of their conclusions.
+
+Definition-local Satisfiability is an obligation of successful Definition Establishment (Section 5.4). The owning
+judgment consumes the qualified analysis conclusion for the exact law and domain. It must not require an established
+SAT conclusion merely to enter and thus prevent judgment of a proven contradiction. Analysis may be prepared before
+entry, evaluated on demand or reused when valid; its physical placement does not change ownership. SAT alone does
+not establish the Definition.
+
+The two Invariant-owned Definition results are:
+
+```text
+complete resolved Candidate
++ satisfaction of the Invariant Definition law
+    -> Established Invariant Definition
+
+complete resolved Candidate
++ established violation of the Invariant Definition law
+    -> Invariant Definition Refusal
+```
+
+Both require legal judgment entry. An inconclusive required analysis prevents successful Establishment but does not
+establish a Definition Refusal. If another owning-law violation is independently established in a lawfully entered
+judgment, analysis uncertainty does not erase that violation. Failed prerequisites prevent the dependent judgment's
+entry where required and retain their owners' attribution. Source interpretation, qualification, Seal and Version
+failures are not Invariant Definition Refusal. Compiler interruption or indeterminate realization cannot fabricate
+an authoritative result (ADR-0063 Section 4.7.2 and ADR-0074).
+
+The entire Definition is the minimum successful establishment unit. Independent conditions may be analyzed separately,
+but no subset acquires Definition authority. Failure creates no partial authority. Independent Established Definitions
+and authoritative Version bindings are not revoked by a failure elsewhere. Establishment, legal visibility and durable
+Version-history publication remain distinct under ADR-0063 Sections 6.9 and 10.8. A subsequent Composition or World
+failure does not undo a Definition established in the current compilation, and retained material from unsuccessful
+work is not current authority merely because it remains stored. These laws prescribe no physical transaction or
+rollback mechanism.
+
+**Definition-Time Required Basis and Applicability**
+
+The following categories of ADR-0063 are `NOT-APPLICABLE` to Invariant Definition Establishment:
+
+- Required Basis Law, Basis Resolution, Basis Binding, Applicable Basis and Complete Basis.
+- Separate Definition Applicability and arbitration.
+
+The Definition requires no Established Fact, Fact Definition or other Invariant as Contract Required Basis. Compiler
+interpretation and analysis dependencies alone do not create such a requirement. The Version prerequisite follows
+ADR-0053 and ADR-0063; it is not an additional Invariant-owned Basis Requirement. The separate application judgment
+in Section 19.9 has its own requirements.
+
+### 19.9. Fact-Scoped Composition, Required Basis and Applicability
+
+#### 19.9.1. Selection Legality and Composition Ownership
+
+Interface-scoped Composition owns the authoritative application relation. Fact owns its factual meaning, and
+Invariant owns its Observation Requirement and Integrity Judgment laws. Neither Definition Authority absorbs the
+other, and CRI prepares exact legal observations rather than owning the selection or judgment (ADR-0077).
+
+The minimum complete scope for the standing-law Composition is the whole Invariant selection of one exact Fact
+Binding, not a single Invariant or all Facts of the interface. Individual or pairwise satisfiability cannot establish
+Joint Satisfiability of that scope (Section 19.3). Interface-wide Composition and World publication retain their
+separate obligations.
+
+Selection legality consumes the complete HIR relation of Sections 19.5–19.7. Repetition of the same exact Versioned
+Invariant Definition for that Fact is a selection violation regardless of spelling or physical reference encoding.
+The check may establish that violation before the selected Definitions have been established. It does not remove the
+repeated occurrences from HIR. Equal meanings of independently identified Definitions are not duplicates. Redundancy
+among distinct selected laws follows Section 5.4. Successful selection legality alone establishes neither an
+authoritative application nor a new Definition.
+
+#### 19.9.2. Higher-Scope Required Basis and Entry
+
+For a nonempty, complete selection, the Fact-scoped Composition judgment requires one exact Established Fact Definition
+and the exact Established Invariant Definition targeted by each selection. These requirements belong to the dependent
+Composition under ADR-0063 Section 8, not to either independent Definition. The exact HIR selection is the relation
+being judged; it is not duplicated as another Required Basis.
+
+```text
+requirement coordinate
+    selectedFactDefinition
+
+required meaning
+    one Established Fact Definition targeted by the exact Fact Binding
+
+cardinality
+    exactly one
+
+permitted absence
+    no
+```
+
+For each exact Invariant selection in that scope:
+
+```text
+requirement coordinate
+    selectedInvariantDefinition (for that exact selection)
+
+required meaning
+    one Established Invariant Definition targeted by that selection
+
+cardinality
+    exactly one
+
+permitted absence
+    no
+```
+
+A requirement is identified within the exact dependent Composition by its coordinate and, where applicable, its
+selection relation. Two Compositions may consume the same Definition without making their required relations identical.
+These logical coordinates require no independent global identifier or record family. If no Invariant is selected,
+there is no Invariant application or Invariant-specific Composition Basis to resolve. The Fact vocabulary and its
+other Composition obligations still apply.
+
+**Basis Resolution and Binding**
+
+The legal source domain of each requirement is fixed by the exact selection and its target Authority and Version.
+Resolution obtains the corresponding Established Definition under its producer-owned protocol. A Candidate, another
+Version, a similarly shaped Definition or an older result without current validity cannot satisfy the requirement.
+A legal Binding establishes the exact required relation; finding a source alone does not establish that relation.
+There is no alternative Definition selection or arbitration. CRI may prepare the relation and its required
+observations under ADR-0077. It cannot establish the application or repair a failed binding by substitution.
+
+**Applicable Basis and Complete Basis**
+
+Applicability under ADR-0063 Section 7 concerns whether an already lawfully bound Established Definition can be
+consumed for the exact dependent Composition. No additional Applicable Context is required. State, Operation,
+time, other Facts or ambient Policy are not additional inputs. The exact selection and governing World determined by
+their owners remain binding; current generation and reuse validity follow common compiler laws. Applicability does
+not judge whether the Fact provides compatible factual observations. That is an owning Composition obligation.
+
+Entry to authoritative Composition requires a complete legal selection and a Complete Basis: an Applicable Basis
+for the exact Fact Definition and one for every required Invariant selection. A missing, unavailable, unestablished
+or inapplicable required source prevents entry. Incomplete selection cannot establish this condition. A legal
+selection check may independently establish its own result before these prerequisites are available. Complete Basis
+is a semantic condition, not a mandatory materialization of another record.
+
+#### 19.9.3. Observation Compatibility and Joint Satisfiability
+
+Composition consumes the complete factual observation requirements of each selected Invariant and the corresponding
+Fact-owned offered meanings under their established semantic protocols. Every required name must correspond to an
+exact direct factual coordinate, and that coordinate must lawfully supply all declared requirements for the name
+(Section 5.2). Compatibility follows the applicable Type, Value and Composition laws. The owning producers' results
+are consumed without reinterpreting the values or transferring their authority. A lawful observation must preserve
+factual information; an implicit conversion or a guard supplied by another independent condition cannot repair a
+missing or incompatible requirement.
+
+Compatibility must hold for every complete value permitted by the selected Fact Definition, before the standing
+integrity law restricts which candidates may be established. Joint Satisfiability, by contrast, requires the existence
+of at least one such complete value satisfying the entire selection under Section 19.3. A satisfying witness cannot
+replace universal compatibility or silently narrow the offered factual domain. For example, a nullable factual
+coordinate cannot supply a non-null requirement merely because a non-null witness satisfies the integrity law.
+
+Both compatibility and established Joint Satisfiability are obligations of successful Composition. Analysis may
+occur earlier when legal meaning is available, but only conclusions valid for the exact current Established Definitions
+and complete selection can support authority. Failure of compatibility or an established joint contradiction belongs
+to the Composition judgment, not Basis Applicability or the independent Definition judgments.
+
+#### 19.9.4. Application Establishment and Result Boundary
+
+The complete Fact-scoped Composition must succeed before its selected laws acquire authoritative standing application
+to that Fact. Individual selection legality, compatibility or partial verification may be established or reused
+without granting that authority. Success preserves each exact Fact–Invariant application relation and the independent
+identity of every selected Definition. It does not introduce a Composite Invariant Definition, separate Contract
+Version or new Contract Authority.
+
+An established violation of selection law belongs to the selection judgment. Failed Basis prerequisites retain their
+own attribution and prevent the dependent Composition judgment's entry. A lawfully entered Composition establishes
+its own violation where observation requirements cannot be met or the joint law is proved unsatisfiable. An inconclusive
+required analysis prevents application establishment without proving that the composition is unlawful. No partial
+standing application may be published as a complete one when the Composition fails. Independently established
+Definitions are unaffected. Common Result and World laws govern the exact result form and legal publication; the
+established reference domains and material protocol for these relations remain open (Section 22).
+
+An actual integrity judgment uses the complete canonical candidate Fact and the applicable standing meaning
+established by that Composition (Section 16). The candidate is its judgment input, not an Established Fact required
+as a prior Basis. No independent runtime Occurrence Basis Requirement Law, formation-path-specific Lowering or
+Operation Basis, or additional runtime Applicable Context is introduced. The applicable World and exact relations
+must still be valid for the judgment. This distinction requires neither a new runtime Basis resolution nor a repeated
+Composition check for each candidate. The need and form of independent Established Occurrence material are left to
+Section 22.
+
+#### 19.9.5. Analysis Preservation and Reuse
+
+Selection legality, requirement correspondence, compatibility and joint analysis have distinct observation scopes.
+An unchanged requirement may permit reuse of compatibility computation even when the complete Integrity Judgment Law
+changes. Joint analysis must account for the complete selection and exact factual domain, including any unobserved
+coordinates or value relations needed to establish the existence of a complete lawful witness. Equality of only the
+coordinates used by a condition cannot establish that domain's continued satisfiability.
+
+For an unchanged domain and retained laws, removal of a condition may preserve an existing SAT witness; addition
+requires checking it against the new obligations. A verified contradiction may survive an added condition, but removal
+requires evidence that the contradiction still follows from the remaining laws. Changes to the domain or meaning
+require current validity to be established. Incremental solver state and proof or witness reuse remain compiler-owned
+under Section 5.4.4. They must not acquire authority from retained assertions, worker completion order or a stale
+context. Sharing analysis or runtime computation does not merge the authoritative application relations.
+
+These obligations permit static specialization and direct coordinate access without mandatory runtime lookup,
+separate analysis records or a particular solver. The compiler's exact current observations, result attribution and
+preservation laws remain the criteria for reuse.
 
 ---
 
@@ -867,11 +1312,12 @@ evolve. The authoring boundary is fixed: one flat Contract with one complete int
 required factual observations and closed computation. Every application is selected by the IDL and judged from one
 complete canonical candidate Fact.
 
-Sections 5 and 19 define the factual observation requirements, Definition meaning and identity, and the satisfiability
-prerequisites for Definition and application legality. The Invariant-specific HIR and semantic protocol, detailed
-IDL Binding and Composition, Definition Establishment and result handoff, applicability and established material,
-and the required compiler conformance detail remain open. The common laws continue to apply. No additional
-Material family or Version API decision is introduced.
+Sections 5 and 19 define factual observation requirements, Definition meaning and identity, satisfiability,
+IDL selection and Binding, the Resolved HIR Candidate Protocol and Seal, Definition Establishment, and the Required
+Basis, applicability and authority boundaries of Fact-scoped Composition. The exact Established Definition and
+application material, established reference domains and semantic protocol, the need for independent Established
+Occurrence material, and the detailed runtime judgment, attribution, World placement and compiler conformance
+remain open. Common laws continue to apply. No additional Material family or Version API decision is introduced.
 
 No future syntax may silently add another Fact, a population or history of separately established Facts, proposal,
 Operation-specific material, hidden lookup, Fact mutation, escaping callback or backend evaluation state without a
