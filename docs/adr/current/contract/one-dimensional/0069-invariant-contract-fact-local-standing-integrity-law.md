@@ -312,11 +312,28 @@ used with a fixed analysis configuration; physical elapsed-time limits may inter
 semantic conclusion. Exhausted resources and unsupported analysis retain their compiler-owned attribution.
 Parallel analysis must not turn a worker's completion order into a determinant of Contract legality.
 
+A conclusion used by an owning judgment requires a qualified justification for the actual resolved law and domain.
+The analysis producer and the applicable verification owners establish that justification; Invariant consumes their
+results under ADR-0075. The analysis encoding must preserve the meaning needed for the claimed conclusion.
+A SAT witness must be admissible and its complete judgment verified. For joint satisfiability, a partial assignment
+must also be shown to extend to a complete lawful Fact. An UNSAT conclusion requires a sound argument covering the
+entire legal domain. A solver status, an unsatisfiable core alone, an unchecked assumption or an unresolved proof
+obligation cannot substitute for that justification. Different analyses may use different qualified verification
+methods; no single proof format or solver is prescribed.
+
 Reuse requires the exact determining meaning and applicable validity context. A retained witness may be checked
 against a changed law and domain instead of repeating a search; it cannot prove the changed law merely because it
 was valid for the previous one. Reused unsatisfiability evidence and diagnostic conclusions likewise require a
 sound current justification. The common compiler product and preservation laws apply to clean, incremental and
-parallel computation. No particular analysis algorithm, evidence format or persistent store is mandated here.
+parallel computation. Reused evidence must retain its determining assumptions and proof scope. An unchanged subset
+of a law does not establish the validity of an argument that also depends on changed material.
+
+A clean analysis may exhaust its resources where an incremental analysis can verify an available witness. This is
+a difference in computational completion, not a different semantic truth or a relaxation of the Establishment
+obligation. Neither path may manufacture a negative conclusion from lack of evidence. Conflicting purportedly
+established conclusions for the same exact law and domain indicate an analysis, interpretation or verification
+failure; scheduling order cannot resolve that conflict. The applicable compiler owner handles it under the common
+Result laws. No particular analysis algorithm, evidence format or persistent store is mandated here.
 
 ---
 
@@ -663,6 +680,19 @@ All required judgments and the resulting establishment concern the same complete
 Section 5.1). Partial observations, asynchronous computation and parallel evaluation must preserve that correspondence.
 The applicable Composition determines the indivisible establishment boundary; judgment success alone grants no Fact
 authority or Operation participation.
+
+The correspondence covers both the information judged and the particular application to which the result belongs.
+Equal information in another candidate may permit calculation sharing, but does not transfer the established
+judgment to that candidate. Formation, judgment and use must preserve the same complete information and exact
+application, including through shared backing or deferred physical materialization. Deferred materialization may
+represent information already determined; it cannot defer the choice of factual meaning until after judgment.
+
+The applicable parts of the proposal complete under the Boundary Processing Completion law (ADR-0057 Section 4.3.3).
+One Invariant refusal does not suppress another independently reachable judgment in the same active boundary.
+The shared Composition consumes each owning judgment and alone determines indivisible establishment under ADR-0049.
+Neither successful integrity judgment nor successful movement grants partial establishment. Results already established
+by other owners remain their results when the proposal cannot be established. This requires no new transaction or
+post-Crash persistence guarantee.
 
 The law also applies independently of the formation path. Physical restoration of an already Established Fact is not
 new establishment when its exact information, authority and validity are preserved under ADR-0068 Section 5.3. Equal
@@ -1239,16 +1269,18 @@ own attribution and prevent the dependent Composition judgment's entry. A lawful
 its own violation where observation requirements cannot be met or the joint law is proved unsatisfiable. An inconclusive
 required analysis prevents application establishment without proving that the composition is unlawful. No partial
 standing application may be published as a complete one when the Composition fails. Independently established
-Definitions are unaffected. Common Result and World laws govern the exact result form and legal publication; the
-established reference domains and material protocol for these relations remain open (Section 22).
+Definitions are unaffected. Common Result and World laws govern the exact result form and legal publication.
+Established Invariant Definition and application observations follow Sections 19.10–19.12. The exact common
+reference and protocol form of the Interface-owned application relation remains with its owning Composition law (Section
+22).
 
 An actual integrity judgment uses the complete canonical candidate Fact and the applicable standing meaning
 established by that Composition (Section 16). The candidate is its judgment input, not an Established Fact required
 as a prior Basis. No independent runtime Occurrence Basis Requirement Law, formation-path-specific Lowering or
 Operation Basis, or additional runtime Applicable Context is introduced. The applicable World and exact relations
 must still be valid for the judgment. This distinction requires neither a new runtime Basis resolution nor a repeated
-Composition check for each candidate. The need and form of independent Established Occurrence material are left to
-Section 22.
+Composition check for each candidate. The actual judgment and the boundary-local result consumption follow Section 21;
+no independent Established Invariant Occurrence family is introduced for this Fact-local law (Section 19.10).
 
 #### 19.9.5. Analysis Preservation and Reuse
 
@@ -1269,6 +1301,193 @@ These obligations permit static specialization and direct coordinate access with
 separate analysis records or a particular solver. The compiler's exact current observations, result attribution and
 preservation laws remain the criteria for reuse.
 
+### 19.10. Established Invariant Definition Material
+
+Successful Definition Establishment produces one complete Established Invariant Definition with two components:
+
+**Identity**
+
+The `EstablishedInvariantDefinitionRef` identifies the Definition under its Owning Invariant Authority Binding and
+Version Binding.
+
+**Meaning**
+
+Preserves the complete Integrity Judgment Law and Factual Observation Requirement Law of Section 19.1, including
+the direct established semantic relations needed to observe that meaning. Separately owned meanings remain with
+their producers and may be observed through exact references. Establishment does not introduce another constraint,
+a Fact association or an actual integrity judgment into the Definition.
+
+Invariant owns one Established reference domain:
+
+```text
+EstablishedInvariantDefinitionRef
+```
+
+One Authority owns one independently addressable Definition per Version (Section 19.2). No Authority-Local Definition
+Coordinate is required. The Owning Authority Binding is directly recoverable without inferring it from the enclosing
+interface, source declaration or physical containment. Identity conflicts and Version history follow ADR-0063
+Section 6 and ADR-0053.
+
+A nominal requirement coordinate selects the complete group of declared requirements within one exact
+`EstablishedInvariantDefinitionRef`. As in Section 19.5, this is a Definition-local semantic selection rather than
+another Reference Domain or independent authority. Conditions and helpers likewise have no independent Established
+Reference Domain. Their meaning and relevant declaration relations remain observable through the complete law.
+
+The Established Reference becomes observable only after the complete Definition and its required identity relations
+are coherently established. A Candidate Reference cannot be promoted or retyped into an Established Reference.
+Distinct Candidates may correspond to the same established identity and meaning through lawful Establishment or
+currently qualified reuse. Established meaning must be interpretable without retaining the originating HIR or source.
+Shared immutable backing, relocation and reclamation remain permitted under the common observation and validity laws;
+sharing representation transfers no authority.
+
+Interface-scoped Composition owns the standing application relations established under Section 19.9.4. The Definition
+need not contain its consumers or a reverse relation to every selected Fact. Neither a separate Composite Invariant
+Definition nor an Invariant-owned Established Binding family is introduced.
+
+**Occurrence Boundary**
+
+An actual application of an Established Invariant Definition is a distinct semantic judgment under ADR-0063
+Sections 4.5–4.6 and Section 21 of this ADR. For the Fact-local law, the owning judgment result is consumed through
+the applicable processing and establishment relations. No independently addressable Established Invariant Occurrence
+Material, `EstablishedInvariantOccurrenceRef`, Occurrence Projection or independent Occurrence history is required.
+The current law identifies no consumer that requires such an independently addressable authority material. The
+Occurrence Material family and its independent reference protocol are NOT-APPLICABLE to this design; the actual
+application, its authoritative judgment and its attribution are not.
+
+This boundary does not permit the result to disappear before its legal consumption. The meaning required by Fact
+Establishment, Failure and other authorized consumers must remain available for their applicable processing lifetime
+(Section 21). It prescribes neither an occurrence object nor a particular storage, transfer or retention mechanism.
+An extension beyond Fact-local judgment would require its own assessment of this boundary (Section 22).
+
+### 19.11. Established Invariant Semantic Protocol
+
+Invariant specializes the read-only Established Semantic Protocol of ADR-0063 Section 11 using the reference domain
+of Section 19.10:
+
+```text
+Established Invariant Definition Projection
+Direct Established Relation Projection
+
+Fine-Grained Established Invariant Projections
+    Established Invariant Factual Observation Requirement Surface Projection
+    Established Invariant Selected Factual Observation Requirement Meaning Projection
+```
+
+**Established Invariant Definition Projection**
+
+Exposes one exact `EstablishedInvariantDefinitionRef` and the entire Definition of Section 19.10. The observation
+includes Authority, Version, both complete determinants and their required direct established relations. Consumers
+obtain the judgment meaning without reinterpreting HIR, source or Host Binding. Proofs, witnesses, test products
+and executable realizations remain products of their respective owners, not additional Definition determinants.
+
+**Established Invariant Factual Observation Requirement Surface Projection**
+
+Exposes the complete nominal coordinate set required by one exact Established Definition. Each name appears once
+at this surface, as in Section 19.6. The observation is complete for requirement coverage without exposing every
+requirement's value meaning. An empty complete surface establishes that no nominal observations are required;
+it is distinct from unavailable or incomplete meaning. Equality preserves the exposed Definition and nominal set
+independently of source order. Multiplicity and the meaning of individual declarations belong to the selected
+requirement observation.
+
+**Established Invariant Selected Factual Observation Requirement Meaning Projection**
+
+Exposes the complete group of declared requirements selected by an exact Established Definition and nominal coordinate.
+It preserves each resolved required meaning, declaration multiplicity and relation to the declaring condition.
+Sections 5.2 and 19.6 govern the distinction between complete declared requirements and narrower computation
+observations. Different requirements for a name cannot be replaced by a common inferred type. Equality preserves
+the exposed identity and the entire selected meaning; one such observation cannot establish the absence of others.
+
+**Direct Established Relation Projection**
+
+The common ADR-0063 Section 11.4 projection observes the source, relation and target of a direct relation already
+established as part of the Definition. It creates no inferred relation, reverse ownership or transitive graph.
+Fact-scoped applications retain their Interface and Composition owners. The HIR-only Binding Candidate and Selection
+Projections of Section 19.6 are not Established Invariant Projections.
+
+The following example observes `NonNegativeBalance` after lawful Definition Establishment under Section 19.8.
+`V1` identifies its authoritative Version Binding and `E` denotes an exact Established Reference. The notation
+shows logical observations, not the encoding of the Definition or an executable instruction vocabulary.
+
+```text
+Invariant Definition Establishment
+    complete sealed NonNegativeBalance Candidate D
+    authoritative Version Binding V1
+    legal Invariant Definition meaning
+        -> Established Invariant Definition
+
+Established Invariant Definition Projection
+    EstablishedInvariantDefinitionRef E
+    Owning Invariant Authority Binding NonNegativeBalance
+    Version Binding V1
+    Integrity Judgment Law
+        amountMinor >= 0L
+    Factual Observation Requirement Law
+        amountMinor -> complete signed 64-bit integer meaning
+
+Established Invariant Factual Observation Requirement Surface Projection
+    Definition E
+    amountMinor
+
+Established Invariant Selected Factual Observation Requirement Meaning Projection
+    Definition E
+    coordinate amountMinor
+    complete signed 64-bit integer meaning
+    relation to the declaring condition
+```
+
+The example retains the established meaning of the original declaration. It does not establish an application to
+`Balance`, create actual factual information or grant execution authority. Required direct relations are available
+under the common protocol even when their detail is not illustrated.
+
+**Observation Equality and Reuse**
+
+Equality of a complete projection preserves all exposed identity and meaning. Equality of the nominal set or
+required value meaning is a narrower comparison: two different Versioned Definitions can have equal requirement
+meaning without their complete projections or authoritative references being equal. Calculations depending on the
+narrower meaning may be reused under current-validity law. Rebinding the result to a current application requires
+its own legal correspondence; the narrower comparison does not establish that correspondence.
+
+Consumers judging complete coverage must obtain the whole requirement surface and all required meanings. Validity
+of previously observed requirements alone cannot establish that the current surface is unchanged. Coherence,
+availability and legal consumption follow ADR-0063 Sections 11.5–11.7 and ADR-0075. Narrow omissions, invalid
+references or unavailable backing cannot establish absence. Projection boundaries prescribe neither separate
+allocations nor mandatory runtime calls, hashing or Query nodes. Bulk access and qualified shared backing may
+supply the same observations.
+
+**Standing Application Observation**
+
+A consumer requiring standing application obtains the relation established by the Interface-scoped Composition under
+Section 19.9.4. The owning protocol must provide the exact authoritative selecting context, the exact selected Fact
+and its Established Definition, and the complete applicable Invariant relations to their Established Definitions.
+This is a requirement on the meaning supplied by that owner, not a new Invariant-owned Projection or reference type.
+
+An individual relation does not establish the completeness of the application scope. Execution Formation and any
+consumer claiming complete integrity coverage require the current complete scope for that Fact. A newly selected
+Invariant cannot be omitted merely because all previously observed relations remain valid. A completed application
+scope with no selected Invariants is distinguishable from partial, failed or unavailable Composition; an empty lookup
+cannot establish it. No artificial always-true Invariant or Established Material for an absent selection is created.
+The exact common form of the owning protocol remains outside this ADR (Section 22).
+
+### 19.12. Canonical Contract World Placement
+
+The Canonical Contract World (ADR-0063 Section 10) exposes complete Established Invariant Definitions through
+Section 19.11. Each Definition's identity, meaning and required direct relations must be coherent. Established
+application relations are observed under their Interface and Composition owners. HIR Candidates, runtime candidate
+Facts, actual integrity results and occurrence-specific information do not belong to the Definition-world substrate.
+Provenance and compiler products, including proof and execution products, retain their adjacent ownership.
+
+Visibility does not establish new authority. The compiler's World is distinct from the Policy-owned Contract World;
+co-location establishes neither Policy membership nor a Fact–Invariant application. Assembly, linking and changes
+of representation preserve existing authority and meaning. World generation, physical location and aggregate identity
+are not Definition identity or actual application identity.
+
+Independent complete Definitions may become visible without unrelated Composition work when the consumer's closure
+is coherent (ADR-0063 Section 10.7). Partial World coverage may be lawful; partial Definition or standing application
+meaning is not. Consumers that require a complete application must not enter using an incomplete scope. World
+formation or observation failure retains compiler attribution, and independent Definition Establishment is preserved.
+Previous backing remains usable only within its valid scope or after current qualification, not as a substitute for
+failed publication of a new World. Storage, linking and reclamation remain replaceable.
+
 ---
 
 ## 20. Compiler-Derived Realization
@@ -1287,6 +1506,103 @@ structure, history traversal or graph algorithm. Fact-local calculations under S
 compiler-derived realization without acquiring any additional authority. Backend machinery used for Fact storage or
 Sameness belongs to those separate concerns and may not enlarge Invariant meaning.
 
+### 20.1. Judgment Preservation and Static Discharge
+
+Compiler-derived execution must preserve the Contract-observable meaning of the original qualified law. Equality of
+the final Boolean alone is insufficient. In particular, a transformation must preserve the legal evaluation domain
+and completion meaning, the declared requirements and mandatory observations, and each independent judgment's
+result and attribution. The compiler need not reproduce every physical operation or execution trace.
+
+A source guard may make a partial operation legal only within its applicable evaluation domain (Sections 5.3 and
+14). Speculation, reordering or vectorization must not introduce an exception, an invalid operation or an altered
+numeric meaning that the qualified source did not admit. Within one Invariant, a computation may be omitted when
+the complete judgment and required observations are already established without it. This cannot excuse incomplete
+source qualification, remove a declared requirement or suppress evidence required by its owning law. Across separate
+Invariant applications, the completion obligation of Section 21 remains in force even when a common kernel realizes
+the judgments.
+
+Definition-local and Joint Satisfiability establish existence, not that every actual candidate satisfies the law.
+Static discharge requires a sound justification for the judgment of the exact application over its applicable
+candidate domain. The compiler may use qualified formation or realization knowledge for that justification without
+making the Invariant Definition depend on a particular Lowering or Operation. The resulting realization preserves
+the applicable obligation and its exact result even when no separate runtime comparison is needed.
+
+Fusion, batching, vectorization and compaction must preserve the legal evaluation domain and the correspondence
+between each actual application and its result. A masked or inactive lane must not introduce an inadmissible
+operation or an additional judgment. Masking only a result is insufficient when the earlier operation is not legal
+in that lane. Physical ordering and lane placement cannot determine Failure membership or attribution. The applicable
+platform qualification and backend laws determine the legality of the chosen realization.
+
+### 20.2. Current Validity, Reuse and Security
+
+The reusable computations of Sections 5.4, 19.6, 19.9 and 19.11 have distinct determining observations. Definition
+analysis, requirement compatibility, joint analysis and executable specialization may share eligible calculations
+without sharing authority or actual application identity. A consumer of complete coverage must retain current
+closure of the required surface or application scope, not merely the validity of known members. Reuse of a proof,
+witness or discharge requires its current justification, including the assumptions that make an omitted change
+irrelevant. The compiler's common Result and preservation laws govern these decisions.
+
+Physical sharing, indexing and relocation must preserve the exact reference and validity context. An address,
+dense ordinal or digest match cannot substitute for exact meaning or authority; collisions must not merge distinct
+meanings. Direct access through a currently qualified observation may avoid repeated validation within that valid
+scope. A stale handle, corrupted backing or poisoned cache cannot supply authoritative meaning. No particular
+cache key, hashing schedule, storage layout or Query granularity is required.
+
+The correspondence of Section 16 must survive copying, shared backing, publication, reclamation and any delayed
+physical materialization. Equality of inputs may support shared calculation but cannot transfer a previous actual
+judgment's attribution. Reclamation must respect the legal consumption lifetime of the results in Section 21.
+Physical representation and reuse must preserve trust-boundary isolation; equal meaning grants no permission to
+share across scopes. Internal keys, timing, addresses and cache observations acquire no automatic outward or
+diagnostic authority. Disclosure remains subject to the owning Publication and diagnostic laws.
+
+Resource safety is distinct from exact semantic comparison. Analysis and verification work must respect their
+compiler-owned resource governance. Runtime Budget and Capacity retain their own accounting and result laws.
+Optimization may change physical resource use but must not change the authority or meaning of those obligations.
+A resource failure, incomplete analysis or interrupted realization must not manufacture an Invariant refusal or
+success. The common security and platform laws govern the protection and qualified execution of these products;
+Invariant consumes their results rather than re-establishing their judgments.
+
+### 20.3. Compiler Conformance and Independent Verification
+
+Conformance extends across the entire realization of Invariant. The applicable verification owners must be able to
+check preservation at the following seams:
+
+- Source interpretation and qualification: the exact value domain, computation, evaluation and completion obligations
+  of Sections 5 and 13–15.
+- Resolved HIR and its protocol: complete determinants, declaration relations, Selection multiplicity, reference
+  validity, Seal and visibility under Sections 19.1–19.7.
+- Definition Establishment and Composition: exact Version, owned results, required Basis, universal compatibility
+  and qualified satisfiability evidence under Sections 19.8–19.9.
+- Established material, protocol and World: complete observations, identity, authority and application closure under
+  Sections 19.10–19.12.
+- Execution Formation, optimization and backend: every applicable reachable judgment, actual application attribution,
+  Failure membership and judgment–use correspondence under Sections 16 and 20–21.
+
+Verification must support both comparison with the deterministic clean path and independent checking against the
+Invariant Contract (ADR-0071 and ADR-0075). Agreement between two defective implementations cannot establish
+conformance. Verification products do not create Invariant or Fact authority, and independent checking does not
+require duplicate computation during every governed execution. The comparison must distinguish an inconclusive or
+interrupted compiler computation from an established semantic result (Section 5.4.4).
+
+Analysis encoding, evidence and transformation conclusions require qualified verification of their claimed scope.
+An independently checked witness or a sound proof must concern the actual legal domain. An incomplete proof or
+bounded test is not a proof of an unrestricted conclusion. Local, incremental or grouped transformation verification
+may establish preservation when the verified scope and its surrounding relations justify the full claimed result.
+Verification at one IR seam does not establish correctness of an unchecked later backend transformation. The actual
+emitted executable must realize the qualified meaning; structural host verification alone is insufficient to establish
+Contract conformance.
+
+Conformance includes negative cases: missing requirements and newly selected laws, wrong-kind or stale references,
+partial publication, corrupted or misbound evidence, guard violations, omitted independent judgments and attribution
+loss during packed or parallel evaluation. Collision handling, resource failure and isolation obligations apply to
+clean and optimized paths alike. Compiler and runtime failure, absence, non-entry and Contract refusal retain their
+own meanings and owners.
+
+Semantic correctness, security conformity and performance are distinct verification concerns. A correct result does
+not prove resource safety, isolation or efficiency. Compiler Design owns the verification strategy, implementation
+choices and performance measurements. V1 and V2 may use different representations and algorithms while preserving
+Contract meaning, current validity and applicable security obligations.
+
 ---
 
 ## 21. Result and Attribution
@@ -1296,11 +1612,66 @@ visible to the machine and attributable to the exact named Invariant and its app
 condition methods and helpers do not acquire separate Contract judgment authority, nor do the declaration class,
 source methods, receiver object or generated JVM mechanics receive runtime Contract authority.
 
-Invariant refusal means complete candidate Fact material exists but an applicable standing law does not hold. An
-unsatisfied prerequisite, unresolved source meaning or an indeterminate realization does not establish such a refusal
-(ADR-0063 and ADR-0074).
+### 21.1. Integrity Judgment Results
 
-It is distinct from malformed Input, Admission rejection, Canonicalization refusal, Lowering refusal, State movement
+A lawfully completed application establishes one of two results:
+
+| Result    | Meaning                                                                                          |
+|-----------|--------------------------------------------------------------------------------------------------|
+| Preserved | The complete integrity law holds for the exact candidate under the applicable standing relation. |
+| Refused   | The complete candidate exists but that applicable integrity law does not hold.                   |
+
+`Preserved` grants neither Fact authority nor Operation participation. `Refused` establishes no authority to change the
+candidate or judge another Contract's law. An unsatisfied prerequisite, unresolved source meaning or indeterminate
+realization does not establish either result merely by preventing judgment (ADR-0063 and ADR-0074). Where no
+Invariant applies, no such judgment occurs; there is no synthetic successful application.
+
+### 21.2. Completion and Exact Attribution
+
+Every applicable and reachable independent Invariant judgment in the active processing boundary must complete under
+ADR-0057 Section 4.3.3. One refusal cannot suppress another judgment that does not require the failed meaning.
+Independent conditions within one Invariant compose a single judgment; they do not establish separate Contract
+results. Section 20.1 governs lawful computation elimination within and across those judgments.
+
+Each established result retains the exact applied Versioned Invariant Definition, standing application relation,
+actual candidate attribution and applicable processing boundary. The exact distinguishing relation is supplied by
+the existing Formation and Composition laws; no new Fact identity, global Occurrence ID or independent Result
+schema is introduced. The result belongs to that application even when its calculation is shared or statically
+discharged. Independent actual applications are not collapsed by equal information; repeated physical execution of
+one judgment does not create another application.
+
+A packed or sparse result representation may avoid materializing successful results separately. An empty refusal
+representation denotes complete success only when every required judgment in its exact scope is established as
+successful. Non-entry, unperformed work and interrupted or uncertain execution cannot be treated as success.
+Failure membership and result attribution must remain independent of discovery or worker completion order, subject
+to the existing canonical processing and accounting laws.
+
+### 21.3. Failure and Legal Consumption
+
+Each exact `Refused` judgment establishes one semantic Failure under ADR-0057 Section 4.3.2. Several false conditions
+within one Invariant do not create several Failures; separate independent refused applications retain their distinct
+Failures. Non-entry does not establish a Failure attributed to Invariant. Realization failures and interruptions
+retain the attribution assigned by their own laws; Invariant does not reconstruct them as a false judgment.
+
+Results must remain legally available for the applicable establishment and Failure processing and for any other
+consumer authorized to observe them. A successful result is not reclassified when another judgment prevents the
+whole proposal's establishment. Reclamation or disposal of unestablished candidate backing must not destroy the
+result meaning still needed by authorized consumers. This obligation concerns valid processing and handoff, not
+mandatory independent Occurrence Material or indefinite retention. ADR-0057 Sections 4.3.4–4.3.7 govern finality,
+availability, boundary completion and Crash.
+
+Failure consumes the source-established meaning using its own source, context and boundary law. Diagnostic Evidence,
+Retention and Publication retain their own responsibilities for additional observations, their lifetime and disclosure.
+An independent condition, helper or failed diagnostic computation cannot create an additional Invariant Failure.
+A diagnostic must not present an unobserved condition as an observed failure, or describe an earlier result using
+an unrelated later Definition. The applicable diagnostic law determines whether more detailed observations, such as
+a complete list of violating collection members, must be supplied. A physical discovery order cannot establish an
+otherwise undeclared semantic ordering or Failure priority.
+
+The exact result and its legal handoff require neither a specific result container nor independent durable history.
+
+Invariant refusal is distinct from malformed Input, Admission rejection, Canonicalization refusal, Lowering refusal,
+State movement
 refusal, Operation realization failure, Publication decision, and Output realization failure.
 
 ---
@@ -1312,19 +1683,27 @@ evolve. The authoring boundary is fixed: one flat Contract with one complete int
 required factual observations and closed computation. Every application is selected by the IDL and judged from one
 complete canonical candidate Fact.
 
-Sections 5 and 19 define factual observation requirements, Definition meaning and identity, satisfiability,
-IDL selection and Binding, the Resolved HIR Candidate Protocol and Seal, Definition Establishment, and the Required
-Basis, applicability and authority boundaries of Fact-scoped Composition. The exact Established Definition and
-application material, established reference domains and semantic protocol, the need for independent Established
-Occurrence material, and the detailed runtime judgment, attribution, World placement and compiler conformance
-remain open. Common laws continue to apply. No additional Material family or Version API decision is introduced.
+Sections 5 and 19 define the factual requirements, Definition meaning and identity, satisfiability, IDL selection,
+Resolved HIR, Establishment and Fact-scoped Composition for the current Fact-local law. Sections 19.10–19.12 define
+its Established Definition, reference and protocol, application observation and World placement. Sections 16 and
+20–21 govern actual judgment, result consumption, attribution, preservation and compiler conformance. Independent
+Established Occurrence Material is not required for that scope. The exact common Interface-owned Established
+Application reference and protocol form, the shared Composition's further common realization details and the
+applicable common Result and diagnostic specifications remain with their respective owners. No additional Material
+family or Version API decision is introduced.
 
 No future syntax may silently add another Fact, a population or history of separately established Facts, proposal,
 Operation-specific material, hidden lookup, Fact mutation, escaping callback or backend evaluation state without a
 new Contract decision.
 
-The complete authoring surface for cross-Fact or operation-specific obligations remains outside this ADR because this
-ADR intentionally does not assign them an owner.
+The complete authoring surface for cross-Fact or operation-specific obligations remains outside the current law.
+A separate design review is required for an explicit many-to-many association of Facts and Invariants in the
+`facts : invariants` IDL block and for an authoring API that can refer to more than one exact Fact. That review must
+determine the meaning of the association, how participating Facts and their observations are selected, and the
+resulting judgment, applicability, establishment and occurrence boundaries. No syntax, Fact-reference semantics,
+relation authority or cross-Fact execution is established by this open item. Sections 4, 10–11 and 19–21 continue
+to describe the current Fact-local law until a new Contract decision changes its scope. Operation-specific
+obligations remain outside that law.
 
 ---
 
